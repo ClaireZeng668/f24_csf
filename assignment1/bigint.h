@@ -15,6 +15,8 @@
 class BigInt {
 private:
   // TODO: add fields
+  bool isNegative;
+  std::vector<std::uint64_t> elements;
 
 public:
   //! Default constructor.
