@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <sstream>
 #include <vector>
+#include <iostream>
+#include <iomanip>
+
 
 BigInt::BigInt()
   // TODO: initialize member variables
@@ -54,7 +57,7 @@ bool BigInt::is_negative() const
 uint64_t BigInt::get_bits(unsigned index) const
 {
   // TODO: implement
-  if (index > elements.size()-1) {
+  if (index >= elements.size()) {
     return 0;
   }
   return elements.at(index);
@@ -80,9 +83,11 @@ BigInt BigInt::operator-(const BigInt &rhs) const
 BigInt BigInt::operator-() const
 {
   // TODO: implement
-  BigInt *obj = new BigInt(*this);
-  obj->isNegative = !this->isNegative;
-  return *obj;
+  BigInt obj = BigInt(*this);
+  if(!is_zero()) {
+    obj.isNegative = !this->isNegative;
+  }
+  return obj;
 }
 
 bool BigInt::is_bit_set(unsigned n) const
@@ -113,19 +118,39 @@ int BigInt::compare(const BigInt &rhs) const
 std::string BigInt::to_hex() const
 {
   // TODO: implement
+
+  if (is_zero()) {
+    return "0";
+  }
+
   std::stringstream hex;
+
   if (isNegative) {
     hex << "-";
   }
-  for (int i = 0; i < elements.size(); i++) {
-    int x = elements.at(i);
-    hex << std::hex << x;
+
+  for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
+    if (it == elements.rbegin()) {
+      hex << std::hex << *it;
+    } else {
+      hex << std::hex << std::setw(16) << std::setfill('0') << *it;
+    }
   }
+  
   return hex.str();
 }
 
 std::string BigInt::to_dec() const
 {
   // TODO: implement
+}
+
+bool BigInt::is_zero () const {
+  for (auto it = elements.begin(); it != elements.end(); ++it) {
+    if (*it != 0) {
+      return false;
+    }
+  }
+  return true;
 }
 

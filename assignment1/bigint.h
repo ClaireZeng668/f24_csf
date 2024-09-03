@@ -186,7 +186,7 @@ public:
   std::string to_dec() const;
 
 private:
-  // TODO: add helper functions
+  bool is_zero() const;
 };
 
 #endif // BIGINT_H

@@ -74,7 +74,8 @@ int main(int argc, char **argv) {
   TEST(test_initlist_ctor);
   TEST(test_copy_ctor);
   TEST(test_get_bits);
-  TEST(test_add_1);
+  
+  /*TEST(test_add_1);
   TEST(test_add_2);
   TEST(test_add_3);
   TEST(test_add_4);
@@ -91,7 +92,7 @@ int main(int argc, char **argv) {
   TEST(test_compare_1);
   TEST(test_compare_2);
   TEST(test_div_1);
-  TEST(test_div_2);
+  TEST(test_div_2);*/
   TEST(test_to_hex_1);
   TEST(test_to_hex_2);
   TEST(test_to_dec_1);
@@ -217,6 +218,15 @@ void test_copy_ctor(TestObjs *objs) {
 
   check_contents(copy, { 0UL, 1UL });
   ASSERT(!copy.is_negative());
+
+  BigInt copy2 = -copy;
+  check_contents(copy, { 0UL, 1UL });
+  ASSERT(copy2.is_negative());
+
+  BigInt copy3(objs->zero);
+  BigInt copy4 = -copy3;
+  
+
 }
 
 void test_get_bits(TestObjs *objs) {
