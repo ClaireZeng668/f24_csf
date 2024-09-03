@@ -38,7 +38,7 @@ void test_u64_ctor(TestObjs *objs);
 void test_initlist_ctor(TestObjs *objs);
 void test_copy_ctor(TestObjs *objs);
 void test_get_bits(TestObjs *objs);
-void test_is_zero(TestObjs *objs);
+void test_unary(TestObjs *objs);
 void test_add_1(TestObjs *objs);
 void test_add_2(TestObjs *objs);
 void test_add_3(TestObjs *objs);
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   TEST(test_initlist_ctor);
   TEST(test_copy_ctor);
   TEST(test_get_bits);
-  TEST(test_is_zero);
+  TEST(test_unary);
   /*TEST(test_add_1);
   TEST(test_add_2);
   TEST(test_add_3);
@@ -221,14 +221,12 @@ void test_copy_ctor(TestObjs *objs) {
   ASSERT(!copy.is_negative());
 }
 
-void test_is_zero (TestObjs *objs) {
-  BigInt copy(objs->two_pow_64);
-  BigInt copy2 = -copy;
-  check_contents(copy, { 0UL, 1UL });
-  ASSERT(copy2.is_negative());
+void test_unary (TestObjs *objs) {
+  BigInt first = objs->three;
+  check_contents(first, { 3UL });
 
-  BigInt copy3(objs->zero);
-  BigInt copy4 = -copy3;
+  BigInt negate = -first;
+  ASSERT (negate.is_negative());
 }
 
 void test_get_bits(TestObjs *objs) {
