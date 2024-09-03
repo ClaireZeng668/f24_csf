@@ -19,7 +19,7 @@ BigInt::BigInt(std::initializer_list<uint64_t> vals, bool negative)
 BigInt::BigInt(uint64_t val, bool negative)
   // TODO: initialize member variables
 {
-  elements[0] = val; //NOT SURE ABT THIS ONE, IDK WHAT IT MEANS
+  elements.push_back(val); //NOT SURE ABT THIS ONE, IDK WHAT IT MEANS
   isNegative = negative;
 }
 
@@ -53,7 +53,10 @@ bool BigInt::is_negative() const
 uint64_t BigInt::get_bits(unsigned index) const
 {
   // TODO: implement
-  return elements[index];
+  if (index > elements.size()-1) {
+    return 0;
+  }
+  return elements.at(index);
 }
 
 const std::vector<uint64_t> &BigInt::get_bit_vector() const {
