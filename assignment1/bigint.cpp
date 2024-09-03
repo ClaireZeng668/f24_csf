@@ -1,6 +1,7 @@
 #include <cassert>
 #include "bigint.h"
 #include <cstdint>
+#include <sstream>
 #include <vector>
 
 BigInt::BigInt()
@@ -79,6 +80,9 @@ BigInt BigInt::operator-(const BigInt &rhs) const
 BigInt BigInt::operator-() const
 {
   // TODO: implement
+  BigInt *obj = new BigInt(*this);
+  obj->isNegative = !this->isNegative;
+  return *obj;
 }
 
 bool BigInt::is_bit_set(unsigned n) const
@@ -109,6 +113,15 @@ int BigInt::compare(const BigInt &rhs) const
 std::string BigInt::to_hex() const
 {
   // TODO: implement
+  std::stringstream hex;
+  if (isNegative) {
+    hex << "-";
+  }
+  for (int i = 0; i < elements.size(); i++) {
+    int x = elements.at(i);
+    hex << std::hex << x;
+  }
+  return hex.str();
 }
 
 std::string BigInt::to_dec() const
