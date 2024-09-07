@@ -187,6 +187,7 @@ public:
 
 private:
   bool is_zero() const;
+  static BigInt add_magnitudes(const BigInt &lhs, const BigInt &rhs);
 };
 
 #endif // BIGINT_H

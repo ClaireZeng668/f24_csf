@@ -74,13 +74,13 @@ int main(int argc, char **argv) {
   TEST(test_u64_ctor);
   TEST(test_initlist_ctor);
   TEST(test_copy_ctor);
-  TEST(test_get_bits);
+  TEST(test_get_bits);*/
   TEST(test_unary);
   TEST(test_add_1);
   TEST(test_add_2);
   TEST(test_add_3);
   TEST(test_add_4);
-  TEST(test_sub_1);
+  /*TEST(test_sub_1);
   TEST(test_sub_2);
   TEST(test_sub_3);
   TEST(test_sub_4);*/

@@ -164,3 +164,33 @@ bool BigInt::is_zero () const {
   return true;
 }
 
+BigInt add_magnitudes(const std::vector<std::uint64_t> lhs, const std::vector<std::uint64_t> rhs) {
+  BigInt obj;
+  std::vector<std::uint64_t> result_vector;
+  bool overflow = false;
+  auto itl = lhs.begin();
+  auto itr = rhs.begin();
+  for (itl, itr; itl != lhs.end() && itr != lhs.end(); ++itl, ++itr) {
+    uint64_t l_elemnt = *itl;
+    uint64_t r_elemnt = *itr;
+    uint64_t result = (l_elemnt + r_elemnt);
+    if (overflow == true) {
+      result++;
+      overflow = false;
+    }
+    if (result < l_elemnt) {
+      result = (l_elemnt + r_elemnt) % (1UL << 63);
+      overflow = true;
+    }
+    result_vector.push_back(result);
+  }
+  while (itl != lhs.end()) {
+    result_vector.push_back(*itl);
+    ++itl;
+  }
+  while (itr != lhs.end()) {
+    result_vector.push_back(*itr);
+    ++itr;
+  }
+}
+
