@@ -8,27 +8,23 @@
 
 
 BigInt::BigInt()
-  // TODO: initialize member variables
 {
   isNegative = false;
 }
 
 BigInt::BigInt(std::initializer_list<uint64_t> vals, bool negative)
-  // TODO: initialize member variables
 {
   isNegative = negative;
   elements = vals;
 }
 
 BigInt::BigInt(uint64_t val, bool negative)
-  // TODO: initialize member variables
 {
   elements.push_back(val); //NOT SURE ABT THIS ONE, IDK WHAT IT MEANS
   isNegative = negative;
 }
 
 BigInt::BigInt(const BigInt &other)
-  // TODO: initialize member variables
 {
   isNegative = other.isNegative;
   elements = other.elements;
@@ -40,7 +36,6 @@ BigInt::~BigInt()
 
 BigInt &BigInt::operator=(const BigInt &rhs)
 {
-  // TODO: implement
   if (this != &rhs) {
     isNegative = rhs.isNegative;
     elements = rhs.elements;
@@ -50,13 +45,11 @@ BigInt &BigInt::operator=(const BigInt &rhs)
 
 bool BigInt::is_negative() const
 {
-  // TODO: implement
   return isNegative;
 }
 
 uint64_t BigInt::get_bits(unsigned index) const
 {
-  // TODO: implement
   if (index >= elements.size()) {
     return 0;
   }
@@ -64,7 +57,6 @@ uint64_t BigInt::get_bits(unsigned index) const
 }
 
 const std::vector<uint64_t> &BigInt::get_bit_vector() const {
-  // TODO: implement
   return elements;
 }
 
@@ -82,7 +74,6 @@ BigInt BigInt::operator-(const BigInt &rhs) const
 
 BigInt BigInt::operator-() const
 {
-  // TODO: implement
   BigInt obj = BigInt(*this);
   if(!is_zero()) {
     obj.isNegative = !this->isNegative;
@@ -93,6 +84,25 @@ BigInt BigInt::operator-() const
 bool BigInt::is_bit_set(unsigned n) const
 {
   // TODO: implement
+  if (is_zero()) {
+    return false;
+  }
+  int pos = 0;
+  if (n >= 64) {
+    pos = n/64;
+  }
+  int bit = n%64;
+  if (bit == 0) {
+    return elements[pos] % 2 != 0;
+  }
+  if (elements[pos] > (1UL << (bit))) {
+    int section = elements[pos] / (1UL << (bit));
+    if (section % 2 == 0) {
+      return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 BigInt BigInt::operator<<(unsigned n) const
