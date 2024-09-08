@@ -1,6 +1,7 @@
 #include <cassert>
 #include "bigint.h"
 #include <cstdint>
+#include <initializer_list>
 #include <sstream>
 #include <vector>
 #include <iostream>
@@ -62,7 +63,13 @@ const std::vector<uint64_t> &BigInt::get_bit_vector() const {
 
 BigInt BigInt::operator+(const BigInt &rhs) const
 {
-  // TODO: implement
+  if (isNegative == rhs.isNegative) {
+    BigInt obj = add_magnitudes(*this, rhs);
+    obj.isNegative = isNegative;
+    return obj;
+  }
+  
+  
 }
 
 BigInt BigInt::operator-(const BigInt &rhs) const
@@ -83,7 +90,6 @@ BigInt BigInt::operator-() const
 
 bool BigInt::is_bit_set(unsigned n) const
 {
-  // TODO: implement
   if (is_zero()) {
     return false;
   }
@@ -164,13 +170,13 @@ bool BigInt::is_zero () const {
   return true;
 }
 
-BigInt add_magnitudes(const std::vector<std::uint64_t> lhs, const std::vector<std::uint64_t> rhs) {
-  BigInt obj;
+BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
+  BigInt result;
   std::vector<std::uint64_t> result_vector;
   bool overflow = false;
-  auto itl = lhs.begin();
-  auto itr = rhs.begin();
-  for (itl, itr; itl != lhs.end() && itr != lhs.end(); ++itl, ++itr) {
+  auto itl = lhs.get_bit_vector().begin();
+  auto itr = rhs.get_bit_vector().begin();
+  for (itl, itr; itl != lhs.get_bit_vector().end() && itr != lhs.get_bit_vector().end(); ++itl, ++itr) {
     uint64_t l_elemnt = *itl;
     uint64_t r_elemnt = *itr;
     uint64_t result = (l_elemnt + r_elemnt);
@@ -184,13 +190,52 @@ BigInt add_magnitudes(const std::vector<std::uint64_t> lhs, const std::vector<st
     }
     result_vector.push_back(result);
   }
-  while (itl != lhs.end()) {
+  while (itl != lhs.get_bit_vector().end()) {
     result_vector.push_back(*itl);
     ++itl;
   }
-  while (itr != lhs.end()) {
+  while (itr != rhs.get_bit_vector().end()) {
     result_vector.push_back(*itr);
     ++itr;
   }
+  result.elements = result_vector;
+  return result;
+}
+
+BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs > rhs
+  BigInt result;
+  std::vector<std::uint64_t> result_vector;
+  bool borrow = false;
+  auto itl = lhs.get_bit_vector().begin();
+  auto itr = rhs.get_bit_vector().begin();
+  for (itl, itr; itl != lhs.get_bit_vector().end() && itr != lhs.get_bit_vector().end(); ++itl, ++itr) {
+    uint64_t l_elemnt = *itl;
+    uint64_t r_elemnt = *itr;
+    if (borrow == true) {
+      if (l_elemnt > 0) {
+        l_elemnt--;
+        borrow = false;
+      } else {
+        
+      }
+
+    }
+    uint64_t result = (l_elemnt - r_elemnt);
+    if (l_elemnt < r_elemnt) {
+      result = 0xFFFFFFFFFFFFFFFFUL - result;
+      borrow = true;
+    }
+    result_vector.push_back(result);
+  }
+  while (itl != lhs.get_bit_vector().end()) {
+    result_vector.push_back(*itl);
+    ++itl;
+  }
+  while (itr != rhs.get_bit_vector().end()) {
+    result_vector.push_back(*itr);
+    ++itr;
+  }
+  result.elements = result_vector;
+  return result;
 }
 
