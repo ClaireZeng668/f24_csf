@@ -67,9 +67,25 @@ BigInt BigInt::operator+(const BigInt &rhs) const
     BigInt obj = add_magnitudes(*this, rhs);
     obj.isNegative = isNegative;
     return obj;
+  } /*else if (this->compare(rhs) > 0) {
+    BigInt obj = subtract_magnitudes(*this, rhs);
+    obj.isNegative = isNegative;
+    return obj;
+  } else {
+    BigInt obj = subtract_magnitudes(rhs, *this);
+    obj.isNegative = isNegative;
+    return obj;
+  } actual code but dont have compare yet so writing this to test subtract magnitudes based on test cases*/
+  bool a = false;
+  if (a) {
+    BigInt obj = subtract_magnitudes(*this, rhs);
+    obj.isNegative = isNegative;
+    return obj;
+  } else {
+    BigInt obj = subtract_magnitudes(rhs, *this);
+    obj.isNegative = rhs.is_negative();
+    return obj;
   }
-  
-  
 }
 
 BigInt BigInt::operator-(const BigInt &rhs) const
@@ -176,30 +192,57 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   bool overflow = false;
   auto itl = lhs.get_bit_vector().begin();
   auto itr = rhs.get_bit_vector().begin();
-  for (itl, itr; itl != lhs.get_bit_vector().end() && itr != lhs.get_bit_vector().end(); ++itl, ++itr) {
-    uint64_t l_elemnt = *itl;
-    uint64_t r_elemnt = *itr;
-    uint64_t result = (l_elemnt + r_elemnt);
+  if (lhs.is_zero()) {
+    result.elements = rhs.get_bit_vector();
+    return result;
+  } else if (rhs.is_zero()) {
+    result.elements = lhs.get_bit_vector();
+    return result;
+  } else {
+    for (; itl != lhs.get_bit_vector().end() && itr != rhs.get_bit_vector().end(); ++itl, ++itr) {
+      uint64_t l_elemnt = *itl;
+      uint64_t r_elemnt = *itr;
+      uint64_t result = (l_elemnt + r_elemnt);
+      if (overflow == true) {
+        result++;
+        overflow = false;
+      }
+      if (result < l_elemnt) {
+        result = (l_elemnt + r_elemnt) % (0xFFFFFFFFFFFFFFFFUL);//(1UL << 63);
+        overflow = true;
+      }
+      result_vector.push_back(result);
+    }
+    while (itl != lhs.get_bit_vector().end()) {
+      if (overflow == true) {
+        if (*itl < 0xFFFFFFFFFFFFFFFFUL) {
+          result_vector.push_back(*itl+1);
+          overflow = false;
+        } else {
+          result_vector.push_back(0UL);
+        }
+      }
+      result_vector.push_back(*itl);
+      ++itl;
+    }
+    while (itr != rhs.get_bit_vector().end()) {
+      if (overflow == true) {
+        if (*itr < 0xFFFFFFFFFFFFFFFFUL) {
+          result_vector.push_back(*itr+1);
+          overflow = false;
+        } else {
+          result_vector.push_back(0UL);
+        }
+      }
+      result_vector.push_back(*itr);
+      ++itr;
+    }
     if (overflow == true) {
-      result++;
-      overflow = false;
+      result_vector.push_back(1UL);
     }
-    if (result < l_elemnt) {
-      result = (l_elemnt + r_elemnt) % (1UL << 63);
-      overflow = true;
-    }
-    result_vector.push_back(result);
+    result.elements = result_vector;
+    return result;
   }
-  while (itl != lhs.get_bit_vector().end()) {
-    result_vector.push_back(*itl);
-    ++itl;
-  }
-  while (itr != rhs.get_bit_vector().end()) {
-    result_vector.push_back(*itr);
-    ++itr;
-  }
-  result.elements = result_vector;
-  return result;
 }
 
 BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs > rhs
@@ -208,7 +251,7 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
   bool borrow = false;
   auto itl = lhs.get_bit_vector().begin();
   auto itr = rhs.get_bit_vector().begin();
-  for (itl, itr; itl != lhs.get_bit_vector().end() && itr != lhs.get_bit_vector().end(); ++itl, ++itr) {
+  for (; itl != lhs.get_bit_vector().end() && itr != rhs.get_bit_vector().end(); ++itl, ++itr) {
     uint64_t l_elemnt = *itl;
     uint64_t r_elemnt = *itr;
     if (borrow == true) {
@@ -216,25 +259,32 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
         l_elemnt--;
         borrow = false;
       } else {
-        
+        l_elemnt = 0xFFFFFFFFFFFFFFFFUL -1;
       }
-
     }
     uint64_t result = (l_elemnt - r_elemnt);
     if (l_elemnt < r_elemnt) {
-      result = 0xFFFFFFFFFFFFFFFFUL - result;
+      result = 0xFFFFFFFFFFFFFFFFUL - r_elemnt + l_elemnt;
       borrow = true;
     }
     result_vector.push_back(result);
   }
   while (itl != lhs.get_bit_vector().end()) {
+    if (borrow == true) {
+      if (*itl > 0) {
+        result_vector.push_back(*itl -1);
+        borrow = false;
+      } else {
+        result_vector.push_back(0xFFFFFFFFFFFFFFFFUL -1);
+      }
+    }
     result_vector.push_back(*itl);
     ++itl;
   }
-  while (itr != rhs.get_bit_vector().end()) {
-    result_vector.push_back(*itr);
-    ++itr;
-  }
+  // while (itr != rhs.get_bit_vector().end()) {
+  //   result_vector.push_back(*itr);
+  //   ++itr;
+  // }
   result.elements = result_vector;
   return result;
 }
