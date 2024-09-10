@@ -188,13 +188,10 @@ std::string BigInt::to_hex() const
   if (is_zero()) {
     return "0";
   }
-
   std::stringstream hex;
-
   if (isNegative) {
     hex << "-";
   }
-
   for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
     if (it == elements.rbegin()) {
       hex << std::hex << *it;
@@ -202,13 +199,26 @@ std::string BigInt::to_hex() const
       hex << std::hex << std::setw(16) << std::setfill('0') << *it;
     }
   }
-  
   return hex.str();
 }
 
 std::string BigInt::to_dec() const
 {
-  // TODO: implement
+  if (is_zero()) {
+    return "0";
+  }
+  std::stringstream hex;
+  if (isNegative) {
+    hex << "-";
+  }
+  for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
+    if (it == elements.rbegin()) {
+      hex << *it;
+    } else {
+      hex << std::setw(20) << std::setfill('0') << *it;
+    }
+  }
+  return hex.str();
 }
 
 bool BigInt::is_zero () const {
@@ -310,9 +320,11 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
       } else {
         result_vector.push_back(0xFFFFFFFFFFFFFFFFUL -1);
       }
+      ++itl;
+    } else {
+      result_vector.push_back(*itl);
+      ++itl;
     }
-    result_vector.push_back(*itl);
-    ++itl;
   }
   // while (itr != rhs.get_bit_vector().end()) {
   //   result_vector.push_back(*itr);

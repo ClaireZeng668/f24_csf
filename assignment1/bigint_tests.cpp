@@ -43,10 +43,12 @@ void test_add_1(TestObjs *objs);
 void test_add_2(TestObjs *objs);
 void test_add_3(TestObjs *objs);
 void test_add_4(TestObjs *objs);
+void test_add_5(TestObjs *objs);
 void test_sub_1(TestObjs *objs);
 void test_sub_2(TestObjs *objs);
 void test_sub_3(TestObjs *objs);
 void test_sub_4(TestObjs *objs);
+void test_sub_5(TestObjs *objs);
 void test_is_bit_set_1(TestObjs *objs);
 void test_is_bit_set_2(TestObjs *objs);
 void test_lshift_1(TestObjs *objs);
@@ -74,19 +76,21 @@ int main(int argc, char **argv) {
   TEST(test_u64_ctor);
   TEST(test_initlist_ctor);
   TEST(test_copy_ctor);
-  TEST(test_get_bits);*/
-  TEST(test_unary);
+  TEST(test_get_bits);
+  TEST(test_unary);*/
   TEST(test_add_1);
   TEST(test_add_2);
   TEST(test_add_3);
   TEST(test_add_4);
+  TEST(test_add_5);
   TEST(test_sub_1);
   TEST(test_sub_2);
   TEST(test_sub_3);
   TEST(test_sub_4);
-  /*TEST(test_is_bit_set_1);
+  TEST(test_sub_5);
+  TEST(test_is_bit_set_1);
   TEST(test_is_bit_set_2);
-  TEST(test_lshift_1);
+  /*TEST(test_lshift_1);
   TEST(test_lshift_2);
   TEST(test_mul_1);
   TEST(test_mul_2);*/
@@ -306,6 +310,11 @@ void test_add_4(TestObjs *) {
 
 }
 
+void test_add_5(TestObjs *objs) {
+  BigInt result5 = objs->negative_two_pow_64 + objs->one;
+  check_contents(result5, { 0xFFFFFFFFFFFFFFFFUL });
+  ASSERT(result5.is_negative());
+}
 
 void test_sub_1(TestObjs *objs) {
   // very basic tests for subtraction
@@ -366,6 +375,12 @@ void test_sub_4(TestObjs *) {
     check_contents(result, {0xe9ecd2b1a9145f5aUL, 0x81fe5f9ade056280UL, 0x56ec433719861074UL, 0x7f6d01dbc70c1274UL, 0xd02fd7f2403ee362UL, 0x24c5400e94347fb3UL, 0x764521caebba2c9UL, 0x51a61e0aa376ff6dUL, 0x103c5aa88eb6e90UL});
     ASSERT(!result.is_negative());
   }
+}
+
+void test_sub_5(TestObjs *objs) {
+  BigInt result5 = objs->two_pow_64 - objs->one;
+  check_contents(result5, { 0xFFFFFFFFFFFFFFFFUL });
+  ASSERT(!result5.is_negative());
 }
 
 void test_is_bit_set_1(TestObjs *objs) {
