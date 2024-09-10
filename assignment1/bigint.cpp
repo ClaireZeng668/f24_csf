@@ -82,29 +82,46 @@ BigInt BigInt::operator-(const BigInt &rhs) const
 {
   // TODO: implement
   // Hint: a - b could be computed as a + -b
-    if (this->is_zero()) {
-      BigInt obj = -rhs;
+  if (this->is_zero()) {
+    BigInt obj = -rhs;
+    return obj;
+  } else if (rhs.is_zero()) {
+    BigInt obj = *this;
+    return obj;
+  }
+  if (isNegative == true && rhs.is_negative() == true) {
+    if (compare_magnitudes(*this, rhs) > 0) {
+      BigInt obj = subtract_magnitudes(*this, rhs);
+      obj.isNegative = true;
       return obj;
-    } else if (rhs.is_zero()){
-      BigInt obj = *this;
-      return obj;
-    } if (isNegative == rhs.is_negative()) {
-      if (this->compare(rhs) > 0) {
-        BigInt obj = subtract_magnitudes(*this, rhs);
-        obj.isNegative = isNegative;
-      } else {
-        BigInt obj = subtract_magnitudes(rhs, *this);
-        obj.isNegative = rhs.is_negative();
-      }
     } else {
-      if (this->compare(rhs) > 0) {
-        BigInt obj = subtract_magnitudes(*this, rhs);
-        obj.isNegative = isNegative;
-      } else {
-        BigInt obj = subtract_magnitudes(rhs, *this);
-        obj.isNegative = rhs.is_negative();
-      }
+      BigInt obj = subtract_magnitudes(rhs, *this);
+      obj.isNegative = false;
+      return obj;
     }
+  }
+  if (isNegative == false && rhs.is_negative() == false) {
+    if (compare_magnitudes(*this, rhs) == 0) {
+      BigInt obj;
+      return obj;
+    } else if (compare_magnitudes(*this, rhs) > 0) {
+      BigInt obj = subtract_magnitudes(*this, rhs);
+      obj.isNegative = false;;
+      return obj;
+    } else {
+      BigInt obj = subtract_magnitudes(rhs, *this);
+      obj.isNegative = true;
+      return obj;
+    }
+  } else {
+    BigInt obj = add_magnitudes(*this, rhs);
+    if (isNegative == false && rhs.is_negative() == true) {
+      obj.isNegative = false;
+    } else if (isNegative == true && rhs.is_negative() == false) {
+      obj.isNegative = true;
+    }
+    return obj;
+  }
 }
 
 BigInt BigInt::operator-() const
