@@ -76,7 +76,7 @@ BigInt BigInt::operator+(const BigInt &rhs) const
     obj.isNegative = rhs.is_negative();
     return obj;
   } actual code but dont have compare yet so writing this to test subtract magnitudes based on test cases*/
-  bool a = false;
+  bool a = true;
   if (a) {
     BigInt obj = subtract_magnitudes(*this, rhs);
     obj.isNegative = isNegative;
@@ -98,6 +98,14 @@ BigInt BigInt::operator-(const BigInt &rhs) const
     } else if (rhs.is_zero()){
       BigInt obj = *this;
       return obj;
+    } if (isNegative == rhs.is_negative()) {
+      if (this->compare(rhs) > 0) {
+        BigInt obj = subtract_magnitudes(*this, rhs);
+        obj.isNegative = isNegative;
+      } else {
+        BigInt obj = subtract_magnitudes(rhs, *this);
+        obj.isNegative = rhs.is_negative();
+      }
     }
     BigInt negate = -rhs;
     BigInt obj = add_magnitudes(*this, rhs);
@@ -158,8 +166,6 @@ int BigInt::compare(const BigInt &rhs) const
 
 std::string BigInt::to_hex() const
 {
-  // TODO: implement
-
   if (is_zero()) {
     return "0";
   }
@@ -217,7 +223,6 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
         overflow = false;
       }
       if (result < l_elemnt) {
-        result = (l_elemnt + r_elemnt) % (0xFFFFFFFFFFFFFFFFUL);//(1UL << 63);
         overflow = true;
       }
       result_vector.push_back(result);

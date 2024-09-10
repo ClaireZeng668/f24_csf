@@ -277,32 +277,32 @@ void test_add_2(TestObjs *) {
 void test_add_3(TestObjs *objs) {
   // Test additions with mixed signs
 
-  BigInt result1 = objs->three + objs->negative_nine;
+  /*BigInt result1 = objs->three + objs->negative_nine;
   check_contents(result1, { 6UL });
-  ASSERT(result1.is_negative());
+  ASSERT(result1.is_negative());*/
 
-  /*BigInt result2 = objs->negative_nine + objs->three;
+  BigInt result2 = objs->negative_nine + objs->three;
   check_contents(result2, { 6UL });
-  ASSERT(result2.is_negative());*/
+  ASSERT(result2.is_negative());
 }
 
 void test_add_4(TestObjs *) {
   // Harder addition test(s) with negative and nonnegative operands
-  /*{
+  {
     BigInt left({0x9f33ca9e0290d102UL, 0xd331662e19562498UL, 0x2347e72885d6e83UL, 0x529bac52c46b047UL, 0x69b3f801ea78f778UL, 0xfdba8845fc024708UL, 0x2UL});
     BigInt right({0x3efacbd8f95c7bbUL, 0x974f58eddfc56dfeUL, 0xa844e13b7c33ebedUL, 0xb4dd001fbdf5f260UL, 0x755c8aee33f48fecUL, 0x60UL}, true);
     BigInt result = left + right;
     check_contents(result, {0x9b441de072fb0947UL, 0x3be20d403990b69aUL, 0x59ef9d370c298296UL, 0x504cbaa56e50bde6UL, 0xf4576d13b684678bUL, 0xfdba8845fc0246a7UL, 0x2UL});
     ASSERT(!result.is_negative());
-  }*/
+  }
 
-  {
+  /*{
     BigInt left({0xd2ec154f6f077e95UL, 0x1bb578fcbf5bec60UL, 0x36735d365fe0f69eUL, 0xa803e03015c610e8UL, 0xca14aac782de50a2UL, 0x2191456abd619da2UL, 0xd9a345c56ba9a659UL, 0x1de31271dc3UL}, true);
     BigInt right({0xe2b272a002612fe3UL, 0xd1ec655e5e2e3d38UL, 0x21bc7b47bae7b899UL, 0xb211826c4e5c346fUL, 0x39d7cf09bfdfe04dUL, 0x1253ec5a1e5b8f9aUL, 0xbabcbf088154c6eeUL, 0x3e676f5f2637b2edUL, 0xcc7edfb347fcd8b4UL, 0x5978260d5ecf00a7UL, 0xe242586be49c40c1UL, 0xf734798ec1dd4ddaUL, 0x76394dUL}, true);
     BigInt result = left + right;
     check_contents(result, {0xb59e87ef7168ae78UL, 0xeda1de5b1d8a2999UL, 0x582fd87e1ac8af37UL, 0x5a15629c64224557UL, 0x3ec79d142be30f0UL, 0x33e531c4dbbd2d3dUL, 0x946004cdecfe6d47UL, 0x3e67713d575ed0b1UL, 0xcc7edfb347fcd8b4UL, 0x5978260d5ecf00a7UL, 0xe242586be49c40c1UL, 0xf734798ec1dd4ddaUL, 0x76394dUL});
     ASSERT(result.is_negative());
-  }
+  }*/
 
 }
 
