@@ -63,17 +63,17 @@ const std::vector<uint64_t> &BigInt::get_bit_vector() const {
 
 BigInt BigInt::operator+(const BigInt &rhs) const
 {
-  if (isNegative == rhs.isNegative) {
+  if (isNegative == rhs.is_negative()) {
     BigInt obj = add_magnitudes(*this, rhs);
     obj.isNegative = isNegative;
     return obj;
   } /*else if (this->compare(rhs) > 0) {
     BigInt obj = subtract_magnitudes(*this, rhs);
-    obj.isNegative = isNegative;
+    obj.isNegative = is_negative();
     return obj;
   } else {
     BigInt obj = subtract_magnitudes(rhs, *this);
-    obj.isNegative = isNegative;
+    obj.isNegative = rhs.is_negative();
     return obj;
   } actual code but dont have compare yet so writing this to test subtract magnitudes based on test cases*/
   bool a = false;
@@ -92,7 +92,16 @@ BigInt BigInt::operator-(const BigInt &rhs) const
 {
   // TODO: implement
   // Hint: a - b could be computed as a + -b
-  
+    if (this->is_zero()) {
+      BigInt obj = -rhs;
+      return obj;
+    } else if (rhs.is_zero()){
+      BigInt obj = *this;
+      return obj;
+    }
+    BigInt negate = -rhs;
+    BigInt obj = add_magnitudes(*this, rhs);
+    return obj;
 }
 
 BigInt BigInt::operator-() const
@@ -264,7 +273,7 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
     }
     uint64_t result = (l_elemnt - r_elemnt);
     if (l_elemnt < r_elemnt) {
-      result = 0xFFFFFFFFFFFFFFFFUL - r_elemnt + l_elemnt;
+      result = 0xFFFFFFFFFFFFFFFFUL - r_elemnt + 1 + l_elemnt;
       borrow = true;
     }
     result_vector.push_back(result);
