@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 
 BigInt::BigInt()
@@ -217,11 +218,17 @@ std::string BigInt::to_dec() const
     dec << "-";
   }
   BigInt current = *this;
-  while (current != 0) {
-    uint64_t mod = current - ((current / 10) * 10)
-    dec << current-((current/10)*10)
+  for (auto it = current.elements.rbegin(); it != current.elements.rend(); ++it) {
+    while (*it != 0) {
+      uint64_t mod = *it - ((*it / 10) * 10);
+      dec << mod;
+      *it = *it / 10;
+    }
   }
+  std::string reversed = dec.str();
+  reverse(reversed.begin(), reversed.end());
   return dec.str();
+
 }
 
 bool BigInt::is_zero () const {
