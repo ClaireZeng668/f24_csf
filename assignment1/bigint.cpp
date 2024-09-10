@@ -67,19 +67,9 @@ BigInt BigInt::operator+(const BigInt &rhs) const
     BigInt obj = add_magnitudes(*this, rhs);
     obj.isNegative = isNegative;
     return obj;
-  } /*else if (this->compare(rhs) > 0) {
+  } else if (compare_magnitudes(*this, rhs) > 0) {
     BigInt obj = subtract_magnitudes(*this, rhs);
     obj.isNegative = is_negative();
-    return obj;
-  } else {
-    BigInt obj = subtract_magnitudes(rhs, *this);
-    obj.isNegative = rhs.is_negative();
-    return obj;
-  } actual code but dont have compare yet so writing this to test subtract magnitudes based on test cases*/
-  bool a = true;
-  if (a) {
-    BigInt obj = subtract_magnitudes(*this, rhs);
-    obj.isNegative = isNegative;
     return obj;
   } else {
     BigInt obj = subtract_magnitudes(rhs, *this);
@@ -106,10 +96,15 @@ BigInt BigInt::operator-(const BigInt &rhs) const
         BigInt obj = subtract_magnitudes(rhs, *this);
         obj.isNegative = rhs.is_negative();
       }
+    } else {
+      if (this->compare(rhs) > 0) {
+        BigInt obj = subtract_magnitudes(*this, rhs);
+        obj.isNegative = isNegative;
+      } else {
+        BigInt obj = subtract_magnitudes(rhs, *this);
+        obj.isNegative = rhs.is_negative();
+      }
     }
-    BigInt negate = -rhs;
-    BigInt obj = add_magnitudes(*this, rhs);
-    return obj;
 }
 
 BigInt BigInt::operator-() const
@@ -162,6 +157,13 @@ BigInt BigInt::operator/(const BigInt &rhs) const
 int BigInt::compare(const BigInt &rhs) const
 {
   // TODO: implement
+  if (isNegative == rhs.is_negative()) {
+    return compare_magnitudes(*this, rhs);
+  } else if (isNegative == false && rhs.is_negative() == true) {
+    return 1;
+  } else {
+    return -1;
+  }
 }
 
 std::string BigInt::to_hex() const
@@ -301,5 +303,26 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
   // }
   result.elements = result_vector;
   return result;
+}
+int BigInt::compare_magnitudes(const BigInt &lhs, const BigInt &rhs) {
+  int left = lhs.elements.size();
+  int right = rhs.elements.size();
+  if (left > right) {
+    return 1;
+  } else if (right > left) {
+    return -1;
+  } else if (left == 0 && right == 0) {
+    return 0;
+  } else {
+    uint64_t current_max = lhs.elements.at(left-1);
+    uint64_t other_max = rhs.elements.at(left-1);
+    if (current_max > other_max) {
+      return 1;
+    } else if (other_max < current_max) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
 }
 
