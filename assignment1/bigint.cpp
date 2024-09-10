@@ -80,7 +80,6 @@ BigInt BigInt::operator+(const BigInt &rhs) const
 
 BigInt BigInt::operator-(const BigInt &rhs) const
 {
-  // TODO: implement
   // Hint: a - b could be computed as a + -b
   if (this->is_zero()) {
     BigInt obj = -rhs;
@@ -101,10 +100,7 @@ BigInt BigInt::operator-(const BigInt &rhs) const
     }
   }
   if (isNegative == false && rhs.is_negative() == false) {
-    if (compare_magnitudes(*this, rhs) == 0) {
-      BigInt obj;
-      return obj;
-    } else if (compare_magnitudes(*this, rhs) > 0) {
+    if (compare_magnitudes(*this, rhs) > 0) {
       BigInt obj = subtract_magnitudes(*this, rhs);
       obj.isNegative = false;;
       return obj;
@@ -173,7 +169,16 @@ BigInt BigInt::operator/(const BigInt &rhs) const
 
 int BigInt::compare(const BigInt &rhs) const
 {
-  // TODO: implement
+  if (this->is_zero()) {
+    if (rhs.is_zero()) {
+      return 0;
+    }
+    return -1;
+  }
+  if (rhs.is_zero()) {
+    return 1;
+  }
+
   if (isNegative == rhs.is_negative()) {
     return compare_magnitudes(*this, rhs);
   } else if (isNegative == false && rhs.is_negative() == true) {
@@ -207,18 +212,16 @@ std::string BigInt::to_dec() const
   if (is_zero()) {
     return "0";
   }
-  std::stringstream hex;
+  std::stringstream dec;
   if (isNegative) {
-    hex << "-";
+    dec << "-";
   }
-  for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
-    if (it == elements.rbegin()) {
-      hex << *it;
-    } else {
-      hex << std::setw(20) << std::setfill('0') << *it;
-    }
+  BigInt current = *this;
+  while (current != 0) {
+    uint64_t mod = current - ((current / 10) * 10)
+    dec << current-((current/10)*10)
   }
-  return hex.str();
+  return dec.str();
 }
 
 bool BigInt::is_zero () const {
@@ -234,16 +237,16 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   BigInt result;
   std::vector<std::uint64_t> result_vector;
   bool overflow = false;
-  auto itl = lhs.get_bit_vector().begin();
-  auto itr = rhs.get_bit_vector().begin();
+  auto itl = lhs.elements.begin();
+  auto itr = rhs.elements.begin();
   if (lhs.is_zero()) {
-    result.elements = rhs.get_bit_vector();
+    result.elements = rhs.elements;
     return result;
   } else if (rhs.is_zero()) {
-    result.elements = lhs.get_bit_vector();
+    result.elements = lhs.elements;
     return result;
   } else {
-    for (; itl != lhs.get_bit_vector().end() && itr != rhs.get_bit_vector().end(); ++itl, ++itr) {
+    for (; itl != lhs.elements.end() && itr != rhs.elements.end(); ++itl, ++itr) {
       uint64_t l_elemnt = *itl;
       uint64_t r_elemnt = *itr;
       uint64_t result = (l_elemnt + r_elemnt);
@@ -256,7 +259,7 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
       }
       result_vector.push_back(result);
     }
-    while (itl != lhs.get_bit_vector().end()) {
+    while (itl != lhs.elements.end()) {
       if (overflow == true) {
         if (*itl < 0xFFFFFFFFFFFFFFFFUL) {
           result_vector.push_back(*itl+1);
@@ -268,7 +271,7 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
       result_vector.push_back(*itl);
       ++itl;
     }
-    while (itr != rhs.get_bit_vector().end()) {
+    while (itr != rhs.elements.end()) {
       if (overflow == true) {
         if (*itr < 0xFFFFFFFFFFFFFFFFUL) {
           result_vector.push_back(*itr+1);
@@ -292,9 +295,9 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
   BigInt result;
   std::vector<std::uint64_t> result_vector;
   bool borrow = false;
-  auto itl = lhs.get_bit_vector().begin();
-  auto itr = rhs.get_bit_vector().begin();
-  for (; itl != lhs.get_bit_vector().end() && itr != rhs.get_bit_vector().end(); ++itl, ++itr) {
+  auto itl = lhs.elements.begin();
+  auto itr = rhs.elements.begin();
+  for (; itl != lhs.elements.end() && itr != rhs.elements.end(); ++itl, ++itr) {
     uint64_t l_elemnt = *itl;
     uint64_t r_elemnt = *itr;
     if (borrow == true) {
@@ -302,7 +305,7 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
         l_elemnt--;
         borrow = false;
       } else {
-        l_elemnt = 0xFFFFFFFFFFFFFFFFUL -1;
+        l_elemnt = 0xFFFFFFFFFFFFFFFFUL;
       }
     }
     uint64_t result = (l_elemnt - r_elemnt);
@@ -312,13 +315,13 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
     }
     result_vector.push_back(result);
   }
-  while (itl != lhs.get_bit_vector().end()) {
+  while (itl != lhs.elements.end()) {
     if (borrow == true) {
       if (*itl > 0) {
         result_vector.push_back(*itl -1);
         borrow = false;
       } else {
-        result_vector.push_back(0xFFFFFFFFFFFFFFFFUL -1);
+        result_vector.push_back(0xFFFFFFFFFFFFFFFFUL);
       }
       ++itl;
     } else {
@@ -333,6 +336,7 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
   result.elements = result_vector;
   return result;
 }
+
 int BigInt::compare_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   int left = lhs.elements.size();
   int right = rhs.elements.size();
@@ -343,15 +347,18 @@ int BigInt::compare_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   } else if (left == 0 && right == 0) {
     return 0;
   } else {
-    uint64_t current_max = lhs.elements.at(left-1);
-    uint64_t other_max = rhs.elements.at(left-1);
-    if (current_max > other_max) {
-      return 1;
-    } else if (other_max < current_max) {
-      return -1;
-    } else {
-      return 0;
+    auto itl = lhs.elements.rbegin();
+    auto itr = rhs.elements.rbegin();
+    for (; itl != lhs.elements.rend() && itr != rhs.elements.rend(); ++itl, ++itr) {
+      uint64_t l_elemnt = *itl;
+      uint64_t r_elemnt = *itr;
+      if (l_elemnt > r_elemnt) {
+        return 1;
+      } else if (l_elemnt < r_elemnt) {
+        return -1;
+      }
     }
+    return 0;
   }
 }
 

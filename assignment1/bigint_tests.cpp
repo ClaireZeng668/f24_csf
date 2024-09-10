@@ -509,6 +509,7 @@ void test_compare_1(TestObjs *objs) {
   ASSERT(objs->one.compare(objs->zero) > 0);
   ASSERT(objs->negative_nine.compare(objs->three) < 0);
   ASSERT(objs->three.compare(objs->negative_three) > 0);
+   ASSERT(objs->two_pow_64.compare(objs->negative_two_pow_64) > 0);
 }
 
 void test_compare_2(TestObjs *) {
