@@ -206,30 +206,41 @@ BigInt BigInt::operator*(const BigInt &rhs) const
 
 BigInt BigInt::operator/(const BigInt &rhs) const
 {
-  if (rhs.is_zero()) {
-      throw std::runtime_error("Division by zero");
-  }
+    if (rhs.is_zero()) {
+        throw std::runtime_error("Division by zero");
+    }
 
-  BigInt left = 0;
-  BigInt right = *this;
-  BigInt divisor = rhs;
-  divisor.isNegative = false;
+    BigInt dividend = *this;
+    BigInt divisor = rhs;
 
-  BigInt quotient = 0;
-  while (left <= right) {
-      BigInt mid = (left + right).div_by_2();
-      BigInt product = mid * divisor;
-      if (product <= *this) {
-          quotient = mid;
-          left = mid + 1;
-      } else {
-          right = mid - 1;
-      }
-  }
+    dividend.isNegative = false;  // work with absolute values
+    divisor.isNegative = false;
 
-  quotient.isNegative = (isNegative != rhs.isNegative);
-  return quotient;
+    if (dividend < divisor) { // if dividend < divisor, quotient is 0
+        return BigInt(0, false);
+    }
+
+    BigInt left = BigInt(0);
+    BigInt right = dividend;
+    BigInt quotient = BigInt(0);
+
+    while (left <= right) {
+        BigInt mid = (left + right).div_by_2();
+        BigInt product = mid * divisor;
+
+        if (product <= dividend) {
+            quotient = mid;
+            left = mid + BigInt(1);
+        } else {
+            right = mid - BigInt(1);
+        }
+    }
+
+    // Handle sign of the result
+    quotient.isNegative = (this->isNegative != rhs.isNegative);
+    return quotient;
 }
+
 
 BigInt BigInt::div_by_2() const {
     BigInt result;
