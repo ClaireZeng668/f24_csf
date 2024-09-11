@@ -23,8 +23,8 @@ BigInt::BigInt(std::initializer_list<uint64_t> vals, bool negative)
 
 BigInt::BigInt(uint64_t val, bool negative)
 {
-  elements.push_back(val); //NOT SURE ABT THIS ONE, IDK WHAT IT MEANS
-  isNegative = negative;
+  elements.push_back(val); // push the value to the vector
+  isNegative = negative;   // set whether the value is negative or not
 }
 
 BigInt::BigInt(const BigInt &other)
