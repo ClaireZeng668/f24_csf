@@ -63,6 +63,45 @@ const std::vector<uint64_t> &BigInt::get_bit_vector() const {
   return elements;
 }
 
+/** 
+
+BigInt BigInt::operator+(const BigInt &rhs) const
+{
+    BigInt obj;
+    if (isNegative == rhs.is_negative()) {
+        obj = add_magnitudes(*this, rhs);
+        if (!obj.is_zero()) {
+            obj.isNegative = isNegative;
+        }
+    } else if (compare_magnitudes(*this, rhs) > 0) {
+        obj = subtract_magnitudes(*this, rhs);
+        if (!obj.is_zero()) {
+            obj.isNegative = is_negative();
+        }
+    } else {
+        obj = subtract_magnitudes(rhs, *this);
+        if (!obj.is_zero()) {
+            obj.isNegative = rhs.is_negative();
+        }
+    }
+    return obj;
+}
+
+BigInt BigInt::operator-(const BigInt &rhs) const
+{
+    return *this + (-rhs);
+}
+
+BigInt BigInt::operator-() const
+{
+    BigInt obj = BigInt(*this);
+    if (!is_zero()) {
+        obj.isNegative = !this->isNegative;
+    }
+    return obj;
+}
+*/
+
 BigInt BigInt::operator+(const BigInt &rhs) const
 {
   BigInt obj;
@@ -71,7 +110,7 @@ BigInt BigInt::operator+(const BigInt &rhs) const
     if (!obj.is_zero()) {
       obj.isNegative = isNegative;
     }
-  } else if (compare_magnitudes(*this, rhs) > 0) {
+  } else if (compare_magnitudes(*this, rhs) > 0) {     
     obj = subtract_magnitudes(*this, rhs);
     if (!obj.is_zero()) {
       obj.isNegative = is_negative();
@@ -159,34 +198,41 @@ bool BigInt::is_bit_set(unsigned n) const
   return false;
 }
 
+// need to handle shifts larger than 64
 BigInt BigInt::operator<<(unsigned n) const
 {
-  if (n == 0 || this->is_zero()) {
-      return *this;
-  }
 
-  BigInt result;
-  unsigned shift_units = n / 64;
-  unsigned shift_bits = n % 64;
+    if (isNegative) {
+        throw std::invalid_argument("Cannot left shift a negative value");
+    }
 
-  result.elements.resize(shift_units, 0);
-  result.elements.insert(result.elements.end(), elements.begin(), elements.end());
+    if (n == 0 || this->is_zero()) {
+        return *this;
+    }
 
-  if (shift_bits > 0) {
-      uint64_t carry = 0;
-      for (std::size_t i = 0; i < result.elements.size(); ++i) {
-          uint64_t temp = result.elements[i];
-          result.elements[i] = (temp << shift_bits) | carry;
-          carry = (temp >> (64 - shift_bits));
-      }
-      if (carry > 0) {
-          result.elements.push_back(carry);
-      }
-  }
+    BigInt result;
+    unsigned shift_units = n / 64;
+    unsigned shift_bits = n % 64;
 
-  result.isNegative = isNegative;
-  return result;
+    result.elements.resize(shift_units, 0);
+    result.elements.insert(result.elements.end(), elements.begin(), elements.end());
+
+    if (shift_bits > 0) {
+        uint64_t carry = 0;
+        for (std::size_t i = 0; i < result.elements.size(); ++i) {
+            uint64_t temp = result.elements[i];
+            result.elements[i] = (temp << shift_bits) | carry;
+            carry = (temp >> (64 - shift_bits));
+        }
+        if (carry > 0) {
+            result.elements.push_back(carry);
+        }
+    }
+
+    result.isNegative = isNegative;
+    return result;
 }
+
 
 
 BigInt BigInt::operator*(const BigInt &rhs) const
@@ -262,6 +308,18 @@ BigInt BigInt::div_by_2() const {
     return result;
 }
 
+
+int BigInt::compare(const BigInt &rhs) const
+{
+    if (isNegative != rhs.is_negative()) {
+        return isNegative ? -1 : 1;
+    }
+
+    int comp = compare_magnitudes(*this, rhs);
+    return isNegative ? -comp : comp;
+}
+
+/**
 int BigInt::compare(const BigInt &rhs) const
 {
   if (this->is_zero()) {
@@ -282,6 +340,7 @@ int BigInt::compare(const BigInt &rhs) const
       return -1;
   }
 }
+*/
 
 std::string BigInt::to_hex() const
 {
@@ -331,6 +390,7 @@ std::string BigInt::to_dec() const
 
 }
 
+
 bool BigInt::is_zero () const {
   for (auto it = elements.begin(); it != elements.end(); ++it) {
     if (*it != 0) {
@@ -339,6 +399,18 @@ bool BigInt::is_zero () const {
   }
   return true;
 }
+
+// compare the size of left hand side and right hand size vector
+// set larger and smaller
+// if the size of left hand side is greater than right hand side, return 1
+//set carry to 0
+//iterate through larger vector
+//store result into carry
+//reset carry
+//to result add sum to vector
+//if its overflow, set carry 1, push sum into 1
+//if carry is 1, push 1 into vector
+
 
 BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   BigInt result;
@@ -353,7 +425,7 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
     result.elements = lhs.elements;
     return result;
   } else {
-    for (; itl != lhs.elements.end() && itr != rhs.elements.end(); ++itl, ++itr) {
+    for (; itl != lhs.elements.end() && itr != rhs.elements.end(); ++itl, ++itr) {  //iterate only through the larger vector
       uint64_t l_elemnt = *itl;
       uint64_t r_elemnt = *itr;
       uint64_t result = (l_elemnt + r_elemnt);
@@ -443,6 +515,7 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
   result.elements = result_vector;
   return result;
 }
+
 
 int BigInt::compare_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   int left = lhs.elements.size();
