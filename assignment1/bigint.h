@@ -3,6 +3,7 @@
 
 #include <initializer_list>
 #include <vector>
+#include <cstddef>
 #include <string>
 #include <cstdint>
 
@@ -190,6 +191,7 @@ private:
   static BigInt add_magnitudes(const BigInt &lhs, const BigInt &rhs);
   static BigInt subtract_magnitudes(const BigInt &lhs, const BigInt &rhs); //lhs > rhs
   static int compare_magnitudes(const BigInt &lhs, const BigInt &rhs);
+  BigInt div_by_2() const;
 };
 
 #endif // BIGINT_H

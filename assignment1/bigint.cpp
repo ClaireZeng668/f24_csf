@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstddef>
 #include "bigint.h"
 #include <cstdint>
 #include <initializer_list>
@@ -155,37 +156,114 @@ bool BigInt::is_bit_set(unsigned n) const
 
 BigInt BigInt::operator<<(unsigned n) const
 {
-  // TODO: implement
+  if (n == 0 || this->is_zero()) {
+      return *this;
+  }
+
+  BigInt result;
+  unsigned shift_units = n / 64;
+  unsigned shift_bits = n % 64;
+
+  result.elements.resize(shift_units, 0);
+  result.elements.insert(result.elements.end(), elements.begin(), elements.end());
+
+  if (shift_bits > 0) {
+      uint64_t carry = 0;
+      for (std::size_t i = 0; i < result.elements.size(); ++i) {
+          uint64_t temp = result.elements[i];
+          result.elements[i] = (temp << shift_bits) | carry;
+          carry = (temp >> (64 - shift_bits));
+      }
+      if (carry > 0) {
+          result.elements.push_back(carry);
+      }
+  }
+
+  result.isNegative = isNegative;
+  return result;
 }
+
 
 BigInt BigInt::operator*(const BigInt &rhs) const
 {
-  // TODO: implement
+  BigInt result;
+  result.elements.resize(this->elements.size() + rhs.elements.size(), 0);
+
+  for (std::size_t i = 0; i < this->elements.size(); ++i) {
+      uint64_t carry = 0;
+      for (std::size_t j = 0; j < rhs.elements.size(); ++j) {
+          __uint128_t product = (__uint128_t)this->elements[i] * rhs.elements[j] + result.elements[i + j] + carry;
+          result.elements[i + j] = (uint64_t)product;
+          carry = (uint64_t)(product >> 64);
+      }
+      result.elements[i + rhs.elements.size()] += carry;
+  }
+
+  result.isNegative = this->isNegative != rhs.isNegative;
+  return result;
 }
+
 
 BigInt BigInt::operator/(const BigInt &rhs) const
 {
-  // TODO: implement
+  if (rhs.is_zero()) {
+      throw std::runtime_error("Division by zero");
+  }
+
+  BigInt left = 0;
+  BigInt right = *this;
+  BigInt divisor = rhs;
+  divisor.isNegative = false;
+
+  BigInt quotient = 0;
+  while (left <= right) {
+      BigInt mid = (left + right).div_by_2();
+      BigInt product = mid * divisor;
+      if (product <= *this) {
+          quotient = mid;
+          left = mid + 1;
+      } else {
+          right = mid - 1;
+      }
+  }
+
+  quotient.isNegative = (isNegative != rhs.isNegative);
+  return quotient;
+}
+
+BigInt BigInt::div_by_2() const {
+    BigInt result;
+    uint64_t carry = 0;
+
+    for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
+        uint64_t value = *it;
+        result.elements.push_back((value >> 1) | carry);
+        carry = (value & 1) ? 0x8000000000000000 : 0;
+    }
+
+    std::reverse(result.elements.begin(), result.elements.end());
+    result.isNegative = isNegative;
+    return result;
 }
 
 int BigInt::compare(const BigInt &rhs) const
 {
   if (this->is_zero()) {
-    if (rhs.is_zero()) {
-      return 0;
-    }
-    return -1;
+      if (rhs.is_zero()) {
+          return 0;
+      }
+      return -1;
   }
   if (rhs.is_zero()) {
-    return 1;
+      return 1;
   }
 
   if (isNegative == rhs.is_negative()) {
-    return compare_magnitudes(*this, rhs);
-  } else if (isNegative == false && rhs.is_negative() == true) {
-    return 1;
+      return compare_magnitudes(*this, rhs);
+  } else if (!isNegative && rhs.is_negative()) {
+      return 1;
   } else {
-    return -1;
+      return -1;
   }
 }
 
@@ -348,23 +426,23 @@ int BigInt::compare_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   int left = lhs.elements.size();
   int right = rhs.elements.size();
   if (left > right) {
-    return 1;
+      return 1;
   } else if (right > left) {
-    return -1;
+      return -1;
   } else if (left == 0 && right == 0) {
-    return 0;
+      return 0;
   } else {
-    auto itl = lhs.elements.rbegin();
-    auto itr = rhs.elements.rbegin();
-    for (; itl != lhs.elements.rend() && itr != rhs.elements.rend(); ++itl, ++itr) {
-      uint64_t l_elemnt = *itl;
-      uint64_t r_elemnt = *itr;
-      if (l_elemnt > r_elemnt) {
-        return 1;
-      } else if (l_elemnt < r_elemnt) {
-        return -1;
+      auto itl = lhs.elements.rbegin();
+      auto itr = rhs.elements.rbegin();
+      for (; itl != lhs.elements.rend() && itr != rhs.elements.rend(); ++itl, ++itr) {
+          uint64_t l_elemnt = *itl;
+          uint64_t r_elemnt = *itr;
+          if (l_elemnt > r_elemnt) {
+              return 1;
+          } else if (l_elemnt < r_elemnt) {
+              return -1;
+          }
       }
-    }
     return 0;
   }
 }
