@@ -361,78 +361,6 @@ bool BigInt::is_zero () const {
   return true;
 }
 
-// compare the size of left hand side and right hand size vector
-// set larger and smaller
-// if the size of left hand side is greater than right hand side, return 1
-//set carry to 0
-//iterate through larger vector
-//store result into carry
-//reset carry
-//to result add sum to vector
-//if its overflow, set carry 1, push sum into 1
-//if carry is 1, push 1 into vector
-
-/**
-BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
-  BigInt result;
-  std::vector<std::uint64_t> result_vector;
-  bool overflow = false;
-  auto itl = lhs.elements.begin();
-  auto itr = rhs.elements.begin();
-
-  if (lhs.is_zero()) {
-    result.elements = rhs.elements;
-    return result;
-  } else if (rhs.is_zero()) {
-    result.elements = lhs.elements;
-    return result;
-  } else {
-    for (; itl != lhs.elements.end() && itr != rhs.elements.end(); ++itl, ++itr) {  //iterate only through the larger vector
-      uint64_t l_elemnt = *itl;
-      uint64_t r_elemnt = *itr;
-      uint64_t result = (l_elemnt + r_elemnt);
-      if (overflow == true) {
-        result++;
-        overflow = false;
-      }
-      if (result < l_elemnt) {
-        overflow = true;
-      }
-      result_vector.push_back(result);
-    }
-    while (itl != lhs.elements.end()) {
-      if (overflow == true) {
-        if (*itl < 0xFFFFFFFFFFFFFFFFUL) {
-          result_vector.push_back(*itl+1);
-          overflow = false;
-        } else {
-          result_vector.push_back(0UL);
-        }
-      }
-      result_vector.push_back(*itl);
-      ++itl;
-    }
-    while (itr != rhs.elements.end()) {
-      if (overflow == true) {
-        if (*itr < 0xFFFFFFFFFFFFFFFFUL) {
-          result_vector.push_back(*itr+1);
-          overflow = false;
-        } else {
-          result_vector.push_back(0UL);
-        }
-      }
-      result_vector.push_back(*itr);
-      ++itr;
-    }
-    if (overflow == true) {
-      result_vector.push_back(1UL);
-    }
-    result.elements = result_vector;
-    return result;
-  }
-}
-*/
-
 BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   BigInt result;
   std::vector<std::uint64_t> result_vector;
@@ -447,7 +375,7 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
     result.elements = lhs.elements;
     return result;
   } else {
-    for (; itl != lhs.elements.end() && itr != rhs.elements.end(); ++itl, ++itr) {  //iterate only through the larger vector
+    for (; itl != lhs.elements.end() && itr != rhs.elements.end(); ++itl, ++itr) {
       uint64_t l_elemnt = *itl;
       uint64_t r_elemnt = *itr;
       uint64_t result = (l_elemnt + r_elemnt);
