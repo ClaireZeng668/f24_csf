@@ -159,7 +159,7 @@ bool BigInt::is_bit_set(unsigned n) const
   return false;
 }
 
-// need to handle shifts larger than 64
+
 BigInt BigInt::operator<<(unsigned n) const
 {
 
@@ -216,43 +216,40 @@ BigInt BigInt::operator*(const BigInt &rhs) const
 }
 
 
-BigInt BigInt::operator/(const BigInt &rhs) const
-{
-    if (rhs.is_zero()) {
-        throw std::runtime_error("Division by zero");
-    }
+BigInt BigInt::operator/(const BigInt &rhs) const {
+  if (rhs.is_zero()) {
+      throw std::runtime_error("Division by zero");
+  }
+  
+  BigInt dividend = *this;
+  BigInt divisor = rhs;
+  
+  dividend.isNegative = false;  // work with absolute values
+  divisor.isNegative = false;
 
-    BigInt dividend = *this;
-    BigInt divisor = rhs;
-
-    dividend.isNegative = false;  // work with absolute values
-    divisor.isNegative = false;
-
-    if (dividend < divisor) { // if dividend < divisor, quotient is 0
-        return BigInt(0, false);
-    }
-
-    BigInt left = BigInt(0);
-    BigInt right = dividend;
-    BigInt quotient = BigInt(0);
-
-    while (left <= right) {
-        BigInt mid = (left + right).div_by_2();
-        BigInt product = mid * divisor;
-
-        if (product <= dividend) {
-            quotient = mid;
-            left = mid + BigInt(1);
-        } else {
-            right = mid - BigInt(1);
-        }
-    }
-
-    // Handle sign of the result
-    quotient.isNegative = (this->isNegative != rhs.isNegative);
-    return quotient;
+  if (dividend < divisor) {
+      return BigInt(0);
+  }
+  
+  BigInt quotient = BigInt(0);
+  BigInt one = BigInt(1);
+  
+  while (dividend >= divisor) {
+      BigInt temp = divisor;
+      BigInt multiple = one;
+      
+      while (dividend >= (temp << 1)) {
+          temp = temp << 1;
+          multiple = multiple << 1;
+      }
+      
+      dividend = dividend - temp;
+      quotient = quotient + multiple;
+  }
+  
+  quotient.isNegative = (this->isNegative != rhs.isNegative);
+  return quotient;
 }
-
 
 BigInt BigInt::div_by_2() const {
     BigInt result;
@@ -273,35 +270,21 @@ BigInt BigInt::div_by_2() const {
 int BigInt::compare(const BigInt &rhs) const
 {
     if (isNegative != rhs.is_negative()) {
-        return isNegative ? -1 : 1;
+      if (isNegative) {
+        return -1;
+      } else {
+          return 1;
+      }
     }
 
     int comp = compare_magnitudes(*this, rhs);
-    return isNegative ? -comp : comp;
-}
 
-/**
-int BigInt::compare(const BigInt &rhs) const
-{
-  if (this->is_zero()) {
-      if (rhs.is_zero()) {
-          return 0;
-      }
-      return -1;
-  }
-  if (rhs.is_zero()) {
-      return 1;
-  }
-
-  if (isNegative == rhs.is_negative()) {
-      return compare_magnitudes(*this, rhs);
-  } else if (!isNegative && rhs.is_negative()) {
-      return 1;
-  } else {
-      return -1;
-  }
+    if (isNegative) {
+      return -comp;
+    } else {
+      return comp;
+    }
 }
-*/
 
 std::string BigInt::to_hex() const
 {
@@ -389,7 +372,7 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
       result_vector.push_back(result);
     }
      while (itl != lhs.elements.end() || itr != rhs.elements.end() || overflow) {
-        uint64_t l_elemnt = (itl != lhs.elements.end()) ? *itl : 0;
+        uint64_t l_elemnt = (itl != lhs.elements.end()) ? *itl : 0;    // ternary operators replacing if else statements
         uint64_t r_elemnt = (itr != rhs.elements.end()) ? *itr : 0;
         uint64_t sum = l_elemnt + r_elemnt + overflow;
         overflow = (sum < l_elemnt) || (sum < r_elemnt);
