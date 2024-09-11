@@ -63,45 +63,6 @@ const std::vector<uint64_t> &BigInt::get_bit_vector() const {
   return elements;
 }
 
-/** 
-
-BigInt BigInt::operator+(const BigInt &rhs) const
-{
-    BigInt obj;
-    if (isNegative == rhs.is_negative()) {
-        obj = add_magnitudes(*this, rhs);
-        if (!obj.is_zero()) {
-            obj.isNegative = isNegative;
-        }
-    } else if (compare_magnitudes(*this, rhs) > 0) {
-        obj = subtract_magnitudes(*this, rhs);
-        if (!obj.is_zero()) {
-            obj.isNegative = is_negative();
-        }
-    } else {
-        obj = subtract_magnitudes(rhs, *this);
-        if (!obj.is_zero()) {
-            obj.isNegative = rhs.is_negative();
-        }
-    }
-    return obj;
-}
-
-BigInt BigInt::operator-(const BigInt &rhs) const
-{
-    return *this + (-rhs);
-}
-
-BigInt BigInt::operator-() const
-{
-    BigInt obj = BigInt(*this);
-    if (!is_zero()) {
-        obj.isNegative = !this->isNegative;
-    }
-    return obj;
-}
-*/
-
 BigInt BigInt::operator+(const BigInt &rhs) const
 {
   BigInt obj;
