@@ -65,19 +65,24 @@ const std::vector<uint64_t> &BigInt::get_bit_vector() const {
 
 BigInt BigInt::operator+(const BigInt &rhs) const
 {
+  BigInt obj;
   if (isNegative == rhs.is_negative()) {
-    BigInt obj = add_magnitudes(*this, rhs);
-    obj.isNegative = isNegative;
-    return obj;
+    obj = add_magnitudes(*this, rhs);
+    if (!obj.is_zero()) {
+      obj.isNegative = isNegative;
+    }
   } else if (compare_magnitudes(*this, rhs) > 0) {
-    BigInt obj = subtract_magnitudes(*this, rhs);
-    obj.isNegative = is_negative();
-    return obj;
+    obj = subtract_magnitudes(*this, rhs);
+    if (!obj.is_zero()) {
+      obj.isNegative = is_negative();
+    }
   } else {
-    BigInt obj = subtract_magnitudes(rhs, *this);
-    obj.isNegative = rhs.is_negative();
-    return obj;
+    obj = subtract_magnitudes(rhs, *this);
+    if (!obj.is_zero()) {
+      obj.isNegative = rhs.is_negative();
+    }
   }
+  return obj;
 }
 
 BigInt BigInt::operator-(const BigInt &rhs) const
@@ -307,13 +312,19 @@ std::string BigInt::to_dec() const
     dec << "-";
   }
   BigInt current = *this;
-  for (auto it = current.elements.rbegin(); it != current.elements.rend(); ++it) {
-    while (*it != 0) {
-      uint64_t mod = *it - ((*it / 10) * 10);
-      dec << mod;
-      *it = *it / 10;
-    }
+  while (!current.is_zero()) {
+    BigInt last = current - ((current/10) * 10);
+    current = current / 10;
+    uint64_t digit = last.get_bits(0);
+    dec << digit;
   }
+  // for (auto it = current.elements.begin(); it != current.elements.end(); ++it) {
+  //   while (*it != 0) {
+  //     uint64_t mod = *it - ((*it / 10) * 10);
+  //     dec << mod;
+  //     *it = *it / 10;
+  //   }
+  // }
   std::string reversed = dec.str();
   reverse(reversed.begin(), reversed.end());
   return dec.str();
