@@ -372,13 +372,14 @@ bool BigInt::is_zero () const {
 //if its overflow, set carry 1, push sum into 1
 //if carry is 1, push 1 into vector
 
-
+/**
 BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   BigInt result;
   std::vector<std::uint64_t> result_vector;
   bool overflow = false;
   auto itl = lhs.elements.begin();
   auto itr = rhs.elements.begin();
+
   if (lhs.is_zero()) {
     result.elements = rhs.elements;
     return result;
@@ -422,6 +423,52 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
       }
       result_vector.push_back(*itr);
       ++itr;
+    }
+    if (overflow == true) {
+      result_vector.push_back(1UL);
+    }
+    result.elements = result_vector;
+    return result;
+  }
+}
+*/
+
+BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
+  BigInt result;
+  std::vector<std::uint64_t> result_vector;
+  bool overflow = false;
+  auto itl = lhs.elements.begin();
+  auto itr = rhs.elements.begin();
+  
+  if (lhs.is_zero()) {
+    result.elements = rhs.elements;
+    return result;
+  } else if (rhs.is_zero()) {
+    result.elements = lhs.elements;
+    return result;
+  } else {
+    for (; itl != lhs.elements.end() && itr != rhs.elements.end(); ++itl, ++itr) {  //iterate only through the larger vector
+      uint64_t l_elemnt = *itl;
+      uint64_t r_elemnt = *itr;
+      uint64_t result = (l_elemnt + r_elemnt);
+      if (overflow == true) {
+        result++;
+        overflow = false;
+      }
+      if (result < l_elemnt) {
+        overflow = true;
+      }
+      result_vector.push_back(result);
+    }
+     while (itl != lhs.elements.end() || itr != rhs.elements.end() || overflow) {
+        uint64_t l_elemnt = (itl != lhs.elements.end()) ? *itl : 0;
+        uint64_t r_elemnt = (itr != rhs.elements.end()) ? *itr : 0;
+        uint64_t sum = l_elemnt + r_elemnt + overflow;
+        overflow = (sum < l_elemnt) || (sum < r_elemnt);
+        result_vector.push_back(sum);
+        
+        if (itl != lhs.elements.end()) ++itl;
+        if (itr != rhs.elements.end()) ++itr;
     }
     if (overflow == true) {
       result_vector.push_back(1UL);
