@@ -166,8 +166,9 @@ bool BigInt::is_bit_set(unsigned n) const
   if (elements[pos] > (1UL << (bit))) {
     int section = elements[pos] / (1UL << (bit));
     if (section % 2 == 0) {
-      return section % 2 != 0;  //check if the specific bit is set
+      return false;
     }
+    return true;
   }
   return false;
 }
