@@ -236,57 +236,38 @@ BigInt BigInt::operator/(const BigInt &rhs) const {
   if (this->is_zero()) {
       return BigInt(0);
   }
-
-  //handle division by 1 or -1
-  if (rhs == BigInt(1, false)) {
-      return *this;
-  }
-  if (rhs == BigInt(1, true)) {
-      return -(*this);
-  }
-  if (rhs == BigInt(-1, false)) {
-      return -(*this);
-  }
-  if (rhs == BigInt(-1, true)) {
-      return *this;
-  }
-
+  
   BigInt dividend = *this;
   BigInt divisor = rhs;
-  dividend.isNegative = false;
+  dividend.isNegative = false;  // work with absolute values
   divisor.isNegative = false;
 
   if (dividend < divisor) {
-      return BigInt(0);  //if divisor is greater, quotient is 0
+      return BigInt(0);
   }
-
-  //binary search
-  BigInt low(0);             
-  BigInt high = dividend;    
-  BigInt mid;                
-  BigInt quotient;
-
-  while (low < high) {
-      mid = (low + high + BigInt(1)).div_by_2();  //midpoint
-
-      BigInt product = mid * divisor;
-      if (product == dividend) {
-          quotient = mid;
-          break; 
-      } else if (product < dividend) {
-          low = mid;         //search higher
-          quotient = mid;    
-      } else {
-          high = mid - BigInt(1); //search lower
+  
+  BigInt quotient = BigInt(0);
+  BigInt one = BigInt(1);
+  
+  while (dividend >= divisor) {
+      BigInt temp = divisor;
+      BigInt multiple = one;
+      
+      while (dividend >= (temp << 1)) {
+          temp = temp << 1;
+          multiple = multiple << 1;
       }
+      
+      dividend = dividend - temp;
+      quotient = quotient + multiple;
   }
-
-  quotient.isNegative = (this->isNegative != rhs.isNegative);  //handle sign of quotient
+  
+  quotient.isNegative = (this->isNegative != rhs.isNegative);
   return quotient;
 }
 
 
-// Division by 2 helper method
+// Division by 2 helper method, if needed
 BigInt BigInt::div_by_2() const {
   BigInt result;
   uint64_t carry = 0;
