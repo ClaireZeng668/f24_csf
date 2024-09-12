@@ -63,6 +63,7 @@ const std::vector<uint64_t> &BigInt::get_bit_vector() const {
   return elements;
 }
 
+
 BigInt BigInt::operator+(const BigInt &rhs) const
 {
   BigInt obj;
@@ -159,41 +160,37 @@ bool BigInt::is_bit_set(unsigned n) const
   return false;
 }
 
-
 BigInt BigInt::operator<<(unsigned n) const
 {
+  if (isNegative) {
+      throw std::invalid_argument("Cannot left shift a negative value");
+  }
+  if (n == 0 || this->is_zero()) {
+      return *this;
+  }
 
-    if (isNegative) {
-        throw std::invalid_argument("Cannot left shift a negative value");
-    }
+  BigInt result;
+  unsigned shift_units = n / 64;
+  unsigned shift_bits = n % 64;
 
-    if (n == 0 || this->is_zero()) {
-        return *this;
-    }
+  result.elements.resize(shift_units, 0);
+  result.elements.insert(result.elements.end(), elements.begin(), elements.end());
 
-    BigInt result;
-    unsigned shift_units = n / 64;
-    unsigned shift_bits = n % 64;
+  if (shift_bits > 0) {
+      uint64_t carry = 0;
+      for (std::size_t i = 0; i < result.elements.size(); ++i) {
+          uint64_t temp = result.elements[i];
+          result.elements[i] = (temp << shift_bits) | carry;
+          carry = (temp >> (64 - shift_bits));
+      }
+      if (carry > 0) {
+          result.elements.push_back(carry);
+      }
+  }
 
-    result.elements.resize(shift_units, 0);
-    result.elements.insert(result.elements.end(), elements.begin(), elements.end());
-
-    if (shift_bits > 0) {
-        uint64_t carry = 0;
-        for (std::size_t i = 0; i < result.elements.size(); ++i) {
-            uint64_t temp = result.elements[i];
-            result.elements[i] = (temp << shift_bits) | carry;
-            carry = (temp >> (64 - shift_bits));
-        }
-        if (carry > 0) {
-            result.elements.push_back(carry);
-        }
-    }
-
-    result.isNegative = isNegative;
-    return result;
+  result.isNegative = isNegative;
+  return result;
 }
-
 
 
 BigInt BigInt::operator*(const BigInt &rhs) const
@@ -218,91 +215,75 @@ BigInt BigInt::operator*(const BigInt &rhs) const
 
 BigInt BigInt::operator/(const BigInt &rhs) const {
   if (rhs.is_zero()) {
-      throw std::runtime_error("Division by zero");
+      throw std::invalid_argument("Division by zero");
   }
-  
+
+  //handle zero dividend
+  if (this->is_zero()) {
+      return BigInt(0);
+  }
+
+  //handle division by 1 or -1
+  if (rhs == BigInt(1, false)) {
+      return *this;
+  }
+  if (rhs == BigInt(1, true)) {
+      return -(*this);
+  }
+  if (rhs == BigInt(-1, false)) {
+      return -(*this);
+  }
+  if (rhs == BigInt(-1, true)) {
+      return *this;
+  }
+
   BigInt dividend = *this;
   BigInt divisor = rhs;
-  
-  dividend.isNegative = false;  // work with absolute values
+  dividend.isNegative = false;
   divisor.isNegative = false;
 
   if (dividend < divisor) {
-      return BigInt(0);
+      return BigInt(0);  //if divisor is greater, quotient is 0
   }
-  
-  BigInt quotient = BigInt(0);
-  BigInt one = BigInt(1);
-  
-  while (dividend >= divisor) {
-      BigInt temp = divisor;
-      BigInt multiple = one;
-      
-      while (dividend >= (temp << 1)) {
-          temp = temp << 1;
-          multiple = multiple << 1;
+
+  //binary search
+  BigInt low(0);             
+  BigInt high = dividend;    
+  BigInt mid;                
+  BigInt quotient;
+
+  while (low < high) {
+      mid = (low + high + BigInt(1)).div_by_2();  //midpoint
+
+      BigInt product = mid * divisor;
+      if (product == dividend) {
+          quotient = mid;
+          break; 
+      } else if (product < dividend) {
+          low = mid;         //search higher
+          quotient = mid;    
+      } else {
+          high = mid - BigInt(1); //search lower
       }
-      
-      dividend = dividend - temp;
-      quotient = quotient + multiple;
   }
-  
-  quotient.isNegative = (this->isNegative != rhs.isNegative);
+
+  quotient.isNegative = (this->isNegative != rhs.isNegative);  //handle sign of quotient
   return quotient;
 }
 
 BigInt BigInt::div_by_2() const {
-    BigInt result;
-    uint64_t carry = 0;
+  BigInt result;
+  uint64_t carry = 0;
 
-    for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
-        uint64_t value = *it;
-        result.elements.push_back((value >> 1) | carry);
-        carry = (value & 1) ? 0x8000000000000000 : 0;
-    }
-
-    std::reverse(result.elements.begin(), result.elements.end());
-    result.isNegative = isNegative;
-    return result;
-}
-
-
-int BigInt::compare(const BigInt &rhs) const
-{
-    if (isNegative != rhs.is_negative()) {
-      if (isNegative) {
-        return -1;
-      } else {
-          return 1;
-      }
-    }
-
-    int comp = compare_magnitudes(*this, rhs);
-
-    if (isNegative) {
-      return -comp;
-    } else {
-      return comp;
-    }
-}
-
-std::string BigInt::to_hex() const
-{
-  if (is_zero()) {
-    return "0";
-  }
-  std::stringstream hex;
-  if (isNegative) {
-    hex << "-";
-  }
   for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
-    if (it == elements.rbegin()) {
-      hex << std::hex << *it;
-    } else {
-      hex << std::hex << std::setw(16) << std::setfill('0') << *it;
-    }
+      uint64_t value = *it;
+      result.elements.push_back((value >> 1) | carry);
+      carry = (value & 1) ? 0x8000000000000000 : 0;  //ternary operators
   }
-  return hex.str();
+
+  std::reverse(result.elements.begin(), result.elements.end());
+  result.isNegative = isNegative;
+  return result;
 }
 
 std::string BigInt::to_dec() const
@@ -310,30 +291,73 @@ std::string BigInt::to_dec() const
   if (is_zero()) {
     return "0";
   }
+
   std::stringstream dec;
   if (isNegative) {
     dec << "-";
   }
+
   BigInt current = *this;
+  std::vector<char> digits;
+
   while (!current.is_zero()) {
     BigInt last = current - ((current/10) * 10);
     current = current / 10;
     uint64_t digit = last.get_bits(0);
     dec << digit;
   }
-  // for (auto it = current.elements.begin(); it != current.elements.end(); ++it) {
-  //   while (*it != 0) {
-  //     uint64_t mod = *it - ((*it / 10) * 10);
-  //     dec << mod;
-  //     *it = *it / 10;
-  //   }
-  // }
   std::string reversed = dec.str();
   reverse(reversed.begin(), reversed.end());
   return dec.str();
 
 }
 
+
+int BigInt::compare(const BigInt &rhs) const
+{
+  if (isNegative != rhs.is_negative()) {
+    if (isNegative) {
+      return -1;
+    } else {
+        return 1;
+    }
+  }
+
+  int comp = compare_magnitudes(*this, rhs);
+
+  if (isNegative) {
+    return -comp;
+  } else {
+    return comp;
+  }
+}
+
+std::string BigInt::to_hex() const
+{
+ if (is_zero()) {
+    return "0";
+  }
+
+  std::stringstream dec;
+  if (isNegative) {
+    dec << "-";
+  }
+
+  BigInt current = *this;
+  std::vector<char> digits;
+
+  while (!current.is_zero()) {
+    BigInt last = current - ((current/10) * 10);
+    current = current / 10;
+    uint64_t digit = last.get_bits(0);
+    dec << digit;
+  }
+
+  std::string reversed = dec.str();
+  reverse(reversed.begin(), reversed.end());
+  return dec.str();
+
+}
 
 bool BigInt::is_zero () const {
   for (auto it = elements.begin(); it != elements.end(); ++it) {
@@ -427,10 +451,6 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
       ++itl;
     }
   }
-  // while (itr != rhs.get_bit_vector().end()) {
-  //   result_vector.push_back(*itr);
-  //   ++itr;
-  // }
   result.elements = result_vector;
   return result;
 }
@@ -460,4 +480,3 @@ int BigInt::compare_magnitudes(const BigInt &lhs, const BigInt &rhs) {
     return 0;
   }
 }
-
