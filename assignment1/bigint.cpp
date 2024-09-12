@@ -9,34 +9,39 @@
 #include <iomanip>
 #include <algorithm>
 
-
+// Default constructor that initializes the BigInt value to 0, non-negative
 BigInt::BigInt()
 {
   isNegative = false;
 }
 
+// Constructor from an `std::initializer_list` of `uint64_t` values
 BigInt::BigInt(std::initializer_list<uint64_t> vals, bool negative)
 {
   isNegative = negative;
   elements = vals;
 }
 
+// Constructor from a `uint64_t` value
 BigInt::BigInt(uint64_t val, bool negative)
 {
   elements.push_back(val); // push the value to the vector
   isNegative = negative;   // set whether the value is negative or not
 }
 
+// Copy constructor
 BigInt::BigInt(const BigInt &other)
 {
   isNegative = other.isNegative;
   elements = other.elements;
 }
 
+// Destructor
 BigInt::~BigInt()
 {
 }
 
+// Assignment operator
 BigInt &BigInt::operator=(const BigInt &rhs)
 {
   if (this != &rhs) {
@@ -46,11 +51,13 @@ BigInt &BigInt::operator=(const BigInt &rhs)
   return *this;
 }
 
+// Check whether value is negative
 bool BigInt::is_negative() const
 {
   return isNegative;
 }
 
+// Gets the value of the bit at the specified index
 uint64_t BigInt::get_bits(unsigned index) const
 {
   if (index >= elements.size()) {
@@ -59,25 +66,28 @@ uint64_t BigInt::get_bits(unsigned index) const
   return elements.at(index);
 }
 
+// Returns the vector containing the bit string values
 const std::vector<uint64_t> &BigInt::get_bit_vector() const {
   return elements;
 }
 
-
+// Addition operator
 BigInt BigInt::operator+(const BigInt &rhs) const
 {
   BigInt obj;
-  if (isNegative == rhs.is_negative()) {
+  if (isNegative == rhs.is_negative()) {  //if both are negative or positive
     obj = add_magnitudes(*this, rhs);
     if (!obj.is_zero()) {
-      obj.isNegative = isNegative;
+      obj.isNegative = isNegative;  //result has the same sign as the operands
     }
-  } else if (compare_magnitudes(*this, rhs) > 0) {     
+  } else if (compare_magnitudes(*this, rhs) > 0) { 
+    //operand is positive, subtract the smaller from the larger   
     obj = subtract_magnitudes(*this, rhs);
     if (!obj.is_zero()) {
       obj.isNegative = is_negative();
     }
   } else {
+    // operand is negative, subtract positive
     obj = subtract_magnitudes(rhs, *this);
     if (!obj.is_zero()) {
       obj.isNegative = rhs.is_negative();
@@ -86,6 +96,7 @@ BigInt BigInt::operator+(const BigInt &rhs) const
   return obj;
 }
 
+// Subtraction operator
 BigInt BigInt::operator-(const BigInt &rhs) const
 {
   // Hint: a - b could be computed as a + -b
@@ -128,6 +139,7 @@ BigInt BigInt::operator-(const BigInt &rhs) const
   }
 }
 
+// Unary negation operator
 BigInt BigInt::operator-() const
 {
   BigInt obj = BigInt(*this);
@@ -137,41 +149,42 @@ BigInt BigInt::operator-() const
   return obj;
 }
 
+// Test whether a specific bit in the bit string is set
 bool BigInt::is_bit_set(unsigned n) const
 {
   if (is_zero()) {
-    return false;
+    return false; //if the value is zero, no bit is set
   }
   int pos = 0;
   if (n >= 64) {
-    pos = n/64;
+    pos = n/64;  //position of the element in the vector
   }
-  int bit = n%64;
+  int bit = n%64;  //position of the bit in the element
   if (bit == 0) {
-    return elements[pos] % 2 != 0;
+    return elements[pos] % 2 != 0;  //check if the least signficant bit is set
   }
   if (elements[pos] > (1UL << (bit))) {
     int section = elements[pos] / (1UL << (bit));
     if (section % 2 == 0) {
-      return false;
+      return section % 2 != 0;  //check if the specific bit is set
     }
-    return true;
   }
   return false;
 }
 
+// Left shift ooerator
 BigInt BigInt::operator<<(unsigned n) const
 {
   if (isNegative) {
       throw std::invalid_argument("Cannot left shift a negative value");
   }
   if (n == 0 || this->is_zero()) {
-      return *this;
+      return *this;  //if n is 0 or the value is zero, no shift is needed
   }
 
   BigInt result;
-  unsigned shift_units = n / 64;
-  unsigned shift_bits = n % 64;
+  unsigned shift_units = n / 64;  //number of units to shift
+  unsigned shift_bits = n % 64;   //number of bits to shift
 
   result.elements.resize(shift_units, 0);
   result.elements.insert(result.elements.end(), elements.begin(), elements.end());
@@ -180,11 +193,11 @@ BigInt BigInt::operator<<(unsigned n) const
       uint64_t carry = 0;
       for (std::size_t i = 0; i < result.elements.size(); ++i) {
           uint64_t temp = result.elements[i];
-          result.elements[i] = (temp << shift_bits) | carry;
-          carry = (temp >> (64 - shift_bits));
+          result.elements[i] = (temp << shift_bits) | carry;   //shift and add carry
+          carry = (temp >> (64 - shift_bits));  // update carry
       }
       if (carry > 0) {
-          result.elements.push_back(carry);
+          result.elements.push_back(carry);  //add the carry to the end
       }
   }
 
@@ -192,7 +205,7 @@ BigInt BigInt::operator<<(unsigned n) const
   return result;
 }
 
-
+// Multiplication operator
 BigInt BigInt::operator*(const BigInt &rhs) const
 {
   BigInt result;
@@ -203,12 +216,12 @@ BigInt BigInt::operator*(const BigInt &rhs) const
       for (std::size_t j = 0; j < rhs.elements.size(); ++j) {
           __uint128_t product = (__uint128_t)this->elements[i] * rhs.elements[j] + result.elements[i + j] + carry;
           result.elements[i + j] = (uint64_t)product;
-          carry = (uint64_t)(product >> 64);
+          carry = (uint64_t)(product >> 64);  //update carry
       }
-      result.elements[i + rhs.elements.size()] += carry;
+      result.elements[i + rhs.elements.size()] += carry;  //add the carry to the next element
   }
 
-  result.isNegative = this->isNegative != rhs.isNegative;
+  result.isNegative = this->isNegative != rhs.isNegative;  //determine sign of the result
   return result;
 }
 
@@ -271,21 +284,24 @@ BigInt BigInt::operator/(const BigInt &rhs) const {
   return quotient;
 }
 
+
+// Division by 2 helper method
 BigInt BigInt::div_by_2() const {
   BigInt result;
   uint64_t carry = 0;
 
   for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
       uint64_t value = *it;
-      result.elements.push_back((value >> 1) | carry);
+      result.elements.push_back((value >> 1) | carry);  //shift right and add carry
       carry = (value & 1) ? 0x8000000000000000 : 0;  //ternary operators
   }
 
-  std::reverse(result.elements.begin(), result.elements.end());
+  std::reverse(result.elements.begin(), result.elements.end());  //reverse the vector
   result.isNegative = isNegative;
   return result;
 }
 
+// Convert BigInt to decimal string representation
 std::string BigInt::to_dec() const
 {
   if (is_zero()) {
@@ -301,18 +317,19 @@ std::string BigInt::to_dec() const
   std::vector<char> digits;
 
   while (!current.is_zero()) {
-    BigInt last = current - ((current/10) * 10);
-    current = current / 10;
+    BigInt last = current - ((current/10) * 10);  //get the last digit
+    current = current / 10;  //reduce the number
     uint64_t digit = last.get_bits(0);
-    dec << digit;
+    dec << digit;  //append
   }
+
   std::string reversed = dec.str();
-  reverse(reversed.begin(), reversed.end());
+  reverse(reversed.begin(), reversed.end());  //reverse the string to get the correct order
   return dec.str();
 
 }
 
-
+// Compare two BigInt values
 int BigInt::compare(const BigInt &rhs) const
 {
   if (isNegative != rhs.is_negative()) {
@@ -332,6 +349,7 @@ int BigInt::compare(const BigInt &rhs) const
   }
 }
 
+// Convert BigInt to hexadecimal string representation
 std::string BigInt::to_hex() const
 {
  if (is_zero()) {
@@ -347,27 +365,29 @@ std::string BigInt::to_hex() const
   std::vector<char> digits;
 
   while (!current.is_zero()) {
-    BigInt last = current - ((current/10) * 10);
-    current = current / 10;
+    BigInt last = current - ((current/10) * 10);  //get the last digit
+    current = current / 10;  //reduce the number
     uint64_t digit = last.get_bits(0);
-    dec << digit;
+    dec << digit;  //append
   }
 
   std::string reversed = dec.str();
-  reverse(reversed.begin(), reversed.end());
+  reverse(reversed.begin(), reversed.end());  //reverse the string to get the correct order
   return dec.str();
 
 }
 
+// Check if the value is zero
 bool BigInt::is_zero () const {
   for (auto it = elements.begin(); it != elements.end(); ++it) {
     if (*it != 0) {
-      return false;
+      return false;  //return false if any element is not zero
     }
   }
-  return true;
+  return true;  //otherwise return true
 }
 
+// Add magnitudes of two BigInt numbers helper method
 BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   BigInt result;
   std::vector<std::uint64_t> result_vector;
@@ -406,13 +426,14 @@ BigInt BigInt::add_magnitudes(const BigInt &lhs, const BigInt &rhs) {
         if (itr != rhs.elements.end()) ++itr;
     }
     if (overflow == true) {
-      result_vector.push_back(1UL);
+      result_vector.push_back(1UL);  //add final carry if overflow
     }
     result.elements = result_vector;
     return result;
   }
 }
 
+// Subtract magnitudes of two BigInt numbers helper method
 BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs > rhs
   BigInt result;
   std::vector<std::uint64_t> result_vector;
@@ -455,7 +476,7 @@ BigInt BigInt::subtract_magnitudes(const BigInt &lhs, const BigInt &rhs) { //lhs
   return result;
 }
 
-
+// Compare magnitudes of two BigInt numbers helper method
 int BigInt::compare_magnitudes(const BigInt &lhs, const BigInt &rhs) {
   int left = lhs.elements.size();
   int right = rhs.elements.size();

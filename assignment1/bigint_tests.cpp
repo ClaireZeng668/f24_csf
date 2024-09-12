@@ -613,3 +613,277 @@ void test_to_dec_2(TestObjs *) {
 }
 
 // TODO: implement additional test functions
+
+void testing_add(TestObjs *objs) {
+  BigInt result5 = objs->negative_two_pow_64 + objs->one;
+  check_contents(result5, { 0xFFFFFFFFFFFFFFFFUL});
+  ASSERT(result5.is_negative());
+
+
+  BigInt result9 = objs->negative_two_pow_64 + objs->u64_max;
+  check_contents(result9, { 1UL});
+  ASSERT(result9.is_negative());
+
+
+  {
+    BigInt left = objs->zero;
+    BigInt right({1UL}, true);
+    BigInt result6 = left + right;
+    check_contents(result6, { 1UL });
+    ASSERT(result6.is_negative());
+  }
+
+
+  {
+    BigInt left = objs->two_pow_64;
+    BigInt right({1UL}, true);
+    BigInt result7 = left + right;
+    check_contents(result7, { 0xFFFFFFFFFFFFFFFFUL});
+    ASSERT(!result7.is_negative());
+  }
+
+
+  {
+    BigInt left({1UL}, true);
+    BigInt right = objs->one;
+    BigInt result8 = left + right;
+    check_contents(result8, { 0UL});
+    ASSERT(!result8.is_negative());
+  }
+
+
+  {
+    BigInt left({0UL, 0UL, 1UL});
+    BigInt right({1UL}, true);
+    BigInt result10 = left + right;
+    check_contents(result10, {0xFFFFFFFFFFFFFFFFUL, 0xFFFFFFFFFFFFFFFFULL});
+    ASSERT(!result10.is_negative());
+  }
+}
+
+void testing_sub(TestObjs *objs) {
+  BigInt result5 = objs->two_pow_64 - objs->one;
+  check_contents(result5, { 0xFFFFFFFFFFFFFFFFUL });
+  ASSERT(!result5.is_negative());
+
+
+  BigInt result6 = objs->two_pow_64 - objs->u64_max;
+  check_contents(result6, { 1UL});
+  ASSERT(!result6.is_negative());
+
+
+  BigInt result7 = objs->one - objs->one;
+  check_contents(result7, { 0UL});
+  ASSERT(!result7.is_negative());
+  {
+    BigInt left = objs->zero;
+    BigInt right({1UL}, true);
+    BigInt result8 = left - right;
+    check_contents(result8, { 1UL});
+    ASSERT(!result8.is_negative());
+  }
+
+
+  {
+    BigInt left = objs->u64_max;
+    BigInt right({1UL}, true);
+    BigInt result9 = left - right;
+    check_contents(result9, { 0UL, 1UL});
+    ASSERT(!result9.is_negative());
+  }
+
+
+  {
+    BigInt left({0xFFFFFFFFFFFFFFFFUL}, true);
+    BigInt right = objs->one;
+    BigInt result10 = left - right;
+    check_contents(result10, { 0UL, 1UL});
+    ASSERT(result10.is_negative());
+  }
+
+
+}
+
+void testing_add_1(TestObjs *objs) {
+    BigInt result = objs->one + objs->two;
+    check_contents(result, {3});
+    ASSERT(!result.is_negative());
+}
+
+void testing_add_2(TestObjs *objs) {
+    BigInt result = objs->negative_three + objs->three;
+    check_contents(result, {0});
+    ASSERT(!result.is_negative());
+}
+
+void testing_add_3(TestObjs *objs) {
+    BigInt result = objs->negative_three + objs->nine;
+    check_contents(result, {6});
+    ASSERT(!result.is_negative());
+}
+
+void testing_add_4(TestObjs *objs) {
+    BigInt result = objs->negative_nine + objs->nine;
+    check_contents(result, {0});
+    ASSERT(!result.is_negative());
+}
+
+void testing_add_5(TestObjs *objs) {
+    BigInt result = objs->negative_nine + objs->negative_three;
+    check_contents(result, {12});
+    ASSERT(result.is_negative());
+}
+
+void testing_sub_1(TestObjs *objs) {
+    BigInt result = objs->nine - objs->three;
+    check_contents(result, {6});
+    ASSERT(!result.is_negative());
+}
+
+void testing_sub_2(TestObjs *objs) {
+    BigInt result = objs->three - objs->nine;
+    check_contents(result, {6});
+    ASSERT(result.is_negative());
+}
+
+void testing_sub_3(TestObjs *objs) {
+    BigInt result = objs->negative_three - objs->nine;
+    check_contents(result, {12});
+    ASSERT(result.is_negative());
+}
+
+void testing_sub_4(TestObjs *objs) {
+    BigInt result = objs->negative_three - objs->negative_nine;
+    check_contents(result, {6});
+    ASSERT(!result.is_negative());
+}
+
+void testing_sub_5(TestObjs *objs) {
+    BigInt result = objs->negative_nine - objs->negative_three;
+    check_contents(result, {12});
+    ASSERT(result.is_negative());
+}
+
+void testing_is_bit_set_1(TestObjs *objs) {
+    ASSERT(objs->one.is_bit_set(0));
+    ASSERT(!objs->one.is_bit_set(1));
+}
+
+void testing_is_bit_set_2(TestObjs *objs) {
+    BigInt bigint(0b1010, false);
+    ASSERT(bigint.is_bit_set(1));
+    ASSERT(bigint.is_bit_set(3));
+    ASSERT(!bigint.is_bit_set(0));
+    ASSERT(!bigint.is_bit_set(2));
+}
+
+void testing_lshift_1(TestObjs *objs) {
+    BigInt result = objs->one << 3;
+    check_contents(result, {8});
+    ASSERT(!result.is_negative());
+}
+
+void testing_lshift_2(TestObjs *objs) {
+    BigInt result = objs->two << 1;
+    check_contents(result, {4});
+    ASSERT(!result.is_negative());
+}
+
+void testing_mul_1(TestObjs *objs) {
+    BigInt result = objs->three * objs->three;
+    check_contents(result, {9});
+    ASSERT(!result.is_negative());
+}
+
+void testing_mul_2(TestObjs *objs) {
+    BigInt result = objs->negative_three * objs->three;
+    check_contents(result, {9});
+    ASSERT(result.is_negative());
+}
+
+void testing_compare_1(TestObjs *objs) {
+    ASSERT(objs->nine.compare(objs->three) > 0);
+    ASSERT(objs->three.compare(objs->nine) < 0);
+}
+
+void testing_compare_2(TestObjs *objs) {
+    ASSERT(objs->nine.compare(objs->nine) == 0);
+}
+
+void testing_div_1(TestObjs *objs) {
+    BigInt result = objs->nine / objs->three;
+    check_contents(result, {3});
+    ASSERT(!result.is_negative());
+}
+
+void testing_div_2(TestObjs *objs) {
+    BigInt result = objs->negative_nine / objs->three;
+    check_contents(result, {3});
+    ASSERT(result.is_negative());
+}
+
+void testing_to_hex_1(TestObjs *objs) {
+    ASSERT(objs->nine.to_hex() == "9");
+}
+
+void testing_to_hex_2(TestObjs *objs) {
+    BigInt bigint(255, false);
+    ASSERT(bigint.to_hex() == "ff");
+}
+
+void testing_to_dec_1(TestObjs *objs) {
+    ASSERT(objs->nine.to_dec() == "9");
+}
+
+void testing_to_dec_2(TestObjs *objs) {
+    BigInt bigint(123456, false);
+    ASSERT(bigint.to_dec() == "123456");
+}
+
+void testing_to_hex_3(TestObjs *objs) {
+    BigInt bigint(0, false);
+    ASSERT(bigint.to_hex() == "0");
+}
+
+void testing_to_dec_3(TestObjs *objs) {
+    BigInt bigint(0, false);
+    ASSERT(bigint.to_dec() == "0");
+}
+
+void testing_to_hex_4(TestObjs *objs) {
+    BigInt bigint(0, true);
+    ASSERT(bigint.to_hex() == "0");
+}
+
+void testing_to_dec_4(TestObjs *objs) {
+    BigInt bigint(0, true);
+    ASSERT(bigint.to_dec() == "0");
+}
+
+void testing_additional_cases(TestObjs *objs) {
+    BigInt result = objs->u64_max + objs->one;
+
+    check_contents(result, {0xFFFFFFFFFFFFFFFFUL});
+    ASSERT(result.is_negative());
+
+    result = objs->zero - objs->one;
+    check_contents(result, {0xFFFFFFFFFFFFFFFFUL});
+    ASSERT(result.is_negative());
+
+    result = objs->one - objs->zero;
+    check_contents(result, {1UL});
+    ASSERT(!result.is_negative());
+
+    result = objs->u64_max * objs->two;
+    check_contents(result, {0xFFFFFFFFFFFFFFFEUL, 0x1UL});
+    ASSERT(!result.is_negative());
+
+    BigInt zero(0);
+    ASSERT(!zero.is_bit_set(0));
+
+    BigInt all_bits_set(~0);
+    for (int i = 0; i < 64; ++i) {
+        ASSERT(all_bits_set.is_bit_set(i));
+    }
+
+}
