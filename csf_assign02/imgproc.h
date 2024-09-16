@@ -1,5 +1,12 @@
-// Header for image processing API functions (imgproc_mirror_h, etc.)
-// as well as any helper functions they rely on.
+/*
+ * Header for image processing API functions (imgproc_mirror_h, etc.) as well as any helper functions they rely on.
+ * CSF Assignment 2
+ * Claire Zeng
+ * Prasi Thapa
+ * czeng8@jhu.edu
+ * pthapa6@jhu.edu
+ */
+
 
 #ifndef IMGPROC_H
 #define IMGPROC_H
@@ -63,5 +70,81 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img );
 int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct Image *output_img );
 
 // TODO: add prototypes for your helper functions
+
+//int all_tiles_nonempty( int width, int height, int n );
+int determine_tile_w( int width, int n, int tile_col );
+int determine_tile_x_offset( int width, int n, int tile_col );
+int determine_tile_h( int height, int n, int tile_row );
+int determine_tile_y_offset( int height, int n, int tile_row );
+void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n );
+
+/*
+ * Return a uint32_t value correpsonding to the 8 bit red/green/blue
+ * component of a pixel represented by a uint32_t value
+ *
+ * Parameters:
+ *   pixel - uint32_t value corresponding to a pixel
+ *
+ * Returns:
+ *   a uint32_t value of red/green/blue extracted from pixel
+ */
+uint32_t get_r( uint32_t pixel );
+uint32_t get_g( uint32_t pixel );
+uint32_t get_b( uint32_t pixel );
+uint32_t get_a( uint32_t pixel );
+
+/*
+ * Return a uint32_t value correpsonding to the 32 bit value
+ * containing the red, green, blue, and alpha component of a pixel
+ *
+ * Parameters:
+ *   r - uint32_t value corresponding to the red component
+ *   g - uint32_t value corresponding to the green component
+ *   b - uint32_t value corresponding to the blue component
+ *   a - uint32_t value corresponding to the alpha component
+ *
+ * Returns:
+ *   a uint32_t value representing the color of a pixel
+ */
+uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a );
+
+/*
+ * Return a uint32_t value representing the greyscale transformation
+ * of the given pixel
+ *
+ * Parameters:
+ *   pixel - uint32_t value corresponding to a pixel
+ *
+ * Returns:
+ *   a uint32_t value representing the greayscale transformation of the pixel
+ */
+uint32_t to_grayscale( uint32_t pixel );
+
+/*
+ * Return a uint32_t value representing the result of blending
+ * the input pixel components.
+ *
+ * Parameters:
+ *   fg - uint32_t value corresponding to the foreground pixel component
+ *   bg - uint32_t value corresponding to the background pixel component
+ *   alpha - uint32_t value corresponding to the alpha of the foreground
+ *
+ * Returns:
+ *   a uint32_t value representing the blended pixel component result
+ */
+uint32_t blend_components( uint32_t fg, uint32_t bg, uint32_t alpha );
+
+/*
+ * Return a uint32_t value representing the result of blending
+ * the input values.
+ *
+ * Parameters:
+ *   fg - uint32_t value corresponding to the foreground pixel
+ *   bg - uint32_t value corresponding to the background pixel
+ *
+ * Returns:
+ *   a uint32_t value representing the blended pixel result
+ */
+uint32_t blend_colors( uint32_t fg, uint32_t bg );
 
 #endif // IMGPROC_H
