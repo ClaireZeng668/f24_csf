@@ -47,10 +47,8 @@ void imgproc_mirror_v( struct Image *input_img, struct Image *output_img ) {
   int32_t cols = input_img->width;
 
   for (int32_t col = 0; col < cols; col++) {
-    int end = rows - 1;
-    for (int32_t current = col; current <= current + ((rows-1)*cols); current=current+cols) {
-      output_img->data[current] = input_img->data[current + cols*end];
-      end--;
+    for (int32_t row = 0; row < rows; row++) {
+      output_img->data[(row*cols) + col] = input_img->data[(rows-row-1)*cols + col];
     }
   }
 }
@@ -100,7 +98,7 @@ int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
 //                pixels should be stored)
 void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
   // TODO: implement
-  int32_t count = (input_img->height * input_img->width) - 1;
+  int32_t count = (input_img->height * input_img->width);
   for (int32_t current = 0; current < count; current++) {
     output_img->data[current] = to_grayscale(input_img->data[current]);
   }
@@ -120,7 +118,13 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
 //   and overlay image do not have the same dimensions
 int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct Image *output_img ) {
   // TODO: implement
-  return 0;
+  if (base_img->height != overlay_img->height || base_img->width != overlay_img->width) {
+    return 0;
+  }
+  for (int i = 0; i < (base_img->height*base_img->width)-1; i++) {
+    output_img->data[i] = blend_colors(*overlay_img->data, *base_img->data);
+  }
+  return 1;
 }
 
 int all_tiles_nonempty( int width, int height, int n ) {
@@ -195,11 +199,13 @@ uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a ) {
 }
 uint32_t to_grayscale( uint32_t pixel ) {
   uint32_t grey;
+  uint32_t greypix;
   uint32_t red = get_r(pixel);
   uint32_t green = get_g(pixel);
   uint32_t blue = get_b(pixel);
   grey = ((79*red)+(128*green)+(49*blue))/256;
-  return grey;
+  greypix = ((get_a(pixel) | (grey << 8) | (grey << 16) | (grey << 24)));
+  return greypix;
 }
 uint32_t blend_components( uint32_t fg, uint32_t bg, uint32_t alpha ) {
   uint32_t result = ((alpha*fg)+(255-alpha)*bg)/255;
