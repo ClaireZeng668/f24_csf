@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 #include "imgproc.h"
 
 // TODO: define your helper functions here
@@ -23,20 +24,14 @@
 void imgproc_mirror_h( struct Image *input_img, struct Image *output_img ) {
   int32_t rows = input_img->height;
   int32_t cols = input_img->width;
-  uint32_t *orig = input_img->data;
 
   for (int32_t row = 0; row < rows; row++) {
-    int pos = row*cols;
-    int end = pos + cols - 1;
-    for (int32_t cur = 0; cur <= cols/2; cur++) {
-      uint32_t front = orig[pos + cur];
-      orig[pos + cur] = orig[end];
-      orig[end] = front;
+    int end = (row*cols) + cols - 1;
+    for (int32_t current = 0; current < cols; current++) {
+      output_img->data[(row*cols) + current] = input_img->data[end];
       end--;
     }
   }
-
-  output_img->data = orig;
 }
 
 // Mirror input image vertically.
@@ -50,11 +45,27 @@ void imgproc_mirror_v( struct Image *input_img, struct Image *output_img ) {
   // TODO: implement
   int32_t rows = input_img->height;
   int32_t cols = input_img->width;
-  uint32_t *orig = input_img->data;
 
   for (int32_t col = 0; col < cols; col++) {
+    int end = rows - 1;
+    for (int32_t current = col; current <= current + ((rows-1)*cols); current=current+cols) {
+      output_img->data[current] = input_img->data[current + cols*end];
+      end--;
+    }
   }
 }
+/* 0  1  2  3  4
+   5  6  7  8  9
+  10 11 12 13 14 6*5
+  15 16 17 18 19
+  20 21 22 23 24
+  25 26 27 28 29
+
+  0  1  2  3  4  5
+  6  7  8  9  10 11 4*6
+  12 13 14 15 16 17
+  18 19 20 21 22 23
+*/
 
 // Transform image by generating a grid of n x n smaller tiles created by
 // sampling every n'th pixel from the original image.
@@ -71,6 +82,12 @@ void imgproc_mirror_v( struct Image *input_img, struct Image *output_img ) {
 //       be empty (i.e., have 0 width or height)
 int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
   // TODO: implement
+  int32_t rows = input_img->height;
+  int32_t cols = input_img->width;
+  if (!all_tiles_nonempty(cols, rows, n)) {
+    return 0;
+  }
+
   return 0;
 }
 
@@ -83,6 +100,10 @@ int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
 //                pixels should be stored)
 void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
   // TODO: implement
+  int32_t count = (input_img->height * input_img->width) - 1;
+  for (int32_t current = 0; current < count; current++) {
+    output_img->data[current] = to_grayscale(input_img->data[current]);
+  }
 }
 
 // Overlay a foreground image on a background image, using each foreground
@@ -102,28 +123,74 @@ int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct
   return 0;
 }
 
+int all_tiles_nonempty( int width, int height, int n ) {
+  if (width >= n && height >= n && width > 0 && height > 0) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+int determine_tile_w( int width, int n, int tile_col ) {
+  int tile_width = width / n;
+  return tile_width;
+}
+int determine_tile_x_offset( int width, int n, int tile_col ) {
+  int number_offset = width % n;
+  if (number_offset != 0 && tile_col <= number_offset) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+int determine_tile_h( int height, int n, int tile_row ) {
+  int tile_height = height / n;
+  return tile_height;
+}
+int determine_tile_y_offset( int height, int n, int tile_row ) {
+  int number_offset = height % n;
+  if (tile_row <= number_offset) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n ) {
+  int row_len = determine_tile_w(img->width, n, tile_col) + determine_tile_x_offset(img->width, n, tile_col);
+  int col_len = determine_tile_h(img->height, n, tile_col)  + determine_tile_y_offset(img->height, n, tile_row);
+  
+  int orig_start_index = (tile_row-1)*(img->width) + (tile_col-1);
+  //NOT DONE
+  for (int row = 0; row < row_len; row++) {
+    for (int col = 0; col < col_len; col++) {
+
+    }
+  }
+}
+
 uint32_t get_r( uint32_t pixel ) {
-  uint32_t add = (1 << 8) - 1;
-  return pixel & add;
-}
-uint32_t get_g( uint32_t pixel ) {
-  uint32_t add = (1 << 8) - 1;
-  uint32_t altered = pixel >> 8;
-  return altered & add;
-}
-uint32_t get_b( uint32_t pixel ) {
-  uint32_t add = (1 << 8) - 1;
-  uint32_t altered = pixel >> 16;
-  return altered & add;
-}
-uint32_t get_a( uint32_t pixel ) {
-  uint32_t add = (1 << 8) - 1;
+  uint32_t add = 0x000000FFU;
   uint32_t altered = pixel >> 24;
   return altered & add;
 }
+uint32_t get_g( uint32_t pixel ) {
+  uint32_t add = 0x000000FFU;
+  uint32_t altered = pixel >> 16;
+  return altered & add;
+}
+uint32_t get_b( uint32_t pixel ) {
+  uint32_t add = 0x000000FFU;
+  uint32_t altered = pixel >> 8;
+  return altered & add;
+}
+uint32_t get_a( uint32_t pixel ) {
+  uint32_t add = 0x000000FFU;
+  return pixel & add;
+}
+
 uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a ) {
   uint32_t pixel;
-  pixel = (a << 24) & (b << 16) & (g << 8) & r;
+  pixel = (r << 24) & (g << 16) & (b << 8) & r;
   return pixel;
 }
 uint32_t to_grayscale( uint32_t pixel ) {

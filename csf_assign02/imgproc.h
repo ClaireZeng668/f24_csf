@@ -71,11 +71,81 @@ int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct
 
 // TODO: add prototypes for your helper functions
 
-//int all_tiles_nonempty( int width, int height, int n );
+/*
+ * Check whether the given dimensions are compatible with the given tiling factor
+ *
+ * Parameters:
+ *   width - int value corresponding to the image width
+ *   height - int value corresponding to the image width
+ *   n - int value corresponding to the tiling factor
+ *
+ * Returns:
+ *   a 1 or 0 of whether the given dimensions and tiling factor are compatible
+ */
+int all_tiles_nonempty( int width, int height, int n );
+
+/*
+ * Determine the width of the small tiles
+ *
+ * Parameters:
+ *   width - int value corresponding to the image width
+ *   n - int value corresponding to the tiling factor
+ *   tile_col - int value corresponding to the image width
+ *
+ * Returns:
+ *   an integer tile width value
+ */
 int determine_tile_w( int width, int n, int tile_col );
+
+/*
+ * Determine the width offset of the small tiles
+ *
+ * Parameters:
+ *   width - int value corresponding to the image width
+ *   n - int value corresponding to the tiling factor
+ *   tile_col - int value corresponding to the image width
+ *
+ * Returns:
+ *   an integer of how many small tiles need a width offset
+ */
 int determine_tile_x_offset( int width, int n, int tile_col );
+
+/*
+ * Determine the height of the small tiles
+ *
+ * Parameters:
+ *   height - int value corresponding to the image width
+ *   n - int value corresponding to the tiling factor
+ *   tile_row - int value corresponding to the image width
+ *
+ * Returns:
+ *   an integer tile height value
+ */
 int determine_tile_h( int height, int n, int tile_row );
+
+/*
+ * Determine the height offset of the small tiles
+ *
+ * Parameters:
+ *   height - int value corresponding to the image width
+ *   n - int value corresponding to the tiling factor
+ *   tile_row - int value corresponding to the image width
+ *
+ * Returns:
+ *   an integer of how many small tiles need a height offset
+ */
 int determine_tile_y_offset( int height, int n, int tile_row );
+
+/*
+ * Populate the tile at the specifiec row and col from the image to the output image
+ *
+ * Parameters:
+ *   out_imag - pointer to image of the tile destination
+ *   img - pointer to image of the source
+ *   tile_row - the row number of the result tile
+ *   tile_col - the column number of the result tile
+ *   n - the tiling factor
+ */
 void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n );
 
 /*
