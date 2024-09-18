@@ -82,11 +82,26 @@ int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
   // TODO: implement
   int32_t rows = input_img->height;
   int32_t cols = input_img->width;
-  if (!all_tiles_nonempty(cols, rows, n)) {
+  if (n < 1 || !all_tiles_nonempty(cols, rows, n)) {
     return 0;
   }
 
-  return 0;
+  int tile_width, tile_height, x_offset, y_offset;
+
+  // Loop over each tile row and column
+  for (int tile_row = 0; tile_row < n; tile_row++) {
+    for (int tile_col = 0; tile_col < n; tile_col++) {
+      tile_width = determine_tile_w(cols, n, tile_col);
+      tile_height = determine_tile_h(rows, n, tile_row);
+      x_offset = determine_tile_x_offset(cols, n, tile_col);
+      y_offset = determine_tile_y_offset(rows, n, tile_row);
+
+      // Copy the sampled tile to the output image
+      copy_tile(output_img, input_img, tile_row, tile_col, n);
+    }
+  }
+
+  return 1;
 }
 
 // Convert input pixels to grayscale.
@@ -117,13 +132,17 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
 //   1 if successful, or 0 if the transformation fails because the base
 //   and overlay image do not have the same dimensions
 int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct Image *output_img ) {
-  // TODO: implement
   if (base_img->height != overlay_img->height || base_img->width != overlay_img->width) {
     return 0;
   }
-  for (int i = 0; i < (base_img->height*base_img->width)-1; i++) {
-    output_img->data[i] = blend_colors(*overlay_img->data, *base_img->data);
+
+  int32_t count = base_img->height * base_img->width;
+  for (int32_t i = 0; i < count; i++) {
+    uint32_t fg_pixel = overlay_img->data[i];
+    uint32_t bg_pixel = base_img->data[i];
+    output_img->data[i] = blend_colors(fg_pixel, bg_pixel);
   }
+
   return 1;
 }
 
@@ -160,14 +179,19 @@ int determine_tile_y_offset( int height, int n, int tile_row ) {
   }
 }
 void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n ) {
-  int row_len = determine_tile_w(img->width, n, tile_col) + determine_tile_x_offset(img->width, n, tile_col);
-  int col_len = determine_tile_h(img->height, n, tile_col)  + determine_tile_y_offset(img->height, n, tile_row);
-  
-  int orig_start_index = (tile_row-1)*(img->width) + (tile_col-1);
-  //NOT DONE
-  for (int row = 0; row < row_len; row++) {
-    for (int col = 0; col < col_len; col++) {
+  int tile_width = determine_tile_w(img->width, n, tile_col);
+  int tile_height = determine_tile_h(img->height, n, tile_row);
+  int row_offset = tile_row * tile_height;
+  int col_offset = tile_col * tile_width;
 
+  // Copy pixels from the input image to the tile
+  for (int row = 0; row < tile_height; row++) {
+    for (int col = 0; col < tile_width; col++) {
+      // Sample every nth pixel from the input image
+      int sampled_row = row_offset + row * n;
+      int sampled_col = col_offset + col * n;
+      out_img->data[(tile_row * tile_height + row) * out_img->width + (tile_col * tile_width + col)] =
+        img->data[sampled_row * img->width + sampled_col];
     }
   }
 }
@@ -193,10 +217,9 @@ uint32_t get_a( uint32_t pixel ) {
 }
 
 uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a ) {
-  uint32_t pixel;
-  pixel = (r << 24) & (g << 16) & (b << 8) & r;
-  return pixel;
+  return (r << 24) | (g << 16) | (b << 8) | a;
 }
+
 uint32_t to_grayscale( uint32_t pixel ) {
   uint32_t grey;
   uint32_t greypix;
