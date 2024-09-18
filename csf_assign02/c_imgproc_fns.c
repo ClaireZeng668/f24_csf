@@ -22,6 +22,9 @@
 //   output_img - pointer to the output Image (in which the transformed
 //                pixels should be stored)
 void imgproc_mirror_h( struct Image *input_img, struct Image *output_img ) {
+  if (input_img == NULL || output_img == NULL) return;
+  if (input_img->width != output_img->width || input_img->height != output_img->height) return;
+
   int32_t rows = input_img->height;
   int32_t cols = input_img->width;
 
@@ -42,15 +45,19 @@ void imgproc_mirror_h( struct Image *input_img, struct Image *output_img ) {
 //   output_img - pointer to the output Image (in which the transformed
 //                pixels should be stored)
 void imgproc_mirror_v( struct Image *input_img, struct Image *output_img ) {
+  if (input_img == NULL || output_img == NULL) return;
+  if (input_img->width != output_img->width || input_img->height != output_img->height) return;
+
   // TODO: implement
   int32_t rows = input_img->height;
   int32_t cols = input_img->width;
 
-  for (int32_t col = 0; col < cols; col++) {
-    for (int32_t row = 0; row < rows; row++) {
-      output_img->data[(row*cols) + col] = input_img->data[(rows-row-1)*cols + col];
-    }
+  for (int32_t row = 0; row < rows; row++) {
+      for (int32_t col = 0; col < cols; col++) {
+          output_img->data[(row * cols) + col] = input_img->data[((rows - row - 1) * cols) + col];
+      }
   }
+
 }
 /* 0  1  2  3  4
    5  6  7  8  9
@@ -79,9 +86,10 @@ void imgproc_mirror_v( struct Image *input_img, struct Image *output_img ) {
 //     - the output can't be generated because at least one tile would
 //       be empty (i.e., have 0 width or height)
 int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
-  // TODO: implement
   int32_t rows = input_img->height;
   int32_t cols = input_img->width;
+
+  // If n < 1 or n is too large for the image, return failure
   if (n < 1 || !all_tiles_nonempty(cols, rows, n)) {
     return 0;
   }
@@ -91,12 +99,13 @@ int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
   // Loop over each tile row and column
   for (int tile_row = 0; tile_row < n; tile_row++) {
     for (int tile_col = 0; tile_col < n; tile_col++) {
+      // Determine tile dimensions and offsets
       tile_width = determine_tile_w(cols, n, tile_col);
       tile_height = determine_tile_h(rows, n, tile_row);
       x_offset = determine_tile_x_offset(cols, n, tile_col);
       y_offset = determine_tile_y_offset(rows, n, tile_row);
 
-      // Copy the sampled tile to the output image
+      // Copy the sampled tile from the input image to the output
       copy_tile(output_img, input_img, tile_row, tile_col, n);
     }
   }
@@ -147,17 +156,14 @@ int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct
 }
 
 int all_tiles_nonempty( int width, int height, int n ) {
-  if (width >= n && height >= n && width > 0 && height > 0) {
-    return 1;
-  } else {
-    return 0;
-  }
+  return (width >= n && height >= n && width > 0 && height > 0);
 }
 
 int determine_tile_w( int width, int n, int tile_col ) {
   int tile_width = width / n;
   return tile_width;
 }
+
 int determine_tile_x_offset( int width, int n, int tile_col ) {
   int number_offset = width % n;
   if (number_offset != 0 && tile_col <= number_offset) {
@@ -166,10 +172,12 @@ int determine_tile_x_offset( int width, int n, int tile_col ) {
     return 0;
   }
 }
+
 int determine_tile_h( int height, int n, int tile_row ) {
   int tile_height = height / n;
   return tile_height;
 }
+
 int determine_tile_y_offset( int height, int n, int tile_row ) {
   int number_offset = height % n;
   if (tile_row <= number_offset) {
@@ -178,23 +186,27 @@ int determine_tile_y_offset( int height, int n, int tile_row ) {
     return 0;
   }
 }
+
 void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n ) {
   int tile_width = determine_tile_w(img->width, n, tile_col);
   int tile_height = determine_tile_h(img->height, n, tile_row);
   int row_offset = tile_row * tile_height;
   int col_offset = tile_col * tile_width;
 
-  // Copy pixels from the input image to the tile
+  // Copy pixels from the input image to the tile in the output image
   for (int row = 0; row < tile_height; row++) {
     for (int col = 0; col < tile_width; col++) {
-      // Sample every nth pixel from the input image
+      // Ensure we're not reading outside the bounds of the input image
       int sampled_row = row_offset + row * n;
       int sampled_col = col_offset + col * n;
-      out_img->data[(tile_row * tile_height + row) * out_img->width + (tile_col * tile_width + col)] =
-        img->data[sampled_row * img->width + sampled_col];
+      if (sampled_row < img->height && sampled_col < img->width) {
+        out_img->data[(tile_row * tile_height + row) * out_img->width + (tile_col * tile_width + col)] =
+          img->data[sampled_row * img->width + sampled_col];
+      }
     }
   }
 }
+
 
 uint32_t get_r( uint32_t pixel ) {
   uint32_t add = 0x000000FFU;
@@ -216,28 +228,30 @@ uint32_t get_a( uint32_t pixel ) {
   return pixel & add;
 }
 
+
+
+//changed this to using bitwise OR
 uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a ) {
-  return (r << 24) | (g << 16) | (b << 8) | a;
+    return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
-uint32_t to_grayscale( uint32_t pixel ) {
-  uint32_t grey;
-  uint32_t greypix;
+uint32_t to_grayscale(uint32_t pixel) {
   uint32_t red = get_r(pixel);
   uint32_t green = get_g(pixel);
   uint32_t blue = get_b(pixel);
-  grey = ((79*red)+(128*green)+(49*blue))/256;
-  greypix = ((get_a(pixel) | (grey << 8) | (grey << 16) | (grey << 24)));
-  return greypix;
+  uint32_t gray = (79 * red + 128 * green + 49 * blue) / 256;
+  return make_pixel(gray, gray, gray, get_a(pixel));
 }
+
+
 uint32_t blend_components( uint32_t fg, uint32_t bg, uint32_t alpha ) {
   uint32_t result = ((alpha*fg)+(255-alpha)*bg)/255;
   return result;
 }
-uint32_t blend_colors( uint32_t fg, uint32_t bg ) {
+
+uint32_t blend_colors(uint32_t fg, uint32_t bg) {
   uint32_t red_blend = blend_components(get_r(fg), get_r(bg), get_a(fg));
   uint32_t green_blend = blend_components(get_g(fg), get_g(bg), get_a(fg));
   uint32_t blue_blend = blend_components(get_b(fg), get_b(bg), get_a(fg));
-  uint32_t result = make_pixel(red_blend, green_blend, blue_blend, 255);
-  return result;
+  return make_pixel(red_blend, green_blend, blue_blend, 255);
 }
