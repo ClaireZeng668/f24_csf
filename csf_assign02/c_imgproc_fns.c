@@ -166,11 +166,7 @@ int determine_tile_w( int width, int n, int tile_col ) {
 
 int determine_tile_x_offset( int width, int n, int tile_col ) {
   int number_offset = width % n;
-  if (number_offset != 0 && tile_col <= number_offset) {
-    return 1;
-  } else {
-    return 0;
-  }
+  return (number_offset != 0 && tile_col <= number_offset);
 }
 
 int determine_tile_h( int height, int n, int tile_row ) {
@@ -180,11 +176,7 @@ int determine_tile_h( int height, int n, int tile_row ) {
 
 int determine_tile_y_offset( int height, int n, int tile_row ) {
   int number_offset = height % n;
-  if (tile_row <= number_offset) {
-    return 1;
-  } else {
-    return 0;
-  }
+  return (tile_row <= number_offset);
 }
 
 void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n ) {
