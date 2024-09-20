@@ -206,7 +206,8 @@ void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile
   int col_len = base_height  + determine_tile_y_offset(img->height, n, tile_row);
 
 
-  int orig_start_index = (tile_row)*(img->width) + (tile_col);
+
+  int orig_start_index = 0;//(tile_row)*(img->width) + (tile_col);
   int out_start_index = 0;
 
   for (int i = 0; i < tile_col; i++) {
