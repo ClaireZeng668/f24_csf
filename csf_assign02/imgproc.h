@@ -80,7 +80,7 @@ int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct
  *   n - int value corresponding to the tiling factor
  *
  * Returns:
- *   a 1 or 0 of whether the given dimensions and tiling factor are compatible
+ *   a 1 or 0 of whether the given dimensions and tiling factor are compatible (1 meaning they are compatible)
  */
 int all_tiles_nonempty( int width, int height, int n );
 
@@ -95,7 +95,7 @@ int all_tiles_nonempty( int width, int height, int n );
  * Returns:
  *   an integer tile width value
  */
-int determine_tile_w( int width, int n, int tile_col );
+int determine_tile_w( int width, int n);
 
 /*
  * Determine the width offset of the small tiles
@@ -121,7 +121,7 @@ int determine_tile_x_offset( int width, int n, int tile_col );
  * Returns:
  *   an integer tile height value
  */
-int determine_tile_h( int height, int n, int tile_row );
+int determine_tile_h( int height, int n);
 
 /*
  * Determine the height offset of the small tiles

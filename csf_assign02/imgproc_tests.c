@@ -97,6 +97,19 @@ void test_mirror_v_basic( TestObjs *objs );
 void test_tile_basic( TestObjs *objs );
 void test_grayscale_basic( TestObjs *objs );
 void test_composite_basic( TestObjs *objs );
+// void test_all_tiles_nonempty( TestObjs *objs );
+// void test_determine_tile_w( TestObjs *objs );
+// void test_determine_tile_x_offset( TestObjs *objs );
+// void test_determine_tile_h( TestObjs *objs );
+// void test_determine_tile_y_offset( TestObjs *objs );
+// void test_get_r( TestObjs *objs );
+// void test_get_g( TestObjs *objs );
+// void test_get_b( TestObjs *objs );
+// void test_get_a( TestObjs *objs );
+// void test_make_pixel( TestObjs *objs );
+// void test_to_grayscale( TestObjs *objs );
+// void test_blend_components( TestObjs *objs );
+// void test_blend_colors( TestObjs *objs );
 // TODO: add prototypes for additional test functions
 
 int main( int argc, char **argv ) {
@@ -115,7 +128,19 @@ int main( int argc, char **argv ) {
   TEST( test_tile_basic );
   TEST( test_grayscale_basic );
   TEST( test_composite_basic );
-
+  // TEST( test_all_tiles_nonempty );
+  // TEST( test_determine_tile_w );
+  // TEST( test_determine_tile_x_offset );
+  // TEST( test_determine_tile_h );
+  // TEST( test_determine_tile_y_offset );
+  // TEST( test_get_r );
+  // TEST( test_get_g );
+  // TEST( test_get_b );
+  // TEST( test_get_a );
+  // TEST( test_make_pixel );
+  // TEST( test_to_grayscale );
+  // TEST( test_blend_components );
+  // TEST( test_blend_colors );
   TEST_FINI();
 }
 
@@ -348,3 +373,119 @@ void test_composite_basic( TestObjs *objs ) {
   ASSERT( 0x000080FF == objs->smiley_out->data[87] );
 }
 
+// void test_all_tiles_nonempty( TestObjs *objs ) {
+//   ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 1) == 1);
+//   ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 10) == 1);
+//   ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 16) == 0);
+
+// }
+
+// void test_determine_tile_w( TestObjs *objs ) {
+//   ASSERT(determine_tile_w(objs->smiley->width, 1) == 16);
+//   ASSERT(determine_tile_w(objs->smiley->width, 2) == 8);
+//   ASSERT(determine_tile_w(objs->smiley->width, 3) == 5);
+//   ASSERT(determine_tile_w(objs->smiley->width, 14) == 1);
+//   ASSERT(determine_tile_w(objs->smiley->width, 15) == 1);
+//   ASSERT(determine_tile_w(objs->smiley->width, 16) == 1);
+// }
+
+// void test_determine_tile_x_offset( TestObjs *objs ) {
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 3,0) == 1);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 3,1) == 0);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 3,2) == 0);
+
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 7,0) == 1);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 7,1) == 1);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 7,6) == 0);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 7,7) == 0);
+
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 13,0) == 1);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 13,1) == 1);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 13,2) == 1);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 13,11) == 0);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 13,12) == 0);
+
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 16,0) == 0);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 16,1) == 0);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 16,14) == 0);
+//   ASSERT(determine_tile_x_offset(objs->smiley->width, 16,15) == 0);
+// }
+
+// void test_determine_tile_h( TestObjs *objs ) {
+//   ASSERT(determine_tile_h(objs->smiley->height, 1) == 10);
+//   ASSERT(determine_tile_h(objs->smiley->height, 2) == 5);
+//   ASSERT(determine_tile_h(objs->smiley->height, 3) == 3);
+//   ASSERT(determine_tile_h(objs->smiley->height, 8) == 1);
+//   ASSERT(determine_tile_h(objs->smiley->height, 9) == 1);
+//   ASSERT(determine_tile_h(objs->smiley->height, 10) == 1);
+// }
+
+// void test_determine_tile_y_offset( TestObjs *objs ) {
+//    ASSERT(determine_tile_y_offset(objs->smiley->height, 3,0) == 1);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 3,1) == 0);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 3,2) == 0);
+
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 6,0) == 1);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 6,1) == 1);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 6,4) == 0);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 6,5) == 0);
+
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 9,0) == 1);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 9,1) == 0);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 9,8) == 0);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 9,8) == 0);
+
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 10,0) == 0);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 10,1) == 0);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 10,9) == 0);
+//   ASSERT(determine_tile_y_offset(objs->smiley->height, 10,10) == 0);
+// }
+
+// void test_get_r( TestObjs *objs ) {
+//   ASSERT(get_r(0x00000000U) == 0x00000000U);
+//   ASSERT(get_r(0xFF000000U) == 0x000000FFU);
+//   ASSERT(get_r(0x01000000U) == 0x00000001U);
+//   ASSERT(get_r(0x11000000U) == 0x00000011U);
+//   ASSERT(get_r(0xFFFFFFFFU) == 0x000000FFU);
+// }
+// void test_get_g( TestObjs *objs ) {
+//   ASSERT(get_g(0x00000000U) == 0x00000000U);
+//   ASSERT(get_g(0x00FF0000U) == 0x000000FFU);
+//   ASSERT(get_g(0x00110000U) == 0x00000011U);
+//   ASSERT(get_g(0x00010000U) == 0x00000001U);
+//   ASSERT(get_g(0xFFFFFFFFU) == 0x000000FFU);
+// }
+// void test_get_b( TestObjs *objs ) {
+//   ASSERT(get_b(0x00000000U) == 0x00000000U);
+//   ASSERT(get_b(0x0000FF00U) == 0x000000FFU);
+//   ASSERT(get_b(0x00001100U) == 0x00000011U);
+//   ASSERT(get_b(0x00000100U) == 0x00000001U);
+//   ASSERT(get_b(0xFFFFFFFFU) == 0x000000FFU);
+// }
+// void test_get_a( TestObjs *objs ) {
+//   ASSERT(get_a(0x00000000U) == 0x00000000U);
+//   ASSERT(get_a(0x000000FFU) == 0x000000FFU);
+//   ASSERT(get_a(0x00000011U) == 0x00000011U);
+//   ASSERT(get_a(0x00000001U) == 0x00000001U);
+//   ASSERT(get_a(0xFFFFFFFFU) == 0x000000FFU);
+// }
+// void test_make_pixel( TestObjs *objs ) {
+//   ASSERT(make_pixel(0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U) == 0x00000000U);
+//   ASSERT(make_pixel(0x00000001U, 0x00000000U, 0x00000000U, 0x00000000U) == 0x01000000U);
+//   ASSERT(make_pixel(0x00000000U, 0x00000001U, 0x00000000U, 0x00000000U) == 0x00010000U);
+//   ASSERT(make_pixel(0x00000000U, 0x00000000U, 0x00000001U, 0x00000000U) == 0x00000100U);
+//   ASSERT(make_pixel(0x00000000U, 0x00000000U, 0x00000000U, 0x00000001U) == 0x00000001U);
+
+//   ASSERT(make_pixel(0x000000FFU, 0x000000FFU, 0x000000FFU, 0x000000FFU) == 0xFFFFFFFU);
+// }
+// void test_to_grayscale( TestObjs *objs ) {
+//   //not done yet, i have practice soon and i dont wanna do the math
+// }
+
+// void test_blend_components ( TestObjs *objs ) {
+//   //not done yet, i have practice soon and i dont wanna do the math
+// }
+
+// void test_blend_colors ( TestObjs *objs ) {
+//   //not done yet, i have practice soon and i dont wanna do the math
+// }
