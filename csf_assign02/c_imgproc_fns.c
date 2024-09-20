@@ -94,16 +94,16 @@ int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
     return 0;
   }
 
-  int tile_width, tile_height, x_offset, y_offset;
+  //int tile_width, tile_height, x_offset, y_offset;
 
   // Loop over each tile row and column
   for (int tile_row = 0; tile_row < n; tile_row++) {
     for (int tile_col = 0; tile_col < n; tile_col++) {
       // Determine tile dimensions and offsets
-      tile_width = determine_tile_w(cols, n, tile_col);
-      tile_height = determine_tile_h(rows, n, tile_row);
-      x_offset = determine_tile_x_offset(cols, n, tile_col);
-      y_offset = determine_tile_y_offset(rows, n, tile_row);
+      // tile_width = determine_tile_w(cols, n, tile_col);
+      // tile_height = determine_tile_h(rows, n, tile_row);
+      // x_offset = determine_tile_x_offset(cols, n, tile_col);
+      // y_offset = determine_tile_y_offset(rows, n, tile_row);
 
       // Copy the sampled tile from the input image to the output
       copy_tile(output_img, input_img, tile_row, tile_col, n);
@@ -159,44 +159,87 @@ int all_tiles_nonempty( int width, int height, int n ) {
   return (width >= n && height >= n && width > 0 && height > 0);
 }
 
-int determine_tile_w( int width, int n, int tile_col ) {
+int determine_tile_w( int width, int n) {
   int tile_width = width / n;
   return tile_width;
 }
 
 int determine_tile_x_offset( int width, int n, int tile_col ) {
   int number_offset = width % n;
-  return (number_offset != 0 && tile_col <= number_offset);
+  return (number_offset != 0 && tile_col < number_offset);
 }
 
-int determine_tile_h( int height, int n, int tile_row ) {
+int determine_tile_h( int height, int n ) {
   int tile_height = height / n;
   return tile_height;
 }
 
 int determine_tile_y_offset( int height, int n, int tile_row ) {
   int number_offset = height % n;
-  return (tile_row <= number_offset);
+  return (tile_row < number_offset);
 }
 
 void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n ) {
-  int tile_width = determine_tile_w(img->width, n, tile_col);
-  int tile_height = determine_tile_h(img->height, n, tile_row);
-  int row_offset = tile_row * tile_height;
-  int col_offset = tile_col * tile_width;
+  // int tile_width = determine_tile_w(img->width, n, tile_col);
+  // int tile_height = determine_tile_h(img->height, n, tile_row);
+  // int row_offset = tile_row * tile_height;
+  // int col_offset = tile_col * tile_width;
 
-  // Copy pixels from the input image to the tile in the output image
-  for (int row = 0; row < tile_height; row++) {
-    for (int col = 0; col < tile_width; col++) {
-      // Ensure we're not reading outside the bounds of the input image
-      int sampled_row = row_offset + row * n;
-      int sampled_col = col_offset + col * n;
-      if (sampled_row < img->height && sampled_col < img->width) {
-        out_img->data[(tile_row * tile_height + row) * out_img->width + (tile_col * tile_width + col)] =
-          img->data[sampled_row * img->width + sampled_col];
-      }
+  // // Copy pixels from the input image to the tile in the output image
+  // for (int row = 0; row < tile_height; row++) {
+  //   for (int col = 0; col < tile_width; col++) {
+  //     // Ensure we're not reading outside the bounds of the input image
+  //     int sampled_row = row_offset + row * n;
+  //     int sampled_col = col_offset + col * n;
+  //     if (sampled_row < img->height && sampled_col < img->width) {
+  //       out_img->data[(tile_row * tile_height + row) * out_img->width + (tile_col * tile_width + col)] =
+  //         img->data[sampled_row * img->width + sampled_col];
+  //     }
+  //   }
+  //}
+  int total_width_offset = img->width % n;
+  int total_height_offset = img->height % n;
+  int base_width = determine_tile_w(img->width, n);
+  int base_height = determine_tile_h(img->height, n);
+
+  int row_len = base_width + determine_tile_x_offset(img->width, n, tile_col);
+  int col_len = base_height  + determine_tile_y_offset(img->height, n, tile_row);
+
+
+  int orig_start_index = (tile_row)*(img->width) + (tile_col);
+  int out_start_index = 0;
+
+  for (int i = 0; i < tile_col; i++) {
+    if (total_width_offset > 0) {
+      out_start_index = out_start_index + base_width + 1;
+      total_width_offset--;
+    } else {
+      out_start_index = out_start_index + base_width;
     }
   }
+
+  for (int i = 0; i < tile_row; i++) {
+    if (total_height_offset > 0) {
+      out_start_index = out_start_index + (img->width * (base_height+1));
+      total_height_offset--;
+    } else {
+      out_start_index = out_start_index + (img->width * base_height);
+    }
+  }
+
+  int orig_pos = orig_start_index;
+  int out_pos = out_start_index;
+  for (int row = 0; row < row_len; row++) {
+    for (int col = 0; col < col_len; col++) {
+      //printf("copying output: %d, input: %d\n", out_pos, orig_pos);
+      out_img->data[out_pos] = img->data[orig_pos];
+      out_pos+=img->width;
+      orig_pos+=(n*img->width);
+    }
+    out_pos = out_start_index+row+1;
+    orig_pos = orig_start_index+((row+1)*n);
+  }
+  //printf("tile done\n");
 }
 
 
