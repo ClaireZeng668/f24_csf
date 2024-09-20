@@ -113,13 +113,13 @@ int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
   return 1;
 }
 
-// Convert input pixels to grayscale.
-// This transformation always succeeds.
-//
-// Parameters:
-//   input_img  - pointer to the input Image
-//   output_img - pointer to the output Image (in which the transformed
-//                pixels should be stored)
+
+/* 
+  * Convert a pixel to grayscale.
+  * This transformation always succeeds.
+  * @param input_img pointer to the input Image
+  * @param output_img pointer to the output Image (in which the transformed pi
+ */
 void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
   // TODO: implement
   int32_t count = (input_img->height * input_img->width);
@@ -128,18 +128,14 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
   }
 }
 
-// Overlay a foreground image on a background image, using each foreground
-// pixel's alpha value to determine its degree of opacity in order to blend
-// it with the corresponding background pixel.
-//
-// Parameters:
-//   base_img - pointer to base (background) image
-//   overlay_img - pointer to overlaid (foreground) image
-//   output_img - pointer to output Image
-//
-// Returns:
-//   1 if successful, or 0 if the transformation fails because the base
-//   and overlay image do not have the same dimensions
+/*
+ * Overlay a foreground image on a background image.
+ * using each foreground pixel's alpha value to determine its degree of opacity in order to blend it with the corresponding background pixel.
+ * @param base_img pointer to base (background) image
+ * @param overlay_img pointer to overlaid (foreground) image
+ * @param output_img pointer to output Image
+ * @return 1 if successful, or 0 if the transformation fails because the base and overlay image do not have the same dimensions
+*/
 int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct Image *output_img ) {
   if (base_img->height != overlay_img->height || base_img->width != overlay_img->width) {
     return 0;
@@ -180,23 +176,6 @@ int determine_tile_y_offset( int height, int n, int tile_row ) {
 }
 
 void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n ) {
-  // int tile_width = determine_tile_w(img->width, n, tile_col);
-  // int tile_height = determine_tile_h(img->height, n, tile_row);
-  // int row_offset = tile_row * tile_height;
-  // int col_offset = tile_col * tile_width;
-
-  // // Copy pixels from the input image to the tile in the output image
-  // for (int row = 0; row < tile_height; row++) {
-  //   for (int col = 0; col < tile_width; col++) {
-  //     // Ensure we're not reading outside the bounds of the input image
-  //     int sampled_row = row_offset + row * n;
-  //     int sampled_col = col_offset + col * n;
-  //     if (sampled_row < img->height && sampled_col < img->width) {
-  //       out_img->data[(tile_row * tile_height + row) * out_img->width + (tile_col * tile_width + col)] =
-  //         img->data[sampled_row * img->width + sampled_col];
-  //     }
-  //   }
-  //}
   int total_width_offset = img->width % n;
   int total_height_offset = img->height % n;
   int base_width = determine_tile_w(img->width, n);
@@ -243,6 +222,23 @@ void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile
   //printf("tile done\n");
 }
 
+  // int tile_width = determine_tile_w(img->width, n, tile_col);
+  // int tile_height = determine_tile_h(img->height, n, tile_row);
+  // int row_offset = tile_row * tile_height;
+  // int col_offset = tile_col * tile_width;
+
+  // // Copy pixels from the input image to the tile in the output image
+  // for (int row = 0; row < tile_height; row++) {
+  //   for (int col = 0; col < tile_width; col++) {
+  //     // Ensure we're not reading outside the bounds of the input image
+  //     int sampled_row = row_offset + row * n;
+  //     int sampled_col = col_offset + col * n;
+  //     if (sampled_row < img->height && sampled_col < img->width) {
+  //       out_img->data[(tile_row * tile_height + row) * out_img->width + (tile_col * tile_width + col)] =
+  //         img->data[sampled_row * img->width + sampled_col];
+  //     }
+  //   }
+  //}
 
 uint32_t get_r( uint32_t pixel ) {
   uint32_t add = 0x000000FFU;
