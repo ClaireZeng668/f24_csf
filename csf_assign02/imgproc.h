@@ -149,6 +149,20 @@ int determine_tile_y_offset( int height, int n, int tile_row );
 void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n );
 
 /*
+ * Calculate the starting index to populate the output image based on the current 
+ * tile row, column, and tiling factor
+ *
+ * Parameters:
+ *   img - pointer to image of the source
+ *   tile_row - the row number of the result tile
+ *   tile_col - the column number of the result tile
+ *   n - the tiling factor
+* Returns:
+ *   an integer index indictaing where to start filling the output image
+ */
+int calculate_starting_index (struct Image *img, int tile_row, int tile_col, int n ) ;
+
+/*
  * Return a uint32_t value correpsonding to the 8 bit red/green/blue
  * component of a pixel represented by a uint32_t value
  *

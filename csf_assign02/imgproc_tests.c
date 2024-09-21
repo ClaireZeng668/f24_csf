@@ -110,6 +110,8 @@ void test_composite_basic( TestObjs *objs );
 // void test_to_grayscale( TestObjs *objs );
 // void test_blend_components( TestObjs *objs );
 // void test_blend_colors( TestObjs *objs );
+// void test_calculate_starting_index ( TestObjs *objs );
+void test_copy_tile ( TestObjs *objs); //NOT DONE
 // TODO: add prototypes for additional test functions
 
 int main( int argc, char **argv ) {
@@ -141,6 +143,8 @@ int main( int argc, char **argv ) {
   // TEST( test_to_grayscale );
   // TEST( test_blend_components );
   // TEST( test_blend_colors );
+  // TEST( test_calculate_starting_index );
+  TEST( test_copy_tile );
   TEST_FINI();
 }
 
@@ -478,14 +482,62 @@ void test_composite_basic( TestObjs *objs ) {
 
 //   ASSERT(make_pixel(0x000000FFU, 0x000000FFU, 0x000000FFU, 0x000000FFU) == 0xFFFFFFFU);
 // }
-// void test_to_grayscale( TestObjs *objs ) {
-//   //not done yet, i have practice soon and i dont wanna do the math
-// }
 
-// void test_blend_components ( TestObjs *objs ) {
-//   //not done yet, i have practice soon and i dont wanna do the math
-// }
+void test_to_grayscale( TestObjs *objs ) {
+  ASSERT(to_grayscale(0x00000000U) == 0x00000000U);
+  ASSERT(to_grayscale(0x000000FFU) == 0x000000FFU);
+  ASSERT(to_grayscale(0xFFFFFFFFU) == 0xFFFFFFFFU);
+  ASSERT(to_grayscale(0xFFFFFF00U) == 0xFFFFFF00U);
 
-// void test_blend_colors ( TestObjs *objs ) {
-//   //not done yet, i have practice soon and i dont wanna do the math
-// }
+  ASSERT(to_grayscale(0x01000000U) == 0x00000000U);
+  ASSERT(to_grayscale(0xFF000000U) == 0x4E4E4E00U);
+
+  ASSERT(to_grayscale(0x00010000U) == 0x00000000U);
+  ASSERT(to_grayscale(0x00FF0000U) == 0x7F7F7F00U);
+
+  ASSERT(to_grayscale(0x00000100U) == 0x00000000U);
+  ASSERT(to_grayscale(0x0000FF00U) == 0x30303000U);
+
+  ASSERT(to_grayscale(0x0F0F0F0FU) == 0x0F0F0F0FU);
+}
+
+void test_blend_components ( TestObjs *objs ) {
+  ASSERT(blend_components(0x00000000U, 0x00000000U, 0x00000000U) == 0x00000000U);
+  ASSERT(blend_components(0x000000FFU, 0x00000000U, 0x00000001U) == 0x00000001U);
+  ASSERT(blend_components(0x000000FFU, 0x00000000U, 0x000000FFU) == 0x000000FFU);
+  ASSERT(blend_components(0x00000000U, 0x000000FFU, 0x000000FFU) == 0x00000000U);
+  ASSERT(blend_components(0x00000000U, 0x000000FFU, 0x00000000U) == 0x000000FFU);
+  ASSERT(blend_components(0x000000FFU, 0x00000001U, 0x00000080U) == 0x00000080U);
+  ASSERT(blend_components(0x00000001U, 0x00000000U, 0x00000000U) == 0x00000000U);
+}
+
+void test_blend_colors ( TestObjs *objs ) {
+  ASSERT(blend_colors(0x00000000U, 0x00000000U) == 0x000000FFU);
+  ASSERT(blend_colors(0xFFFFFF00U, 0x00000000U) == 0x000000FFU);
+  ASSERT(blend_colors(0xFFFFFF00U, 0x01010101U) == 0x010101FFU);
+  ASSERT(blend_colors(0xFFFFFF00U, 0x01010101U) == 0x010101FFU);
+  ASSERT(blend_colors(0x01010101U, 0x01010101U) == 0x010101FFU);
+  ASSERT(blend_colors(0x00000000U, 0xFFFFFFFFU) == 0xFFFFFFFFU);
+  ASSERT(blend_colors(0x00000000U, 0xFF00FFFFU) == 0xFF00FFFFU);
+}
+
+void test_calculate_starting_index ( TestObjs *objs ) {
+  ASSERT(calculate_starting_index(objs->smiley, 0, 0, 2) == 0);
+  ASSERT(calculate_starting_index(objs->smiley, 1, 1, 2) == 88);
+
+  ASSERT(calculate_starting_index(objs->smiley, 0, 0, 3) == 0);
+  ASSERT(calculate_starting_index(objs->smiley, 2, 2, 3) == 123);
+  ASSERT(calculate_starting_index(objs->smiley, 1, 1, 3) == 70);
+  
+  ASSERT(calculate_starting_index(objs->smiley, 0, 0, 6) == 0);
+  ASSERT(calculate_starting_index(objs->smiley, 5, 5, 6) == 158);
+  ASSERT(calculate_starting_index(objs->smiley, 3, 2, 6) == 102);
+
+  ASSERT(calculate_starting_index(objs->smiley, 0, 0, 9) == 0);
+  ASSERT(calculate_starting_index(objs->smiley, 8, 8, 9) == 158);
+  ASSERT(calculate_starting_index(objs->smiley, 5, 6, 9) == 108);
+}
+
+void test_copy_tile ( TestObjs *objs) {
+
+}
