@@ -385,7 +385,35 @@ void test_all_tiles_nonempty( TestObjs *objs ) {
   ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 1) == 1);
   ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 10) == 1);
   ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 16) == 0);
+  ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 17) == 0);
 
+  Picture empty = {
+    TEST_COLORS,
+    0, // width
+    0, // height
+    ""
+  };
+  struct Image *empty_img = picture_to_img( &empty );
+
+  ASSERT(all_tiles_nonempty(empty_img->width, empty_img->height, 1) == 0);
+
+  Picture empty_one_row = {
+    TEST_COLORS,
+    0, // width
+    2, // height
+    ""
+  };
+  struct Image *empty_one_row_img = picture_to_img( &empty_one_row );
+  ASSERT(all_tiles_nonempty(empty_one_row_img->width, empty_one_row_img->height, 1) == 0);
+
+  Picture empty_one_col = {
+    TEST_COLORS,
+    0, // width
+    2, // height
+    ""
+  };
+  struct Image *empty_one_col_img = picture_to_img( &empty_one_col );
+  ASSERT(all_tiles_nonempty(empty_one_col_img->width, empty_one_col_img->height, 1) == 0);
 }
 
 void test_determine_tile_w( TestObjs *objs ) {

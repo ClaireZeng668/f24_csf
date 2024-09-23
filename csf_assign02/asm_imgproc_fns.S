@@ -15,6 +15,52 @@
  * them visible to the test code.
  */
 
+.globl all_tiles_nonempty
+all_tiles_nonempty:
+	ret
+.globl determine_tile_w
+determine_tile_w:
+	ret
+.globl determine_tile_h
+determine_tile_h:
+	ret
+.globl determine_tile_x_offset
+determine_tile_x_offset:
+	ret
+.globl determine_tile_y_offset
+determine_tile_y_offset:
+	ret
+.globl copy_tile
+copy_tile:
+	ret
+.globl calculate_starting_index
+calculate_starting_index:
+	ret
+.globl get_r
+get_r:
+	ret
+.globl get_g
+get_g:
+	ret
+.globl get_b
+get_b:
+	ret
+.globl get_a
+get_a:
+	ret
+.globl make_pixel
+make_pixel:
+	ret
+.globl to_grayscale
+to_grayscale:
+	ret
+.globl blend_components
+blend_components:
+	ret
+.globl blend_colors
+blend_colors:
+	ret
+
 /*
  * Implementations of API functions
  */
@@ -31,7 +77,13 @@
  */
 	.globl imgproc_mirror_h
 imgproc_mirror_h:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $8, %rsp
 	/* TODO: implement */
+
+	addq $8, %rsp
+	popq %rbp
 	ret
 
 /*
