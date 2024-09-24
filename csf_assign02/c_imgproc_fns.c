@@ -34,13 +34,7 @@ void imgproc_mirror_h( struct Image *input_img, struct Image *output_img ) {
   }
 }
 
-// Mirror input image vertically.
-// This transformation always succeeds.
-//
-// Parameters:
-//   input_img  - pointer to the input Image
-//   output_img - pointer to the output Image (in which the transformed
-//                pixels should be stored)
+
 void imgproc_mirror_v( struct Image *input_img, struct Image *output_img ) {
   //check if the input and output images are valid and not null
   if (!input_img || !output_img || !input_img->data || !output_img->data) return;
@@ -83,7 +77,6 @@ int imgproc_tile( struct Image *input_img, int n, struct Image *output_img ) {
 }
 
 
-
 void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
   int32_t count = (input_img->height * input_img->width);  //total number of pixels in the image
   //iterate through each pixel in the image and convert it to grayscale
@@ -91,7 +84,6 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
     output_img->data[current] = to_grayscale(input_img->data[current]);
   }
 }
-
 
 
 int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct Image *output_img ) {
