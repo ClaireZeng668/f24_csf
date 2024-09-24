@@ -80,8 +80,45 @@ imgproc_mirror_h:
 	pushq %rbp
 	movq %rsp, %rbp
 	subq $8, %rsp
-	/* TODO: implement */
+	pushq %rbx //%rbx is cols
 
+	movl 4(%rdi), %ebp
+	movl (%rdi), %ebx
+
+	movl $0, %r10d //%r10 is end variable
+	movl $0, %r11d //%r11 is row for loop
+	movl $0, %r13d //%r13 is index for output image
+
+	//for loop
+	.Ltopr:
+		movl %r11d, %r10d //end = row
+		imull %ebx, %r10d //end = end * cols
+		addl %ebx, %r10d //end = end + cols
+		subl $1, %r10d //end = end - 1
+		movl $0, %r12d //%r12 is current for loop
+		jmp .Ltestcondc
+		.Ltopc:
+			movl %r11d, %r13d //index = row
+			imull %ebx, %r13d //index = row*cols
+			addl %r12d, %r13d //index = index + current
+			
+			movl IMAGE_DATA_OFFSET(%rdi), %r15d //r15 is address of input data
+			movl IMAGE_DATA_OFFSET(%rsi), %r14d //r14 is address of output data
+			
+			movl (%r15d,%r10d,4), %r15d //r15 holds address of input to copy
+			movl %r15d, (%r14d,%r13d,4) //r14 holds address of output pixel to change
+			
+			subl $1, %r10d //subtract 1 from end
+			addl $1, %r12d //add 1 to current
+		.Ltestcondc:
+			cmp %r12d, %ebx
+			jge .Ltopc
+		addl $1, %r11d //add 1 to row
+	.Ltestcondr:
+		cmp %r11d, %ebp
+		jge .Ltopr
+
+	popq %rbx
 	addq $8, %rsp
 	popq %rbp
 	ret
