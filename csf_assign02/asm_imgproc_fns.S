@@ -15,6 +15,52 @@
  * them visible to the test code.
  */
 
+.globl all_tiles_nonempty
+all_tiles_nonempty:
+	ret
+.globl determine_tile_w
+determine_tile_w:
+	ret
+.globl determine_tile_h
+determine_tile_h:
+	ret
+.globl determine_tile_x_offset
+determine_tile_x_offset:
+	ret
+.globl determine_tile_y_offset
+determine_tile_y_offset:
+	ret
+.globl copy_tile
+copy_tile:
+	ret
+.globl calculate_starting_index
+calculate_starting_index:
+	ret
+.globl get_r
+get_r:
+	ret
+.globl get_g
+get_g:
+	ret
+.globl get_b
+get_b:
+	ret
+.globl get_a
+get_a:
+	ret
+.globl make_pixel
+make_pixel:
+	ret
+.globl to_grayscale
+to_grayscale:
+	ret
+.globl blend_components
+blend_components:
+	ret
+.globl blend_colors
+blend_colors:
+	ret
+
 /*
  * Implementations of API functions
  */
@@ -31,47 +77,51 @@
  */
 	.globl imgproc_mirror_h
 imgproc_mirror_h:
-    # Function parameters
-    # %rdi: pointer to input_img (struct Image)
-    # %rsi: pointer to output_img (struct Image)
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $8, %rsp
+	pushq %rbx //%rbx is cols
 
-    # Load the width and height of the image
-    movl IMAGE_WIDTH_OFFSET(%rdi), %eax   # Load input_img->width into %eax
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  # Load input_img->height into %ebx
+	movl 4(%rdi), %ebp
+	movl (%rdi), %ebx
 
-    # Set up a loop for each row (height)
-mirror_h_loop_rows:
-    cmp %ebx, 0                           # Check if height (rows) is 0
-    jle done                              # Jump to done if no more rows
+	movl $0, %r10d //%r10 is end variable
+	movl $0, %r11d //%r11 is row for loop
+	movl $0, %r13d //%r13 is index for output image
 
-    # Calculate starting index for the row and loop through its pixels
-    # We need to swap pixels across the row.
-    movl $0, %ecx                         # Pixel index
-    subl $1, %eax                         # width - 1, which gives us the last index of the row
+	//for loop
+	.Ltopr:
+		movl %r11d, %r10d //end = row
+		imull %ebx, %r10d //end = end * cols
+		addl %ebx, %r10d //end = end + cols
+		subl $1, %r10d //end = end - 1
+		movl $0, %r12d //%r12 is current for loop
+		jmp .Ltestcondc
+		.Ltopc:
+			movl %r11d, %r13d //index = row
+			imull %ebx, %r13d //index = row*cols
+			addl %r12d, %r13d //index = index + current
+			
+			movl IMAGE_DATA_OFFSET(%rdi), %r15d //r15 is address of input data
+			movl IMAGE_DATA_OFFSET(%rsi), %r14d //r14 is address of output data
+			
+			movl (%r15d,%r10d,4), %r15d //r15 holds address of input to copy
+			movl %r15d, (%r14d,%r13d,4) //r14 holds address of output pixel to change
+			
+			subl $1, %r10d //subtract 1 from end
+			addl $1, %r12d //add 1 to current
+		.Ltestcondc:
+			cmp %r12d, %ebx
+			jge .Ltopc
+		addl $1, %r11d //add 1 to row
+	.Ltestcondr:
+		cmp %r11d, %ebp
+		jge .Ltopr
 
-mirror_h_loop_cols:
-    # Compare if all pixels are mirrored in the row
-    cmp %ecx, %eax
-    jge next_row                          # Go to next row when done
-
-    # Perform the swap by loading from input_img and storing to output_img
-    mov (%rdi, %ecx, 4), %edx             # Load pixel from input_img at index %ecx
-    mov (%rdi, %eax, 4), %esi             # Load pixel from the mirrored side
-    mov %edx, (%rsi, %eax, 4)             # Store left pixel into output_img
-    mov %esi, (%rsi, %ecx, 4)             # Store right pixel into output_img
-
-    # Update loop indices
-    inc %ecx                              # Increment left pixel index
-    dec %eax                              # Decrement right pixel index
-    jmp mirror_h_loop_cols                # Repeat for next pixel in the row
-
-next_row:
-    # Move to the next row
-    dec %ebx                              # Decrement row index
-    jmp mirror_h_loop_rows                # Loop for next row
-
-done:
-    ret
+	popq %rbx
+	addq $8, %rsp
+	popq %rbp
+	ret
 
 /*
  * void imgproc_mirror_v( struct Image *input_img, struct Image *output_img );

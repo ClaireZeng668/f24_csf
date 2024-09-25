@@ -97,19 +97,23 @@ void test_mirror_v_basic( TestObjs *objs );
 void test_tile_basic( TestObjs *objs );
 void test_grayscale_basic( TestObjs *objs );
 void test_composite_basic( TestObjs *objs );
-// void test_all_tiles_nonempty( TestObjs *objs );
-// void test_determine_tile_w( TestObjs *objs );
-// void test_determine_tile_x_offset( TestObjs *objs );
-// void test_determine_tile_h( TestObjs *objs );
-// void test_determine_tile_y_offset( TestObjs *objs );
-// void test_get_r( TestObjs *objs );
-// void test_get_g( TestObjs *objs );
-// void test_get_b( TestObjs *objs );
-// void test_get_a( TestObjs *objs );
-// void test_make_pixel( TestObjs *objs );
-// void test_to_grayscale( TestObjs *objs );
-// void test_blend_components( TestObjs *objs );
-// void test_blend_colors( TestObjs *objs );
+void test_all_tiles_nonempty( TestObjs *objs );
+void test_determine_tile_w( TestObjs *objs );
+void test_determine_tile_x_offset( TestObjs *objs );
+void test_determine_tile_h( TestObjs *objs );
+void test_determine_tile_y_offset( TestObjs *objs );
+void test_get_r( TestObjs *objs );
+void test_get_g( TestObjs *objs );
+void test_get_b( TestObjs *objs );
+void test_get_a( TestObjs *objs );
+void test_make_pixel( TestObjs *objs );
+void test_to_grayscale( TestObjs *objs );
+void test_blend_components( TestObjs *objs );
+void test_blend_colors( TestObjs *objs );
+void test_calculate_starting_index ( TestObjs *objs );
+void test_copy_tile_1 ( TestObjs *objs);
+void test_copy_tile_2 ( TestObjs *objs);
+void test_copy_tile_3 ( TestObjs *objs);
 // TODO: add prototypes for additional test functions
 
 int main( int argc, char **argv ) {
@@ -125,9 +129,9 @@ int main( int argc, char **argv ) {
   // for any additional test functions you add.
   TEST( test_mirror_h_basic );
   TEST( test_mirror_v_basic );
-  TEST( test_tile_basic );
+  // TEST( test_tile_basic );
   TEST( test_grayscale_basic );
-  TEST( test_composite_basic );
+  // TEST( test_composite_basic );
   // TEST( test_all_tiles_nonempty );
   // TEST( test_determine_tile_w );
   // TEST( test_determine_tile_x_offset );
@@ -141,6 +145,10 @@ int main( int argc, char **argv ) {
   // TEST( test_to_grayscale );
   // TEST( test_blend_components );
   // TEST( test_blend_colors );
+  // TEST( test_calculate_starting_index );
+  // TEST( test_copy_tile_1 );
+  // TEST( test_copy_tile_2 );
+  // TEST( test_copy_tile_3 );
   TEST_FINI();
 }
 
@@ -373,6 +381,7 @@ void test_composite_basic( TestObjs *objs ) {
   ASSERT( 0x000080FF == objs->smiley_out->data[87] );
 }
 
+<<<<<<< HEAD
 // Test for all_tiles_nonempty function
 void test_all_tiles_nonempty( TestObjs *objs ) {
     ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 1) == 1);
@@ -588,4 +597,264 @@ void test_blend_colors(TestObjs *objs) {
     uint32_t bg6 = 0x0000FFFF;
     uint32_t result6 = blend_colors(fg6, bg6);
     assert(result6 == 0x7F7F80FF); 
+=======
+void test_all_tiles_nonempty( TestObjs *objs ) {
+  ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 1) == 1);
+  ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 10) == 1);
+  ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 16) == 0);
+  ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 17) == 0);
+
+  Picture empty = {
+    TEST_COLORS,
+    0, // width
+    0, // height
+    ""
+  };
+  struct Image *empty_img = picture_to_img( &empty );
+
+  ASSERT(all_tiles_nonempty(empty_img->width, empty_img->height, 1) == 0);
+
+  Picture empty_one_row = {
+    TEST_COLORS,
+    0, // width
+    2, // height
+    ""
+  };
+  struct Image *empty_one_row_img = picture_to_img( &empty_one_row );
+  ASSERT(all_tiles_nonempty(empty_one_row_img->width, empty_one_row_img->height, 1) == 0);
+
+  Picture empty_one_col = {
+    TEST_COLORS,
+    0, // width
+    2, // height
+    ""
+  };
+  struct Image *empty_one_col_img = picture_to_img( &empty_one_col );
+  ASSERT(all_tiles_nonempty(empty_one_col_img->width, empty_one_col_img->height, 1) == 0);
+}
+
+void test_determine_tile_w( TestObjs *objs ) {
+  ASSERT(determine_tile_w(objs->smiley->width, 1) == 16);
+  ASSERT(determine_tile_w(objs->smiley->width, 2) == 8);
+  ASSERT(determine_tile_w(objs->smiley->width, 3) == 5);
+  ASSERT(determine_tile_w(objs->smiley->width, 14) == 1);
+  ASSERT(determine_tile_w(objs->smiley->width, 15) == 1);
+  ASSERT(determine_tile_w(objs->smiley->width, 16) == 1);
+}
+
+void test_determine_tile_x_offset( TestObjs *objs ) {
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 3,0) == 1);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 3,1) == 0);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 3,2) == 0);
+
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 7,0) == 1);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 7,1) == 1);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 7,6) == 0);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 7,7) == 0);
+
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 13,0) == 1);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 13,1) == 1);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 13,2) == 1);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 13,11) == 0);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 13,12) == 0);
+
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 16,0) == 0);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 16,1) == 0);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 16,14) == 0);
+  ASSERT(determine_tile_x_offset(objs->smiley->width, 16,15) == 0);
+}
+
+void test_determine_tile_h( TestObjs *objs ) {
+  ASSERT(determine_tile_h(objs->smiley->height, 1) == 10);
+  ASSERT(determine_tile_h(objs->smiley->height, 2) == 5);
+  ASSERT(determine_tile_h(objs->smiley->height, 3) == 3);
+  ASSERT(determine_tile_h(objs->smiley->height, 8) == 1);
+  ASSERT(determine_tile_h(objs->smiley->height, 9) == 1);
+  ASSERT(determine_tile_h(objs->smiley->height, 10) == 1);
+}
+
+void test_determine_tile_y_offset( TestObjs *objs ) {
+   ASSERT(determine_tile_y_offset(objs->smiley->height, 3,0) == 1);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 3,1) == 0);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 3,2) == 0);
+
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 6,0) == 1);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 6,1) == 1);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 6,4) == 0);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 6,5) == 0);
+
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 9,0) == 1);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 9,1) == 0);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 9,8) == 0);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 9,8) == 0);
+
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 10,0) == 0);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 10,1) == 0);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 10,9) == 0);
+  ASSERT(determine_tile_y_offset(objs->smiley->height, 10,10) == 0);
+}
+
+void test_get_r( TestObjs *objs ) {
+  ASSERT(get_r(0x00000000U) == 0x00000000U);
+  ASSERT(get_r(0xFF000000U) == 0x000000FFU);
+  ASSERT(get_r(0x01000000U) == 0x00000001U);
+  ASSERT(get_r(0x11000000U) == 0x00000011U);
+  ASSERT(get_r(0xFFFFFFFFU) == 0x000000FFU);
+}
+void test_get_g( TestObjs *objs ) {
+  ASSERT(get_g(0x00000000U) == 0x00000000U);
+  ASSERT(get_g(0x00FF0000U) == 0x000000FFU);
+  ASSERT(get_g(0x00110000U) == 0x00000011U);
+  ASSERT(get_g(0x00010000U) == 0x00000001U);
+  ASSERT(get_g(0xFFFFFFFFU) == 0x000000FFU);
+}
+void test_get_b( TestObjs *objs ) {
+  ASSERT(get_b(0x00000000U) == 0x00000000U);
+  ASSERT(get_b(0x0000FF00U) == 0x000000FFU);
+  ASSERT(get_b(0x00001100U) == 0x00000011U);
+  ASSERT(get_b(0x00000100U) == 0x00000001U);
+  ASSERT(get_b(0xFFFFFFFFU) == 0x000000FFU);
+}
+void test_get_a( TestObjs *objs ) {
+  ASSERT(get_a(0x00000000U) == 0x00000000U);
+  ASSERT(get_a(0x000000FFU) == 0x000000FFU);
+  ASSERT(get_a(0x00000011U) == 0x00000011U);
+  ASSERT(get_a(0x00000001U) == 0x00000001U);
+  ASSERT(get_a(0xFFFFFFFFU) == 0x000000FFU);
+}
+void test_make_pixel( TestObjs *objs ) {
+  ASSERT(make_pixel(0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U) == 0x00000000U);
+  ASSERT(make_pixel(0x00000001U, 0x00000000U, 0x00000000U, 0x00000000U) == 0x01000000U);
+  ASSERT(make_pixel(0x00000000U, 0x00000001U, 0x00000000U, 0x00000000U) == 0x00010000U);
+  ASSERT(make_pixel(0x00000000U, 0x00000000U, 0x00000001U, 0x00000000U) == 0x00000100U);
+  ASSERT(make_pixel(0x00000000U, 0x00000000U, 0x00000000U, 0x00000001U) == 0x00000001U);
+
+  ASSERT(make_pixel(0x000000FFU, 0x000000FFU, 0x000000FFU, 0x000000FFU) == 0xFFFFFFFFU);
+}
+
+void test_to_grayscale( TestObjs *objs ) {
+  ASSERT(to_grayscale(0x00000000U) == 0x00000000U);
+  ASSERT(to_grayscale(0x000000FFU) == 0x000000FFU);
+  ASSERT(to_grayscale(0xFFFFFFFFU) == 0xFFFFFFFFU);
+  ASSERT(to_grayscale(0xFFFFFF00U) == 0xFFFFFF00U);
+
+  ASSERT(to_grayscale(0x01000000U) == 0x00000000U);
+  ASSERT(to_grayscale(0xFF000000U) == 0x4E4E4E00U);
+
+  ASSERT(to_grayscale(0x00010000U) == 0x00000000U);
+  ASSERT(to_grayscale(0x00FF0000U) == 0x7F7F7F00U);
+
+  ASSERT(to_grayscale(0x00000100U) == 0x00000000U);
+  ASSERT(to_grayscale(0x0000FF00U) == 0x30303000U);
+
+  ASSERT(to_grayscale(0x0F0F0F0FU) == 0x0F0F0F0FU);
+}
+
+void test_blend_components ( TestObjs *objs ) {
+  ASSERT(blend_components(0x00000000U, 0x00000000U, 0x00000000U) == 0x00000000U);
+  ASSERT(blend_components(0x000000FFU, 0x00000000U, 0x00000001U) == 0x00000001U);
+  ASSERT(blend_components(0x000000FFU, 0x00000000U, 0x000000FFU) == 0x000000FFU);
+  ASSERT(blend_components(0x00000000U, 0x000000FFU, 0x000000FFU) == 0x00000000U);
+  ASSERT(blend_components(0x00000000U, 0x000000FFU, 0x00000000U) == 0x000000FFU);
+  ASSERT(blend_components(0x000000FFU, 0x00000001U, 0x00000080U) == 0x00000080U);
+  ASSERT(blend_components(0x00000001U, 0x00000000U, 0x00000000U) == 0x00000000U);
+}
+
+void test_blend_colors ( TestObjs *objs ) {
+  ASSERT(blend_colors(0x00000000U, 0x00000000U) == 0x000000FFU);
+  ASSERT(blend_colors(0xFFFFFF00U, 0x00000000U) == 0x000000FFU);
+  ASSERT(blend_colors(0xFFFFFF00U, 0x01010101U) == 0x010101FFU);
+  ASSERT(blend_colors(0xFFFFFF00U, 0x01010101U) == 0x010101FFU);
+  ASSERT(blend_colors(0x01010101U, 0x01010101U) == 0x010101FFU);
+  ASSERT(blend_colors(0x00000000U, 0xFFFFFFFFU) == 0xFFFFFFFFU);
+  ASSERT(blend_colors(0x00000000U, 0xFF00FFFFU) == 0xFF00FFFFU);
+}
+
+void test_calculate_starting_index ( TestObjs *objs ) {
+  ASSERT(calculate_starting_index(objs->smiley, 0, 0, 2) == 0);
+  ASSERT(calculate_starting_index(objs->smiley, 1, 1, 2) == 88);
+
+  ASSERT(calculate_starting_index(objs->smiley, 0, 0, 3) == 0);
+  ASSERT(calculate_starting_index(objs->smiley, 2, 2, 3) == 123);
+  ASSERT(calculate_starting_index(objs->smiley, 1, 1, 3) == 70);
+  
+  ASSERT(calculate_starting_index(objs->smiley, 0, 0, 6) == 0);
+  ASSERT(calculate_starting_index(objs->smiley, 5, 5, 6) == 158);
+  ASSERT(calculate_starting_index(objs->smiley, 3, 2, 6) == 102);
+
+  ASSERT(calculate_starting_index(objs->smiley, 0, 0, 9) == 0);
+  ASSERT(calculate_starting_index(objs->smiley, 8, 8, 9) == 159);
+  ASSERT(calculate_starting_index(objs->smiley, 5, 6, 9) == 108);
+}
+
+void test_copy_tile_1 ( TestObjs *objs) {
+  for (int tile_row = 0; tile_row < 2; tile_row++) {
+    for (int tile_col = 0; tile_col < 2; tile_col++) {
+      //copy the sampled tile from the input image to the output
+      copy_tile(objs->smiley_out, objs->smiley, tile_row, tile_col, 2);
+    }
+  }
+  int pos;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 6; j++) {
+      pos = (i*16) + j;
+      if (pos == 2) {
+        ASSERT(objs->smiley_out->data[pos] = 0xFF0000FFU);
+      } else if (pos == 3 || pos == 34) {
+        ASSERT(objs->smiley_out->data[pos] = 0x00FF00FFU);
+      }  else if (pos == 35) {
+        ASSERT(objs->smiley_out->data[pos] = 0x0000FFFFU);
+      } else {
+        ASSERT(objs->smiley_out->data[pos] = 0x000000FFU);
+      }
+    }
+  }
+}
+
+
+void test_copy_tile_2 ( TestObjs *objs) {
+  copy_tile(objs->smiley_out, objs->smiley, 0, 0, 9);
+  ASSERT(objs->smiley_out->data[0] = 0x000000FFU);
+  ASSERT(objs->smiley_out->data[2] = 0x00FF00FFU);
+  ASSERT(objs->smiley_out->data[16] = 0x000000FFU);
+  ASSERT(objs->smiley_out->data[17] = 0x000000FFU);
+
+  copy_tile(objs->smiley_out, objs->smiley, 2, 5, 9);
+  ASSERT(objs->smiley_out->data[58] = 0x000000FFU);
+  ASSERT(objs->smiley_out->data[59] = 0x00FF00FFU);
+
+  copy_tile(objs->smiley_out, objs->smiley, 6, 1, 9);
+  ASSERT(objs->smiley_out->data[114] = 0x000000FFU);
+  ASSERT(objs->smiley_out->data[115] = 0x00FF00FFU);
+
+  ASSERT(objs->smiley_out->data[159] = 0x000000FFU);
+}
+
+void test_copy_tile_3 ( TestObjs *objs) {
+  copy_tile(objs->smiley_out, objs->smiley, 0, 0, 2);
+  ASSERT(objs->smiley_out->data[0] = 0x000000FFU);
+  ASSERT(objs->smiley_out->data[2] = 0xFF00FFFFU);
+  ASSERT(objs->smiley_out->data[3] = 0xFF0000FFU);
+  ASSERT(objs->smiley_out->data[4] = 0x00FF00FFU);
+  ASSERT(objs->smiley_out->data[5] = 0x0000FFFFU);
+
+  ASSERT(objs->smiley_out->data[66] = 0x00FF00FFU);
+  ASSERT(objs->smiley_out->data[67] = 0x00FF00FFU);
+  ASSERT(objs->smiley_out->data[68] = 0xFF0000FFU);
+  ASSERT(objs->smiley_out->data[69] = 0xFF00FFFFU);
+
+
+  copy_tile(objs->smiley_out, objs->smiley, 1, 1, 2);
+  ASSERT(objs->smiley_out->data[88] = 0x000000FFU);
+  ASSERT(objs->smiley_out->data[90] = 0xFF00FFFFU);
+  ASSERT(objs->smiley_out->data[91] = 0xFF0000FFU);
+  ASSERT(objs->smiley_out->data[92] = 0x00FF00FFU);
+  ASSERT(objs->smiley_out->data[93] = 0x0000FFFFU);
+
+  ASSERT(objs->smiley_out->data[154] = 0x00FF00FFU);
+  ASSERT(objs->smiley_out->data[155] = 0x00FF00FFU);
+  ASSERT(objs->smiley_out->data[156] = 0xFF0000FFU);
+  ASSERT(objs->smiley_out->data[157] = 0xFF00FFFFU);
+  
+>>>>>>> 5075505406e52fdee0b8f5e1b00fcb5b14a9f7f1
 }

@@ -34,7 +34,10 @@ void imgproc_mirror_h( struct Image *input_img, struct Image *output_img ) {
   }
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5075505406e52fdee0b8f5e1b00fcb5b14a9f7f1
 void imgproc_mirror_v( struct Image *input_img, struct Image *output_img ) {
   //check if the input and output images are valid and not null
   if (!input_img || !output_img || !input_img->data || !output_img->data) return;
@@ -135,36 +138,11 @@ int determine_tile_y_offset( int height, int n, int tile_row ) {
 
 //copy a tile from the input image to the output image
 void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile_col, int n ) {
-  int total_width_offset = img->width % n;  //offset for the width of the image if it is not divisible by n
-  int total_height_offset = img->height % n;  //offset for the height of the image if it is not divisible by n
-  int base_width = determine_tile_w(img->width, n);
-  int base_height = determine_tile_h(img->height, n);
-
-  int row_len = base_width + determine_tile_x_offset(img->width, n, tile_col);
-  int col_len = base_height  + determine_tile_y_offset(img->height, n, tile_row);
+  int row_len = determine_tile_w(img->width, n) + determine_tile_x_offset(img->width, n, tile_col);
+  int col_len = determine_tile_h(img->height, n)  + determine_tile_y_offset(img->height, n, tile_row);
 
   int orig_start_index = 0;
-  int out_start_index = 0;
-
-  //calculate start index for output tile
-  for (int i = 0; i < tile_col; i++) {
-    if (total_width_offset > 0) {
-      out_start_index = out_start_index + base_width + 1;
-      total_width_offset--;
-    } else {
-      out_start_index = out_start_index + base_width;
-    }
-  }
-
-  //calculate start index for row
-  for (int i = 0; i < tile_row; i++) {
-    if (total_height_offset > 0) {
-      out_start_index = out_start_index + (img->width * (base_height+1));
-      total_height_offset--;
-    } else {
-      out_start_index = out_start_index + (img->width * base_height);
-    }
-  }
+  int out_start_index = calculate_starting_index(img, tile_row, tile_col, n);
 
   //copy data from input tile to output tile
   int orig_pos = orig_start_index;
@@ -178,6 +156,33 @@ void copy_tile( struct Image *out_img, struct Image *img, int tile_row, int tile
     out_pos = out_start_index+row+1;
     orig_pos = orig_start_index+((row+1)*n);
   }
+}
+
+//get the output image index based on tile row, tile col, and tiling factor n
+int calculate_starting_index (struct Image *img, int tile_row, int tile_col, int n ) {
+  int total_width_offset = img->width % n;  //offset for the width of the image if it is not divisible by n
+  int total_height_offset = img->height % n;  //offset for the height of the image if it is not divisible by n
+  int out_start_index = 0;
+  //calculate start index for output tile
+  for (int i = 0; i < tile_col; i++) {
+    if (total_width_offset > 0) {
+      out_start_index = out_start_index + determine_tile_w(img->width, n) + 1;
+      total_width_offset--;
+    } else {
+      out_start_index = out_start_index + determine_tile_w(img->width, n);
+    }
+  }
+
+  //calculate start index for row
+  for (int i = 0; i < tile_row; i++) {
+    if (total_height_offset > 0) {
+      out_start_index = out_start_index + (img->width * (determine_tile_h(img->height, n)+1));
+      total_height_offset--;
+    } else {
+      out_start_index = out_start_index + (img->width * determine_tile_h(img->height, n));
+    }
+  }
+  return out_start_index;
 }
 
 //functions to extract RBGA values from 32-bit pixel
