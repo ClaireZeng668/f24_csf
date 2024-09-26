@@ -60,16 +60,23 @@ blend_colors:
 	.globl imgproc_mirror_h
 imgproc_mirror_h:
 //break 282
+	pushq %rbp
+	movq %rsp, %rbp
 	pushq %rbx
-	movq %rsp, %rbx
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
 
 	# Load the width and height of the image
 	movl IMAGE_WIDTH_OFFSET(%rdi), %eax   # Load input_img->width into %eax = cols
     movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  # Load input_img->height into %ebx = rows
 
+	movl $0, %r10d //%r10 is end variable
 	movl $0, %r11d //%r11 is row for loop
 	movl $0, %r12d //%r12 is current for loop
 	movl $0, %r13d //%r13 is index for output image
+	
 	movq IMAGE_DATA_OFFSET(%rsi), %r14 //r14 is address of output data
 	movq IMAGE_DATA_OFFSET(%rdi), %r15 //r15 is address of input data
 
@@ -79,7 +86,7 @@ imgproc_mirror_h:
 		#Calculate end - index of last pixel of row
 		movl $0, %r10d //%r10 is end variable
 		movl %r11d, %r10d //end = row
-		imull %eax, %r10d //end = end * cols
+		imul %eax, %r10d //end = end * cols
 		addl %eax, %r10d //end = end + cols
 		subl $1, %r10d //end = end - 1
 		movl $0, %r12d //%r12 is current for loop
@@ -88,7 +95,7 @@ imgproc_mirror_h:
 		.Ltopc:
 			movl $0, %r13d //%r13 is index for output image
 			movl %r11d, %r13d //index = row
-			imull %ebx, %r13d //index = row*cols
+			imul %eax, %r13d //index = row*cols
 			addl %r12d, %r13d //index = index + current
 
 			//gdb: print *((unsigned *) ($r15 + ($r10 * 4)))
@@ -109,7 +116,12 @@ imgproc_mirror_h:
 		cmp %r11d, %ebx
 		jg .Ltopr
 
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
 	popq %rbx
+	popq %rbp
 	ret
 
 /*
@@ -208,22 +220,17 @@ imgproc_grayscale:
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	subq $24, %rsp
 
 	//Load the width and height of the image
-    movl IMAGE_WIDTH_OFFSET(%rdi), %r10d   //Load input_img->width into %eax
+    movl IMAGE_WIDTH_OFFSET(%rdi), %r15d   //Load input_img->width into %eax
     movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  //Load input_img->height into %ebx
 
     # Total number of pixels
-    imul %ebx, %r10d               //Multiply width * height to get pixel count stored in eax
+    imul %ebx, %r15d               //Multiply width * height to get pixel count stored in eax
 	movl $0, %r12d //r12 is current index  
-	movq %rsi, %rbx //ebx holds output struct
-	movq %rdi, %r15 //r15 holds input struct
 
-	movl IMAGE_DATA_OFFSET(%rbx), %r13d //r13 is output->data
-	movl IMAGE_DATA_OFFSET(%r15), %r14d //r14 is input->data
-	pushq %r10
-
+	movq IMAGE_DATA_OFFSET(%rsi), %r13 //r13 is output->data
+	movq IMAGE_DATA_OFFSET(%rdi), %r14 //r14 is input->data
 	jmp .Ltestcond
 	.Ltop:
 		//print *((unsigned *) ($r15 + ($r10 * 4)))
@@ -233,11 +240,9 @@ imgproc_grayscale:
 		movl %eax, (%r13d,%r12d,4) //put grayscaled pixel into output[current] 
 		addl $1, %r12d
 	.Ltestcond:
-		#popq %r10
-		cmp %r12d, %r10d       			  # Check if we've processed all pixels
+		cmp %r12d, %r15d       			  # Check if we've processed all pixels
     	jg .Ltop
 
-	addq $24, %rsp
 	popq %r15
 	popq %r14
 	popq %r13
