@@ -215,17 +215,21 @@ imgproc_grayscale:
     movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  //Load input_img->height into %ebx
 
     # Total number of pixels
-    imul %ebx, %eax                       //Multiply width * height to get pixel count
+    imul %ebx, %eax               //Multiply width * height to get pixel count stored in eax
 	movl $0, %r12d //r12 is current index  
+	movq %rsi, %rbx //ebx holds output-data
+	movq %rdi, %r15 //r15 holds input-data
 	jmp .Ltestcond
 	.Ltop:
-		movl IMAGE_DATA_OFFSET(%rsi), %r13d //r13 is output->data
-		movl IMAGE_DATA_OFFSET(%rdi), %r14d //r14 is input->data
+		movl IMAGE_DATA_OFFSET(%rbx), %r13d //r13 is output->data
+		movl IMAGE_DATA_OFFSET(%r15), %r14d //r14 is input->data
 
-		movl (%r14d,%r12d,4), %r15d //r15 is address of pixel to convert (input[current])
-		movl %r15d, %edi //move pixel to first argument
+		//print *((unsigned *) ($r15 + ($r10 * 4)))
+		//movl (%r14d,%r12d,4), %r15d //r15 is address of pixel to convert (input[current])
+		movl (%r14d,%r12d,4), %edi //move address of pixel to first argument
 		call to_grayscale //call grayscale on pixel, %eax now hold grayscaled pixel
 		movl %eax, (%r13d,%r12d,4) //put grayscaled pixel into output[current] 
+		addl $1, %r12d
 	.Ltestcond:
 		cmp %r12d, %eax       			  # Check if we've processed all pixels
     	jg .Ltop
@@ -238,11 +242,10 @@ imgproc_grayscale:
 	popq %rbx
 	popq %rbp
     ret
-
-/*Function parameters
-    %rdi: pointer to pixel to grayscale
-	already used r10, r11, r12, r13, r14
-*/
+/*
+ * Parameters:
+ *	%rdi: pointer to pixel to grayscale
+ */
 .globl get_r
 get_r:
 	shr $24, %edi
@@ -284,43 +287,44 @@ make_pixel:
 	or %edx, %eax
 	or %ecx, %eax
 	ret
+/*
+ * Parameters:
+ *	%rdi: pointer to pixel
+ */
 .globl to_grayscale
 to_grayscale:
-	# Function parameters
-    # %rdi: pointer to pixel to grayscale
 	pushq %rbp
 	movq %rsp, %rbp
 	pushq %rbx
-	subq $8, %rsp
-	movl %edi, %ebx
+	pushq %r12
 
-	subq $8, %rsp
-	movl $0, %r13d
-	movl %ebx, %edi
-	call get_r //get r from pixel in rdi, eax holds red
+	movl %edi, %ebx //ebx holds pixel parameter
+
+	movl $0, %r12d
+	call get_r //get r from pixel in edi, eax holds red component
 	imul $79, %eax
-	movl %eax, %r14d //r14 hold grayscaled 
+	movl %eax, %r12d //r12 hold grayscale value
 
 	movl %ebx, %edi
 	call get_g //eax now holds green
 	imul $128, %eax
-	addl %eax, %r14d
+	addl %eax, %r12d
 
 	movl %ebx, %edi
 	call get_b //eax now holds blue
 	imul $48, %eax
-	addl %eax, %r14d
-	shr $8, %r14d //r14 holds grayscaled value
+	addl %eax, %r12d
+	shr $8, %r12d //r12 holds grayscaled value
 
 	movl %ebx, %edi
 	call get_a //eax now holds alpha value
-	movl %r14d, %edi
-	movl %r14d, %esi
-	movl %r14d, %edx
+	movl %r12d, %edi
+	movl %r12d, %esi
+	movl %r12d, %edx
 	movl %eax, %ecx
 	call make_pixel //eax holds grayscaled pixel
 
-	addq $8, %rsp
+	popq %r12
 	popq %rbx
 	popq %rbp
 	ret
