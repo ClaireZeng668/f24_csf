@@ -208,22 +208,24 @@ imgproc_grayscale:
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	subq $8, %rsp
+	subq $24, %rsp
 
 	//Load the width and height of the image
-    movl IMAGE_WIDTH_OFFSET(%rdi), %eax   //Load input_img->width into %eax
+    movl IMAGE_WIDTH_OFFSET(%rdi), %r10d   //Load input_img->width into %eax
     movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  //Load input_img->height into %ebx
 
     # Total number of pixels
-    imul %ebx, %eax               //Multiply width * height to get pixel count stored in eax
+    imul %ebx, %r10d               //Multiply width * height to get pixel count stored in eax
 	movl $0, %r12d //r12 is current index  
-	movq %rsi, %rbx //ebx holds output-data
-	movq %rdi, %r15 //r15 holds input-data
+	movq %rsi, %rbx //ebx holds output struct
+	movq %rdi, %r15 //r15 holds input struct
+
+	movl IMAGE_DATA_OFFSET(%rbx), %r13d //r13 is output->data
+	movl IMAGE_DATA_OFFSET(%r15), %r14d //r14 is input->data
+	pushq %r10
+
 	jmp .Ltestcond
 	.Ltop:
-		movl IMAGE_DATA_OFFSET(%rbx), %r13d //r13 is output->data
-		movl IMAGE_DATA_OFFSET(%r15), %r14d //r14 is input->data
-
 		//print *((unsigned *) ($r15 + ($r10 * 4)))
 		//movl (%r14d,%r12d,4), %r15d //r15 is address of pixel to convert (input[current])
 		movl (%r14d,%r12d,4), %edi //move address of pixel to first argument
@@ -231,10 +233,11 @@ imgproc_grayscale:
 		movl %eax, (%r13d,%r12d,4) //put grayscaled pixel into output[current] 
 		addl $1, %r12d
 	.Ltestcond:
-		cmp %r12d, %eax       			  # Check if we've processed all pixels
+		#popq %r10
+		cmp %r12d, %r10d       			  # Check if we've processed all pixels
     	jg .Ltop
 
-	addq $8, %rsp
+	addq $24, %rsp
 	popq %r15
 	popq %r14
 	popq %r13
@@ -312,7 +315,7 @@ to_grayscale:
 
 	movl %ebx, %edi
 	call get_b //eax now holds blue
-	imul $48, %eax
+	imul $49, %eax
 	addl %eax, %r12d
 	shr $8, %r12d //r12 holds grayscaled value
 
@@ -328,7 +331,6 @@ to_grayscale:
 	popq %rbx
 	popq %rbp
 	ret
-
 
 /*
  * int imgproc_composite( struct Image *base_img, struct Image *overlay_img );

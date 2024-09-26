@@ -137,12 +137,12 @@ int main( int argc, char **argv ) {
   // TEST( test_determine_tile_x_offset );
   // TEST( test_determine_tile_h );
   // TEST( test_determine_tile_y_offset );
-  // TEST( test_get_r );
-  // TEST( test_get_g );
-  // TEST( test_get_b );
-  // TEST( test_get_a );
-  // TEST( test_make_pixel );
-  // TEST( test_to_grayscale );
+  TEST( test_get_r );
+  TEST( test_get_g );
+  TEST( test_get_b );
+  TEST( test_get_a );
+  TEST( test_make_pixel );
+  TEST( test_to_grayscale );
   // TEST( test_blend_components );
   // TEST( test_blend_colors );
   // TEST( test_calculate_starting_index );
