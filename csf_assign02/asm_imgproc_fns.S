@@ -36,24 +36,6 @@ copy_tile:
 .globl calculate_starting_index
 calculate_starting_index:
 	ret
-.globl get_r
-get_r:
-	ret
-.globl get_g
-get_g:
-	ret
-.globl get_b
-get_b:
-	ret
-.globl get_a
-get_a:
-	ret
-.globl make_pixel
-make_pixel:
-	ret
-.globl to_grayscale
-to_grayscale:
-	ret
 .globl blend_components
 blend_components:
 	ret
@@ -77,50 +59,57 @@ blend_colors:
  */
 	.globl imgproc_mirror_h
 imgproc_mirror_h:
-	pushq %rbp
-	movq %rsp, %rbp
-	subq $8, %rsp
-	pushq %rbx //%rbx is cols
+//break 282
+	pushq %rbx
+	movq %rsp, %rbx
 
-	movl 4(%rdi), %ebp
-	movl (%rdi), %ebx
+	# Load the width and height of the image
+	movl IMAGE_WIDTH_OFFSET(%rdi), %eax   # Load input_img->width into %eax = cols
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  # Load input_img->height into %ebx = rows
 
-	movl $0, %r10d //%r10 is end variable
 	movl $0, %r11d //%r11 is row for loop
+	movl $0, %r12d //%r12 is current for loop
 	movl $0, %r13d //%r13 is index for output image
+	movq IMAGE_DATA_OFFSET(%rsi), %r14 //r14 is address of output data
+	movq IMAGE_DATA_OFFSET(%rdi), %r15 //r15 is address of input data
 
 	//for loop
+	jmp .Ltestcondr
 	.Ltopr:
+		#Calculate end - index of last pixel of row
+		movl $0, %r10d //%r10 is end variable
 		movl %r11d, %r10d //end = row
-		imull %ebx, %r10d //end = end * cols
-		addl %ebx, %r10d //end = end + cols
+		imull %eax, %r10d //end = end * cols
+		addl %eax, %r10d //end = end + cols
 		subl $1, %r10d //end = end - 1
 		movl $0, %r12d //%r12 is current for loop
+
 		jmp .Ltestcondc
 		.Ltopc:
+			movl $0, %r13d //%r13 is index for output image
 			movl %r11d, %r13d //index = row
 			imull %ebx, %r13d //index = row*cols
 			addl %r12d, %r13d //index = index + current
-			
-			movl IMAGE_DATA_OFFSET(%rdi), %r15d //r15 is address of input data
-			movl IMAGE_DATA_OFFSET(%rsi), %r14d //r14 is address of output data
-			
-			movl (%r15d,%r10d,4), %r15d //r15 holds address of input to copy
-			movl %r15d, (%r14d,%r13d,4) //r14 holds address of output pixel to change
+
+			//gdb: print *((unsigned *) ($r15 + ($r10 * 4)))
+			//gdb print $r8d
+			//print/x $r8d
+
+			movl (%r15,%r10,4), %r8d
+			movl %r8d, (%r14,%r13,4)
 			
 			subl $1, %r10d //subtract 1 from end
 			addl $1, %r12d //add 1 to current
 		.Ltestcondc:
-			cmp %r12d, %ebx
-			jge .Ltopc
+			cmp %r12d, %eax
+			jg .Ltopc
+
 		addl $1, %r11d //add 1 to row
 	.Ltestcondr:
-		cmp %r11d, %ebp
-		jge .Ltopr
+		cmp %r11d, %ebx
+		jg .Ltopr
 
 	popq %rbx
-	addq $8, %rsp
-	popq %rbp
 	ret
 
 /*
@@ -134,7 +123,7 @@ imgproc_mirror_h:
  *   %rsi - pointer to output struct Image
  */
 	.globl imgproc_mirror_v
-imgproc_mirror_v:
+imgproc_mirror_v:/*
     # Function parameters
     # %rdi: pointer to input_img (struct Image)
     # %rsi: pointer to output_img (struct Image)
@@ -172,7 +161,7 @@ next_col:
     dec %eax                              # Decrement column index
     jmp mirror_v_loop_cols                # Loop for next column
 
-done:
+done:*/
     ret
 
 /*
@@ -211,52 +200,131 @@ imgproc_tile:
  */
 	.globl imgproc_grayscale
 imgproc_grayscale:
-    # Function parameters
-    # %rdi: pointer to input_img (struct Image)
-    # %rsi: pointer to output_img (struct Image)
+	//break 356
+	pushq %rbp
+	movq %rsp, %rbp
+	pushq %rbx
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	subq $8, %rsp
 
-    # Load the width and height of the image
-    movl IMAGE_WIDTH_OFFSET(%rdi), %eax   # Load input_img->width into %eax
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  # Load input_img->height into %ebx
+	//Load the width and height of the image
+    movl IMAGE_WIDTH_OFFSET(%rdi), %eax   //Load input_img->width into %eax
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  //Load input_img->height into %ebx
 
     # Total number of pixels
-    imul %ebx, %eax                       # Multiply width * height to get pixel count
+    imul %ebx, %eax                       //Multiply width * height to get pixel count
+	movl $0, %r12d //r12 is current index  
+	jmp .Ltestcond
+	.Ltop:
+		movl IMAGE_DATA_OFFSET(%rsi), %r13d //r13 is output->data
+		movl IMAGE_DATA_OFFSET(%rdi), %r14d //r14 is input->data
 
-grayscale_loop:
-    cmp %eax, 0                           # Check if we've processed all pixels
-    jle done                              # If no more pixels, exit
+		movl (%r14d,%r12d,4), %r15d //r15 is address of pixel to convert (input[current])
+		movl %r15d, %edi //move pixel to first argument
+		call to_grayscale //call grayscale on pixel, %eax now hold grayscaled pixel
+		movl %eax, (%r13d,%r12d,4) //put grayscaled pixel into output[current] 
+	.Ltestcond:
+		cmp %r12d, %eax       			  # Check if we've processed all pixels
+    	jg .Ltop
 
-    # Load pixel from input_img
-    mov (%rdi, %eax, 4), %edx             # Load pixel into %edx
-
-    # Extract the red, green, and blue components
-    movzbl %dh, %ecx                      # Extract red
-    movzbl %dl, %ebx                      # Extract green
-    movzbl %dah, %esi                     # Extract blue
-
-    # Apply grayscale conversion formula (0.3R + 0.59G + 0.11B)
-    imul $77, %ecx                        # Multiply red by 0.3 * 256 (77)
-    imul $150, %ebx                       # Multiply green by 0.59 * 256 (150)
-    imul $29, %esi                        # Multiply blue by 0.11 * 256 (29)
-    add %ecx, %ebx                        # Add red and green components
-    add %esi, %ebx                        # Add blue component
-
-    # Right shift to divide by 256 and get grayscale value
-    shr $8, %ebx                          # Divide by 256
-
-    # Pack grayscale value back into RGB (R=G=B)
-    mov %ebx, %ecx
-    mov %ebx, %esi
-
-    # Store the result in output_img
-    mov %ecx, (%rsi, %eax, 4)             # Store pixel
-
-    # Move to the next pixel
-    dec %eax                              # Decrement pixel count
-    jmp grayscale_loop                    # Repeat for next pixel
-
-done:
+	addq $8, %rsp
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %rbx
+	popq %rbp
     ret
+
+/*Function parameters
+    %rdi: pointer to pixel to grayscale
+	already used r10, r11, r12, r13, r14
+*/
+.globl get_r
+get_r:
+	shr $24, %edi
+	and $0x000000FFU, %edi
+	movl %edi, %eax
+	ret
+.globl get_g
+get_g:
+	shr $16, %edi
+	and $0x000000FFU, %edi
+	movl %edi, %eax
+	ret
+.globl get_b
+get_b:
+	shr $8, %edi
+	and $0x000000FFU, %edi
+	movl %edi, %eax
+	ret
+.globl get_a
+get_a:
+	and $0x000000FFU, %edi  
+	movl %edi, %eax
+	ret
+/*
+ * Parameters:
+ *	%rdi: red component
+ *	%rsi: green component
+ *	%rdx: blue component
+ *	%rcx: alpha component
+ */
+.globl make_pixel
+make_pixel:
+	shl $24, %edi
+	shl $16, %esi
+	shl $8, %edx
+	movl $0, %eax
+	or %edi, %eax
+	or %esi, %eax
+	or %edx, %eax
+	or %ecx, %eax
+	ret
+.globl to_grayscale
+to_grayscale:
+	# Function parameters
+    # %rdi: pointer to pixel to grayscale
+	pushq %rbp
+	movq %rsp, %rbp
+	pushq %rbx
+	subq $8, %rsp
+	movl %edi, %ebx
+
+	subq $8, %rsp
+	movl $0, %r13d
+	movl %ebx, %edi
+	call get_r //get r from pixel in rdi, eax holds red
+	imul $79, %eax
+	movl %eax, %r14d //r14 hold grayscaled 
+
+	movl %ebx, %edi
+	call get_g //eax now holds green
+	imul $128, %eax
+	addl %eax, %r14d
+
+	movl %ebx, %edi
+	call get_b //eax now holds blue
+	imul $48, %eax
+	addl %eax, %r14d
+	shr $8, %r14d //r14 holds grayscaled value
+
+	movl %ebx, %edi
+	call get_a //eax now holds alpha value
+	movl %r14d, %edi
+	movl %r14d, %esi
+	movl %r14d, %edx
+	movl %eax, %ecx
+	call make_pixel //eax holds grayscaled pixel
+
+	addq $8, %rsp
+	popq %rbx
+	popq %rbp
+	ret
+
 
 /*
  * int imgproc_composite( struct Image *base_img, struct Image *overlay_img );
