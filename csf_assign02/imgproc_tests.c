@@ -129,26 +129,26 @@ int main( int argc, char **argv ) {
   // for any additional test functions you add.
   TEST( test_mirror_h_basic );
   TEST( test_mirror_v_basic );
-  // TEST( test_tile_basic );
+  TEST( test_tile_basic );
   TEST( test_grayscale_basic );
-  // TEST( test_composite_basic );
-  // TEST( test_all_tiles_nonempty );
-  // TEST( test_determine_tile_w );
-  // TEST( test_determine_tile_x_offset );
-  // TEST( test_determine_tile_h );
-  // TEST( test_determine_tile_y_offset );
+  TEST( test_composite_basic );
+  TEST( test_all_tiles_nonempty );
+  TEST( test_determine_tile_w );
+  TEST( test_determine_tile_x_offset );
+  TEST( test_determine_tile_h );
+  TEST( test_determine_tile_y_offset );
   TEST( test_get_r );
   TEST( test_get_g );
   TEST( test_get_b );
   TEST( test_get_a );
   TEST( test_make_pixel );
   TEST( test_to_grayscale );
-  // TEST( test_blend_components );
-  // TEST( test_blend_colors );
-  // TEST( test_calculate_starting_index );
-  // TEST( test_copy_tile_1 );
-  // TEST( test_copy_tile_2 );
-  // TEST( test_copy_tile_3 );
+  TEST( test_blend_components );
+  TEST( test_blend_colors );
+  TEST( test_calculate_starting_index );
+  TEST( test_copy_tile_1 );
+  TEST( test_copy_tile_2 );
+  TEST( test_copy_tile_3 );
   TEST_FINI();
 }
 

@@ -15,6 +15,7 @@
  * them visible to the test code.
  */
 
+/* the following functions will be implemented in MS3 */
 .globl all_tiles_nonempty
 all_tiles_nonempty:
 	ret
@@ -194,6 +195,8 @@ done:*/
  *     - the output can't be generated because at least one tile would
  *       be empty (i.e., have 0 width or height)
  */
+
+ /* this function will be implemented in MS3 */
 	.globl imgproc_tile
 imgproc_tile:
 	/* TODO: implement (this stub implementation just returns 0) */
@@ -250,6 +253,7 @@ imgproc_grayscale:
 	popq %rbx
 	popq %rbp
     ret
+
 /*
  * Parameters:
  *	%rdi: pointer to pixel to grayscale
@@ -277,6 +281,7 @@ get_a:
 	and $0x000000FFU, %edi  
 	movl %edi, %eax
 	ret
+
 /*
  * Parameters:
  *	%rdi: red component
@@ -295,6 +300,7 @@ make_pixel:
 	or %edx, %eax
 	or %ecx, %eax
 	ret
+
 /*
  * Parameters:
  *	%rdi: pointer to pixel
@@ -353,6 +359,8 @@ to_grayscale:
  *   1 if successful, or 0 if the transformation fails because the base
  *   and overlay image do not have the same dimensions
  */
+
+ /* this function will be implemented in MS3 */
 	.globl imgproc_composite
 imgproc_composite:
 	/* TODO: implement (this stub implementation just returns 0) */
