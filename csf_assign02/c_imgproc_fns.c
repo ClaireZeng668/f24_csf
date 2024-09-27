@@ -34,10 +34,6 @@ void imgproc_mirror_h( struct Image *input_img, struct Image *output_img ) {
   }
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 5075505406e52fdee0b8f5e1b00fcb5b14a9f7f1
 void imgproc_mirror_v( struct Image *input_img, struct Image *output_img ) {
   //check if the input and output images are valid and not null
   if (!input_img || !output_img || !input_img->data || !output_img->data) return;
