@@ -271,35 +271,38 @@ imgproc_grayscale:
     pushq %r15
 
     // Load image dimensions (width = cols, height = rows)
-    movl IMAGE_WIDTH_OFFSET(%rdi), %r15d    // r15d = width
+    movl IMAGE_WIDTH_OFFSET(%rdi), %r15d   // r15d = width
     movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx    // ebx = height
 
     imull %ebx, %r15d                       // r15d = width * height (total pixels)
-    movl $0, %r12d                          // r12d = current index = 0
+    movl $0, %r12d                         // r12d = current index = 0
 
-    movq IMAGE_DATA_OFFSET(%rsi), %r13        // %r13 = output data pointer
-    movq IMAGE_DATA_OFFSET(%rdi), %r14        // %r14 = input data pointer
+    movq IMAGE_DATA_OFFSET(%rsi), %r13      // r13 = output data pointer
+    movq IMAGE_DATA_OFFSET(%rdi), %r14      // r14 = input data pointer
 
-	jmp .Ltestcond
+    jmp .Ltestcond
 
-	.Ltop:
-		// Load pixel from input image: pixel = *(input + current)
-		movl (%r14d, %r12d, 4), %edi   // Move address of pixel to first argument
-		call to_grayscale    // Call grayscale 
-		movl %eax, (%r13d,%r12d,4)   // put grayscaled pixel into output[current] 
-		addl $1, %r12d
-	.Ltestcond:
-		cmp %r15d, %r12d       		// compare index < total pixels
-    	jl .Ltop
+.Ltop:
+    // Load pixel from input image: pixel = *(input_data + index)
+    movl (%r14, %r12, 4), %edi             // Load 32-bit pixel into %edi
+    call to_grayscale                      // Grayscale pixel in %eax
+    movl %eax, (%r13, %r12, 4)             // Store 32-bit grayscale pixel
+    // Increment current index
+    addl $1, %r12d
 
-	popq %r15
-	popq %r14
-	popq %r13
-	popq %r12
-	popq %rbx
-	popq %rbp
+.Ltestcond:
+    // Compare current index with total pixels
+    cmpl %r15d, %r12d                      // Compare index < total pixels
+    jl .Ltop                 // If index < total pixels, continue loop
+
+    // Restore registers and return
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbx
+    popq %rbp
     ret
-
 
 /*
  * Functions to extract the red, green, blue, and alpha components of a pixel.

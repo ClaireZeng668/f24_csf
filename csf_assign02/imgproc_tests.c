@@ -402,7 +402,7 @@ void test_composite_basic( TestObjs *objs ) {
 
 void test_get_r_M2() {
   // Standard case: Extract red from a known pixel value
-  uint32_t pixel = 0x11223344;  // Red = 0x11
+  uint32_t pixel = 0x11223344;  
   uint32_t expected_red = 0x11;
   assert(get_r(pixel) == expected_red);
 
