@@ -1,5 +1,10 @@
 /*
  * x86-64 assembly language implementations of functions
+ * CSF Assignment 2 M2
+ * Prasi Thapa
+ * pthapa6@jhu.edu
+ * Claire Zeng
+ * czeng8@jhu.edu
  */
 
 	.section .text
@@ -10,9 +15,7 @@
 #define IMAGE_DATA_OFFSET    8
 
 /*
- * TODO: define your helper functions here.
- * Don't forget to use the .globl directive to make
- * them visible to the test code.
+ * Defining helper functions here.
  */
 
 /* the following functions will be implemented in MS3 */
@@ -44,23 +47,38 @@ blend_components:
 blend_colors:
 	ret
 
+
 /*
  * Implementations of API functions
  */
 
+
 /*
- * void imgproc_mirror_h( struct Image *input_img, struct Image *output_img );
- *
  * Transform image by mirroring its pixels horizontally.
  * This transformation always succeeds.
  *
  * Parameters:
  *   %rdi - pointer to original struct Image
  *   %rsi - pointer to output struct Image
+ *
+ * Register use:
+ *   %rdi  - pointer to input Image
+ *   %rsi  - pointer to output Image
+ *   %eax  - image width (cols)
+ *   %ebx  - image height (rows)
+ *   %r10d - reverse column index (end of row)
+ *   %r11d - current row index
+ *   %r12d - current column index
+ *   %r13d - index in the output image
+ *   %r14  - pointer to output image data
+ *   %r15  - pointer to input image data
+ *
+ * Memory use:
+ *   Stack is aligned by pushing an odd number of registers (6 in this case).
+ *
  */
 	.globl imgproc_mirror_h
 imgproc_mirror_h:
-//break 282
 	pushq %rbp
 	movq %rsp, %rbp
 	pushq %rbx
@@ -69,50 +87,44 @@ imgproc_mirror_h:
 	pushq %r14
 	pushq %r15
 
-	# Load the width and height of the image
-	movl IMAGE_WIDTH_OFFSET(%rdi), %eax   # Load input_img->width into %eax = cols
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  # Load input_img->height into %ebx = rows
+	// Load image dimensions (width = cols, height = rows)
+	movl IMAGE_WIDTH_OFFSET(%rdi), %eax   //cols
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  //rows
 
-	movl $0, %r10d //%r10 is end variable
-	movl $0, %r11d //%r11 is row for loop
-	movl $0, %r12d //%r12 is current for loop
-	movl $0, %r13d //%r13 is index for output image
+	movl $0, %r10d   // %r10 = end (reverse index)
+	movl $0, %r11d   // %r11 = current row, row for loop
+	movl $0, %r12d   // %r12 = current col
+	movl $0, %r13d   // %r13 = output index
 	
-	movq IMAGE_DATA_OFFSET(%rsi), %r14 //r14 is address of output data
-	movq IMAGE_DATA_OFFSET(%rdi), %r15 //r15 is address of input data
+	movq IMAGE_DATA_OFFSET(%rsi), %r14   // Output data pointer
+	movq IMAGE_DATA_OFFSET(%rdi), %r15   // Input data pointer
 
-	//for loop
 	jmp .Ltestcondr_h
 	.Ltopr_h:
-		#Calculate end - index of last pixel of row
-		movl $0, %r10d //%r10 is end variable
-		movl %r11d, %r10d //end = row
-		imul %eax, %r10d //end = end * cols
-		addl %eax, %r10d //end = end + cols
-		subl $1, %r10d //end = end - 1
-		movl $0, %r12d //%r12 is current for loop
+		// Calculate the end index of the current row (last pixel in row)
+		movl %r11d, %r10d     // end = row * cols + (cols - 1)
+		imul %eax, %r10d      // row * cols
+		addl %eax, %r10d      // + cols
+		subl $1, %r10d        // - 1
+
+		movl $0, %r12d        // Reset col index for this row
 
 		jmp .Ltestcondc_h
 		.Ltopc_h:
-			movl $0, %r13d //%r13 is index for output image
-			movl %r11d, %r13d //index = row
-			imul %eax, %r13d //index = row*cols
-			addl %r12d, %r13d //index = index + current
+			movl %r11d, %r13d     // output index = row * cols + current col
+			imul %eax, %r13d
+			addl %r12d, %r13d
 
-			//gdb: print *((unsigned *) ($r15 + ($r10 * 4)))
-			//gdb print $r8d
-			//print/x $r8d
+			movl (%r15, %r10, 4), %r8d  // Get pixel from input at reversed index
+			movl %r8d, (%r14, %r13, 4)  // Write pixel to output at current index
 
-			movl (%r15,%r10,4), %r8d
-			movl %r8d, (%r14,%r13,4)
-			
-			subl $1, %r10d //subtract 1 from end
-			addl $1, %r12d //add 1 to current
+			subl $1, %r10d        // Decrement reverse index
+			addl $1, %r12d        // Increment current col
 		.Ltestcondc_h:
 			cmp %r12d, %eax
 			jg .Ltopc_h
 
-		addl $1, %r11d //add 1 to row
+		addl $1, %r11d		  // Increment row index
 	.Ltestcondr_h:
 		cmp %r11d, %ebx
 		jg .Ltopr_h
@@ -126,14 +138,28 @@ imgproc_mirror_h:
 	ret
 
 /*
- * void imgproc_mirror_v( struct Image *input_img, struct Image *output_img );
- *
  * Transform image by mirroring its pixels vertically.
  * This transformation always succeeds.
  *
  * Parameters:
  *   %rdi - pointer to original struct Image
  *   %rsi - pointer to output struct Image
+ *
+ * Register use:
+ *   %rdi  - pointer to input Image
+ *   %rsi  - pointer to output Image
+ *   %eax  - image width (cols)
+ *   %ebx  - image height (rows)
+ *   %r10d - opposite row index (bottom-to-top mirror)
+ *   %r11d - current row index
+ *   %r12d - current column index
+ *   %r13d - index in the output image
+ *   %r14  - pointer to output image data
+ *   %r15  - pointer to input image data
+ *
+ * Memory use:
+ *   Stack is aligned by pushing an odd number of registers (6 in this case).
+ *
  */
 	.globl imgproc_mirror_v
 imgproc_mirror_v:
@@ -145,55 +171,56 @@ imgproc_mirror_v:
     pushq %r14
     pushq %r15
 
-    # Load the width and height of the image
-    movl IMAGE_WIDTH_OFFSET(%rdi), %eax   # Load input_img->width into %eax = cols
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  # Load input_img->height into %ebx = rows
+    // Load the width and height of the image
+    movl IMAGE_WIDTH_OFFSET(%rdi), %eax  
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  
 
-	movl $0, %r10d //%r10 is opposite_row variable
-	movl $0, %r11d //%r11 is row for loop
-	movl $0, %r12d //%r12 is col for loop
-	movl $0, %r13d //%r13 is index for output image
+    movl $0, %r10d   // %r10 = opposite row index
+    movl $0, %r11d   // %r11 = current row
+    movl $0, %r12d   // %r12 = current col
+	movl $0, %r13d   // %r13 = output index
 
-    movq IMAGE_DATA_OFFSET(%rsi), %r14     # r14 = address of output data
-    movq IMAGE_DATA_OFFSET(%rdi), %r15     # r15 = address of input data
+    movq IMAGE_DATA_OFFSET(%rsi), %r14   // Output data pointer
+    movq IMAGE_DATA_OFFSET(%rdi), %r15   // Input data pointer
 
-    # Vertical mirror logic
+    // Vertical mirror logic
     jmp .Ltestcondr_v
     .Ltopr_v:
-		# Calculate the pixel index for the current row to copy
-		movl $0, %r10d //%r10 is opposite_row variable
-		movl %ebx, %r10d //opposite_row = rows
-		subl %r11d, %r10d //opposite_row = opposite_row - row
-		subl $1, %r10d //opposite_row = opposite_row - 1
+		// Calculate the opposite row
+		movl $0, %r10d      // %r10 is opposite_row variable
+		movl %ebx, %r10d    // opposite_row = rows - 1 - current_row
+		subl %r11d, %r10d
+		subl $1, %r10d
 
-		movl $0, %r12d                    # %r12 = col (start column for this row)
+		movl $0, %r12d      // Reset col index
 
         jmp .Ltestcondc_v
         .Ltopc_v:      
-			movl $0, %r13d //%r13 is index for output image
-			movl %r11d, %r13d             # index = row
-            imul %eax, %r13d              # index = column * cols
-            addl %r12d, %r13d             # index += col
+			// Calculate the pixel index for the corresponding top row
+			movl $0, %r13d                // %r13 is index for output image
+			movl %r11d, %r13d             // index = row
+            imul %eax, %r13d              // index = column * cols
+            addl %r12d, %r13d             // index += col
 
-            # Calculate the pixel index for the corresponding bottom row
-			movl $0, %r8d //%r8 is index for input image
-            movl %r10d, %r8d              # index = opposite_row
-            imul %eax, %r8d               # mirrored index = column * cols
-            addl %r12d, %r8d              # mirrored index += col
+            // Calculate the pixel index for the corresponding bottom row
+			movl $0, %r8d                 // %r8 is index for input image
+            movl %r10d, %r8d              // index = opposite_row
+            imul %eax, %r8d               // mirrored index = column * cols
+            addl %r12d, %r8d              // mirrored index += col
 
-            # Copy pixels from the input image to the output image
-            movl (%r15,%r8,4), %r9d       # load pixel from bottom row
-            movl %r9d, (%r14,%r13,4)      # store pixel in top row
+            // Copy pixels from the input image to the output image
+            movl (%r15,%r8,4), %r9d       // load pixel from bottom row
+            movl %r9d, (%r14,%r13,4)      // store pixel in top row
 
-            addl $1, %r12d                # Increment col
+            addl $1, %r12d                // Increment col
         .Ltestcondc_v:
-            cmp %r12d, %eax               # Compare col to cols
-            jg .Ltopc_v                   # Loop if col < cols
+            cmp %r12d, %eax               // Compare col to cols
+            jg .Ltopc_v                   // Loop if col < cols
 
-        addl $1, %r11d                    # Increment row
+        addl $1, %r11d                    // Increment row
     .Ltestcondr_v:
-        cmp %r11d, %ebx                  # Stop when row >= rows
-        jg .Ltopr_v                       # Loop if row < rows
+        cmp %r11d, %ebx                  // Stop when row >= rows
+        jg .Ltopr_v                      // Loop if row < rows
 
     popq %r15
     popq %r14
@@ -203,24 +230,6 @@ imgproc_mirror_v:
     popq %rbp
     ret
 
-/*
- * int imgproc_tile( struct Image *input_img, int n, struct Image *output_img );
- *
- * Transform image by generating a grid of n x n smaller tiles created by
- * sampling every n'th pixel from the original image.
- *
- * Parameters:
- *   %rdi - pointer to original struct Image
- *   %esi - tiling factor (how many rows and columns of tiles to generate)
- *   %rdx - pointer to the output Image (in which the transformed
- *          pixels should be stored)
- *
- * Returns (in %eax):
- *   1 if successful, or 0 if either
- *     - n is less than 1, or
- *     - the output can't be generated because at least one tile would
- *       be empty (i.e., have 0 width or height)
- */
 
  /* this function will be implemented in MS3 */
 	.globl imgproc_tile
@@ -229,19 +238,30 @@ imgproc_tile:
 	xorl %eax, %eax
 	ret
 
+
 /*
- * void imgproc_grayscale( struct Image *input_img, struct Image *output_img );
- *
  * Transform image by converting each pixel to grayscale.
  * This transformation always succeeds.
  *
  * Parameters:
  *   %rdi - pointer to original struct Image
  *   %rsi - pointer to output struct Image
+ *
+ * Register use:
+ *   %rdi  - pointer to input Image
+ *   %rsi  - pointer to output Image
+ *   %r12d - current pixel index
+ *   %r13  - pointer to output image data
+ *   %r14  - pointer to input image data
+ *   %r15d - total pixel count (width * height)
+ *   %eax  - grayscale pixel value
+ *   %ebx  - image height (rows)
+ *
+ * Memory use:
+ *   Stack is aligned by pushing an odd number of registers (6 in this case).
  */
 	.globl imgproc_grayscale
 imgproc_grayscale:
-	//break 356
 	pushq %rbp
 	movq %rsp, %rbp
 	pushq %rbx
@@ -250,26 +270,25 @@ imgproc_grayscale:
 	pushq %r14
 	pushq %r15
 
-	//Load the width and height of the image
-    movl IMAGE_WIDTH_OFFSET(%rdi), %r15d   //Load input_img->width into %eax
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  //Load input_img->height into %ebx
+	// Load image dimensions (width = cols, height = rows)
+    movl IMAGE_WIDTH_OFFSET(%rdi), %r15d   
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx 
 
-    # Total number of pixels
-    imul %ebx, %r15d               //Multiply width * height to get pixel count stored in eax
-	movl $0, %r12d //r12 is current index  
+    imul %ebx, %r15d   //Total number of pixels (width * height)            
+	movl $0, %r12d     // r12 is current index  
 
-	movq IMAGE_DATA_OFFSET(%rsi), %r13 //r13 is output->data
-	movq IMAGE_DATA_OFFSET(%rdi), %r14 //r14 is input->data
+	movq IMAGE_DATA_OFFSET(%rsi), %r13   // Output data pointer
+	movq IMAGE_DATA_OFFSET(%rdi), %r14   // Input data pointer
+
 	jmp .Ltestcond
+
 	.Ltop:
-		//print *((unsigned *) ($r15 + ($r10 * 4)))
-		//movl (%r14d,%r12d,4), %r15d //r15 is address of pixel to convert (input[current])
-		movl (%r14d,%r12d,4), %edi //move address of pixel to first argument
-		call to_grayscale //call grayscale on pixel, %eax now hold grayscaled pixel
-		movl %eax, (%r13d,%r12d,4) //put grayscaled pixel into output[current] 
+		movl (%r14d,%r12d,4), %edi   // Move address of pixel to first argument
+		call to_grayscale    // Call grayscale on pixel, %eax now holds grayscaled pixel
+		movl %eax, (%r13d,%r12d,4)   // put grayscaled pixel into output[current] 
 		addl $1, %r12d
 	.Ltestcond:
-		cmp %r12d, %r15d       			  # Check if we've processed all pixels
+		cmp %r12d, %r15d       		// Check if we've processed all pixels
     	jg .Ltop
 
 	popq %r15
@@ -280,9 +299,18 @@ imgproc_grayscale:
 	popq %rbp
     ret
 
+
 /*
+ * Functions to extract the red, green, blue, and alpha components of a pixel.
  * Parameters:
- *	%rdi: pointer to pixel to grayscale
+ *   %rdi: pointer to pixel to extract color component
+ *
+ * Register use:
+ *   %edi - pixel value (32-bit RGBA)
+ *   %eax - color component (8-bit)
+ *
+ * Memory use:
+ *   No stack usage; function does not alter stack state.
  */
 .globl get_r
 get_r:
@@ -309,11 +337,22 @@ get_a:
 	ret
 
 /*
+ * Function to create a pixel from red, green, blue, and alpha components.
  * Parameters:
- *	%rdi: red component
- *	%rsi: green component
- *	%rdx: blue component
- *	%rcx: alpha component
+ *   %rdi: red component
+ *   %rsi: green component
+ *   %rdx: blue component
+ *   %rcx: alpha component
+ *
+ * Register use:
+ *   %edi - red component (8 bits)
+ *   %esi - green component (8 bits)
+ *   %edx - blue component (8 bits)
+ *   %ecx - alpha component (8 bits)
+ *   %eax - final pixel value (32 bits)
+ *
+ * Memory use:
+ *   No stack usage; function does not alter stack state.
  */
 .globl make_pixel
 make_pixel:
@@ -327,9 +366,23 @@ make_pixel:
 	or %ecx, %eax
 	ret
 
+
 /*
+ * Function to convert a pixel to grayscale.
  * Parameters:
- *	%rdi: pointer to pixel
+ *   %rdi: pointer to pixel
+ *
+ * Register use:
+ *   %rbx - holds the original pixel pointer
+ *   %r12d - holds the grayscale value (intermediate)
+ *   %eax - holds the extracted color component
+ *   %edi - holds the pixel value
+ *   %esi - holds the grayscaled pixel value
+ *   %edx - holds the alpha value
+ *   %ecx - holds the alpha value
+ *
+ * Memory use:
+ *   Stack is aligned by pushing two registers (2 in this case).
  */
 .globl to_grayscale
 to_grayscale:
@@ -369,22 +422,7 @@ to_grayscale:
 	popq %rbp
 	ret
 
-/*
- * int imgproc_composite( struct Image *base_img, struct Image *overlay_img );
- *
- * Overlay a foreground image on a background image, using each foreground
- * pixel's alpha value to determine its degree of opacity in order to blend
- * it with the corresponding background pixel.
- *
- * Parameters:
- *   %rdi - pointer to base (background) image
- *   %rsi - pointer to overlaid (foreground) image
- *   %rdx - pointer to output Image
- *
- * Returns:
- *   1 if successful, or 0 if the transformation fails because the base
- *   and overlay image do not have the same dimensions
- */
+
 
  /* this function will be implemented in MS3 */
 	.globl imgproc_composite

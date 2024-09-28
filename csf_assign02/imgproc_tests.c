@@ -114,6 +114,14 @@ void test_calculate_starting_index ( TestObjs *objs );
 void test_copy_tile_1 ( TestObjs *objs);
 void test_copy_tile_2 ( TestObjs *objs);
 void test_copy_tile_3 ( TestObjs *objs);
+void test_get_r_M2();
+void test_get_g_M2();
+void test_get_b_M2();
+void test_get_a_M2();
+void test_make_pixel_M2();
+void test_to_grayscale_M2();
+
+
 // TODO: add prototypes for additional test functions
 
 int main( int argc, char **argv ) {
@@ -149,6 +157,12 @@ int main( int argc, char **argv ) {
   TEST( test_copy_tile_1 );
   TEST( test_copy_tile_2 );
   TEST( test_copy_tile_3 );
+  TEST(test_get_r_M2);
+  TEST(test_get_g_M2);
+  TEST(test_get_b_M2);
+  TEST(test_get_a_M2);
+  TEST(test_make_pixel_M2);
+  TEST(test_to_grayscale_M2);
   TEST_FINI();
 }
 
@@ -381,6 +395,127 @@ void test_composite_basic( TestObjs *objs ) {
   ASSERT( 0x000080FF == objs->smiley_out->data[87] );
 }
 
+
+
+
+// M2 TESTS
+
+void test_get_r_M2() {
+  // Standard case: Extract red from a known pixel value
+  uint32_t pixel = 0x11223344;  // Red = 0x11
+  uint32_t expected_red = 0x11;
+  assert(get_r(pixel) == expected_red);
+
+  // Edge case: All color channels maxed out
+  pixel = 0xFFFFFFFF;  // Red = 0xFF
+  expected_red = 0xFF;
+  assert(get_r(pixel) == expected_red);
+
+  // Edge case: All channels zeroed out
+  pixel = 0x00000000;  // Red = 0x00
+  expected_red = 0x00;
+  assert(get_r(pixel) == expected_red);
+}
+
+void test_get_g_M2() {
+  uint32_t pixel = 0x11223344;  // Green = 0x22
+  uint32_t expected_green = 0x22;
+  assert(get_g(pixel) == expected_green);
+
+  // Edge case: All color channels maxed out
+  pixel = 0xFFFFFFFF;  // Green = 0xFF
+  expected_green = 0xFF;
+  assert(get_g(pixel) == expected_green);
+
+  // Edge case: All channels zeroed out
+  pixel = 0x00000000;  // Green = 0x00
+  expected_green = 0x00;
+  assert(get_g(pixel) == expected_green);
+}
+
+void test_get_b_M2() {
+  uint32_t pixel = 0x11223344;  // Blue = 0x33
+  uint32_t expected_blue = 0x33;
+  assert(get_b(pixel) == expected_blue);
+
+  // Edge case: All color channels maxed out
+  pixel = 0xFFFFFFFF;  // Blue = 0xFF
+  expected_blue = 0xFF;
+  assert(get_b(pixel) == expected_blue);
+
+  // Edge case: All channels zeroed out
+  pixel = 0x00000000;  // Blue = 0x00
+  expected_blue = 0x00;
+  assert(get_b(pixel) == expected_blue);
+}
+
+void test_get_a_M2() {
+  uint32_t pixel = 0x11223344;  // Alpha = 0x44
+  uint32_t expected_alpha = 0x44;
+  assert(get_a(pixel) == expected_alpha);
+
+  // Edge case: All color channels maxed out
+  pixel = 0xFFFFFFFF;  // Alpha = 0xFF
+  expected_alpha = 0xFF;
+  assert(get_a(pixel) == expected_alpha);
+
+  // Edge case: All channels zeroed out
+  pixel = 0x00000000;  // Alpha = 0x00
+  expected_alpha = 0x00;
+  assert(get_a(pixel) == expected_alpha);
+}
+
+void test_make_pixel_M2() {
+  uint32_t r = 0x11, g = 0x22, b = 0x33, a = 0x44;
+  uint32_t expected_pixel = 0x11223344;
+  assert(make_pixel(r, g, b, a) == expected_pixel);
+
+  // Edge case: All channels zeroed out
+  r = g = b = a = 0x00;
+  expected_pixel = 0x00000000;
+  assert(make_pixel(r, g, b, a) == expected_pixel);
+
+  // Edge case: All channels maxed out
+  r = g = b = a = 0xFF;
+  expected_pixel = 0xFFFFFFFF;
+  assert(make_pixel(r, g, b, a) == expected_pixel);
+
+  // Edge case: Half maxed values
+  r = 0x7F, g = 0x7F, b = 0x7F, a = 0x7F;
+  expected_pixel = 0x7F7F7F7F;
+  assert(make_pixel(r, g, b, a) == expected_pixel);
+}
+
+void test_to_grayscale_M2() {
+  // Example pixel: R = 79, G = 128, B = 49 -> Grayscale approx 0x7F7F7F7F
+  uint32_t pixel = 0x4F803100;  // R=79, G=128, B=49, A=0x00
+  uint32_t expected_grayscale = 0x7F7F7F00;
+  assert(to_grayscale(pixel) == expected_grayscale);
+
+  // Edge case: Fully transparent pixel
+  pixel = 0x00000000;  // All color channels = 0, A = 0
+  expected_grayscale = 0x00000000;
+  assert(to_grayscale(pixel) == expected_grayscale);
+
+  // Edge case: Opaque white pixel (R=G=B=255)
+  pixel = 0xFFFFFFFF;  // R=G=B=255, A=255
+  expected_grayscale = 0xFFFFFFFF;
+  assert(to_grayscale(pixel) == expected_grayscale);
+
+  // Edge case: Black pixel (R=G=B=0, A=255)
+  pixel = 0x000000FF;
+  expected_grayscale = 0x000000FF;
+  assert(to_grayscale(pixel) == expected_grayscale);
+
+  // Edge case: Middle gray pixel (R=G=B=127)
+  pixel = 0x7F7F7FFF;
+  expected_grayscale = 0x7F7F7FFF;
+  assert(to_grayscale(pixel) == expected_grayscale);
+}
+
+
+
+// M1 TESTS
 void test_all_tiles_nonempty( TestObjs *objs ) {
   ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 1) == 1);
   ASSERT(all_tiles_nonempty(objs->smiley->width, objs->smiley->height, 10) == 1);

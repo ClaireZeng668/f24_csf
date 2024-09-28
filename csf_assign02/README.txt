@@ -1,12 +1,11 @@
 Prasi Thapa
 Implemented:
-imgproc_tile
-imgproc_grayscale
+imgproc_mirror_v
+imgproc_mirror_h
 unit testing
 
 Claire Zeng
 Implemented:
 imgproc_mirror_h
-imgproc_mirror_v
-imgproc_composite
-unit testing
+imgproc_grayscale
+make_pixel and associated helper functions
