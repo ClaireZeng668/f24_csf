@@ -262,34 +262,35 @@ imgproc_tile:
  */
 	.globl imgproc_grayscale
 imgproc_grayscale:
-	pushq %rbp
-	movq %rsp, %rbp
-	pushq %rbx
-	pushq %r12
-	pushq %r13
-	pushq %r14
-	pushq %r15
+    pushq %rbp
+    movq %rsp, %rbp
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
 
-	// Load image dimensions (width = cols, height = rows)
-    movl IMAGE_WIDTH_OFFSET(%rdi), %r15d   
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx 
+    // Load image dimensions (width = cols, height = rows)
+    movl IMAGE_WIDTH_OFFSET(%rdi), %r15d    // r15d = width
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx    // ebx = height
 
-    imul %ebx, %r15d   //Total number of pixels (width * height)            
-	movl $0, %r12d     // r12 is current index  
+    imull %ebx, %r15d                       // r15d = width * height (total pixels)
+    movl $0, %r12d                          // r12d = current index = 0
 
-	movq IMAGE_DATA_OFFSET(%rsi), %r13   // Output data pointer
-	movq IMAGE_DATA_OFFSET(%rdi), %r14   // Input data pointer
+    movq IMAGE_DATA_OFFSET(%rsi), %r13        // %r13 = output data pointer
+    movq IMAGE_DATA_OFFSET(%rdi), %r14        // %r14 = input data pointer
 
 	jmp .Ltestcond
 
 	.Ltop:
-		movl (%r14d,%r12d,4), %edi   // Move address of pixel to first argument
-		call to_grayscale    // Call grayscale on pixel, %eax now holds grayscaled pixel
+		// Load pixel from input image: pixel = *(input + current)
+		movl (%r14d, %r12d, 4), %edi   // Move address of pixel to first argument
+		call to_grayscale    // Call grayscale 
 		movl %eax, (%r13d,%r12d,4)   // put grayscaled pixel into output[current] 
 		addl $1, %r12d
 	.Ltestcond:
-		cmp %r12d, %r15d       		// Check if we've processed all pixels
-    	jg .Ltop
+		cmp %r15d, %r12d       		// compare index < total pixels
+    	jl .Ltop
 
 	popq %r15
 	popq %r14
@@ -421,7 +422,6 @@ to_grayscale:
 	popq %rbx
 	popq %rbp
 	ret
-
 
 
  /* this function will be implemented in MS3 */
