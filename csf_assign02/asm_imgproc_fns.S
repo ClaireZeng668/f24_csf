@@ -149,9 +149,10 @@ imgproc_mirror_v:
     movl IMAGE_WIDTH_OFFSET(%rdi), %eax   # Load input_img->width into %eax = cols
     movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  # Load input_img->height into %ebx = rows
 
-    movl $0, %r11d                        # %r11 = top row index
-    movl %ebx, %r10d                      # %r10 = bottom row index (start from the last row)
-    subl $1, %r10d                        # bottom = rows - 1
+	movl $0, %r10d //%r10 is opposite_row variable
+	movl $0, %r11d //%r11 is row for loop
+	movl $0, %r12d //%r12 is col for loop
+	movl $0, %r13d //%r13 is index for output image
 
     movq IMAGE_DATA_OFFSET(%rsi), %r14     # r14 = address of output data
     movq IMAGE_DATA_OFFSET(%rdi), %r15     # r15 = address of input data
@@ -159,38 +160,40 @@ imgproc_mirror_v:
     # Vertical mirror logic
     jmp .Ltestcondr_v
     .Ltopr_v:
-        movl $0, %r12d                    # %r12 = current column (start column for this row)
+		# Calculate the pixel index for the current row to copy
+		movl $0, %r10d //%r10 is opposite_row variable
+		movl %ebx, %r10d //opposite_row = rows
+		subl %r11d, %r10d //opposite_row = opposite_row - row
+		subl $1, %r10d //opposite_row = opposite_row - 1
+
+		movl $0, %r12d                    # %r12 = col (start column for this row)
 
         jmp .Ltestcondc_v
-        .Ltopc_v:
-            # Calculate the pixel index for the current top row
-            movl %r12d, %r13d             # index = current column
+        .Ltopc_v:      
+			movl $0, %r13d //%r13 is index for output image
+			movl %r11d, %r13d             # index = row
             imul %eax, %r13d              # index = column * cols
-            addl %r11d, %r13d             # index += top row
+            addl %r12d, %r13d             # index += col
 
             # Calculate the pixel index for the corresponding bottom row
-            movl %r12d, %r8d              # mirrored column = current column
+			movl $0, %r8d //%r8 is index for input image
+            movl %r10d, %r8d              # index = opposite_row
             imul %eax, %r8d               # mirrored index = column * cols
-            addl %r10d, %r8d              # mirrored index += bottom row
+            addl %r12d, %r8d              # mirrored index += col
 
-            # Copy pixels from the bottom row to the top row
+            # Copy pixels from the input image to the output image
             movl (%r15,%r8,4), %r9d       # load pixel from bottom row
             movl %r9d, (%r14,%r13,4)      # store pixel in top row
 
-            # Copy pixels from the top row to the bottom row
-            movl (%r15,%r13,4), %r9d      # load pixel from top row
-            movl %r9d, (%r14,%r8,4)       # store pixel in bottom row
-
-            addl $1, %r12d                # Increment column
+            addl $1, %r12d                # Increment col
         .Ltestcondc_v:
-            cmp %r12d, %eax               # Compare current column to cols
-            jl .Ltopc_v                   # Loop if column < cols
+            cmp %r12d, %eax               # Compare col to cols
+            jg .Ltopc_v                   # Loop if col < cols
 
-        addl $1, %r11d                    # Increment top row
-        subl $1, %r10d                    # Decrement bottom row
+        addl $1, %r11d                    # Increment row
     .Ltestcondr_v:
-        cmp %r11d, %r10d                  # Stop when top row >= bottom row
-        jl .Ltopr_v                       # Loop if top row < bottom row
+        cmp %r11d, %ebx                  # Stop when row >= rows
+        jg .Ltopr_v                       # Loop if row < rows
 
     popq %r15
     popq %r14
