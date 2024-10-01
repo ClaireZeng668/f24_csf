@@ -153,8 +153,8 @@ int main( int argc, char **argv ) {
   TEST( test_get_a );
   TEST( test_make_pixel );
   TEST( test_to_grayscale );
-  //TEST( test_blend_components );
-  //TEST( test_blend_colors );
+  TEST( test_blend_components );
+  TEST( test_blend_colors );
   //TEST( test_calculate_starting_index );
   //TEST( test_copy_tile_1 );
   //TEST( test_copy_tile_2 );
