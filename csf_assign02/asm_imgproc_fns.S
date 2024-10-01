@@ -41,88 +41,24 @@ copy_tile:
 calculate_starting_index:
 	ret
 
-.globl blend_components
-blend_components:
-	movq $0, %rax
-	imull %edx, %edi	//edi holds alpha*foreground
-	movl $255, %r10d
-	subl %edx, %r10d	//r10d holds 255-alpha
-	imull %r10d, %esi	//esi hold (255-alpha)*background
-	addl %esi, %edi		//edi holds number to be divided by 255
-	movq $0, %rdx 		//set rdx to 0 for 64 bit division
-	movl %edi, %eax 	//put dividend in eax
-	movl $255, %r10d
-	divl %r10d 			//divide $eax by 255, put quotient in rax
-	ret
-
-.globl blend_colors
-blend_colors:
-	pushq %rbp
-	movq %rsp, %rbp
-	pushq %rbx 
-	pushq %r12
-	pushq %r13
-	pushq %r14
-	pushq %r15
-
-	movl %edi, %ebx //foreground pixel
-	movl %esi, %r12d //background pixel
-
-	call get_a //rax holds fg alpha
-	movl %eax, %r15d //r15 holds fg alpha
-
-	movl %ebx, %edi
-	call get_r
-	movl %eax, %r13d //r13d holds fg red comp
-	movl %r12d, %edi //first agrument is bg pixel
-	call get_r
-	movl %eax, %esi //esi holds bg red comp
-	movl %r13d, %edi //edi holds fg red comp
-	movl %r15d, %edx //edx holds fg alpha
-	call blend_components
-	movl %eax, %r13d //r13 holds red blended component
-
-	movl %ebx, %edi
-	call get_g
-	movl %eax, %r13d //r13d holds fg green comp
-	movl %r12d, %edi //first agrument is bg pixel
-	call get_g
-	movl %eax, %esi //esi holds bg green comp
-	movl %r13d, %edi //edi holds fg green comp
-	movl %r15d, %edx //edx holds fg alpha
-	call blend_components
-	movl %eax, %r14d //r14 holds green blended component
-
-	movl %ebx, %edi
-	call get_b
-	movl %eax, %r13d //r13d holds fg blue comp
-	movl %r12d, %edi //first agrument is bg pixel
-	call get_b
-	movl %eax, %esi //esi holds bg blue comp
-	movl %r13d, %edi //edi holds fg blue comp
-	movl %r15d, %edx //edx holds fg alpha
-	call blend_components
-	movl %eax, %r13d //r13 holds blue blended component
-
-	movl %r15d, %edi //edi holds red blended
-	movl %r14d, %esi //esi holds green blended
-	movl %r13d, %edx //edx holds blue blended
-	movl $255, %ecx //ecx holds alpha = 255
-	call make_pixel //rax holds pixel made from r15,r14,r13, and 255
-
-	popq %r15
-	popq %r14
-	popq %r13
-	popq %r12
-	popq %rbx
-	popq %rbp
-	ret
-
-
 /*
  * Implementations of API functions
  */
 
+
+/* this function will be implemented in MS3 */
+	.globl imgproc_tile
+imgproc_tile:
+	/* TODO: implement (this stub implementation just returns 0) */
+	xorl %eax, %eax
+	ret
+ 
+ /* this function will be implemented in MS3 */
+	.globl imgproc_composite
+imgproc_composite:
+	/* TODO: implement (this stub implementation just returns 0) */
+	xorl %eax, %eax
+	ret
 
 /*
  * Transform image by mirroring its pixels horizontally.
@@ -300,15 +236,6 @@ imgproc_mirror_v:
     popq %rbx
     popq %rbp
     ret
-
-
- /* this function will be implemented in MS3 */
-	.globl imgproc_tile
-imgproc_tile:
-	/* TODO: implement (this stub implementation just returns 0) */
-	xorl %eax, %eax
-	ret
-
 
 /*
  * Transform image by converting each pixel to grayscale.
@@ -498,12 +425,83 @@ to_grayscale:
 	ret
 
 
- /* this function will be implemented in MS3 */
-	.globl imgproc_composite
-imgproc_composite:
-	/* TODO: implement (this stub implementation just returns 0) */
-	xorl %eax, %eax
+.globl blend_components
+blend_components:
+	movq $0, %rax
+	imull %edx, %edi	//edi holds alpha*foreground
+	movl $255, %r10d
+	subl %edx, %r10d	//r10d holds 255-alpha
+	imull %r10d, %esi	//esi hold (255-alpha)*background
+	addl %esi, %edi		//edi holds number to be divided by 255
+	movq $0, %rdx 		//set rdx to 0 for 64 bit division
+	movl %edi, %eax 	//put dividend in eax
+	movl $255, %r10d
+	divl %r10d 			//divide $eax by 255, put quotient in rax
 	ret
+
+.globl blend_colors
+blend_colors:
+	pushq %rbp
+	movq %rsp, %rbp
+	pushq %rbx 
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+
+	movl %edi, %ebx //foreground pixel
+	movl %esi, %r12d //background pixel
+
+	call get_a //rax holds fg alpha
+	movl %eax, %r15d //r15 holds fg alpha
+
+	movl %ebx, %edi
+	call get_r
+	movl %eax, %r13d //r13d holds fg red comp
+	movl %r12d, %edi //first agrument is bg pixel
+	call get_r
+	movl %eax, %esi //esi holds bg red comp
+	movl %r13d, %edi //edi holds fg red comp
+	movl %r15d, %edx //edx holds fg alpha
+	call blend_components
+	movl %eax, %r13d //r13 holds red blended component
+
+	movl %ebx, %edi
+	call get_g
+	movl %eax, %r14d //r14d holds fg green comp
+	movl %r12d, %edi //first agrument is bg pixel
+	call get_g
+	movl %eax, %esi //esi holds bg green comp
+	movl %r14d, %edi //edi holds fg green comp
+	movl %r15d, %edx //edx holds fg alpha
+	call blend_components
+	movl %eax, %r14d //r14 holds green blended component
+
+	movl %ebx, %edi
+	call get_b
+	movl %eax, %ebx //ebx holds fg blue comp
+	movl %r12d, %edi //first agrument is bg pixel
+	call get_b
+	movl %eax, %esi //esi holds bg blue comp
+	movl %ebx, %edi //edi holds fg blue comp
+	movl %r15d, %edx //edx holds fg alpha
+	call blend_components
+	movl %eax, %r15d //r15 holds blue blended component
+
+	movl %r15d, %edi //edi holds red blended
+	movl %r14d, %esi //esi holds green blended
+	movl %r13d, %edx //edx holds blue blended
+	movl $255, %ecx //ecx holds alpha = 255
+	call make_pixel //rax holds pixel made from r15,r14,r13, and 255
+
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %rbx
+	popq %rbp
+	ret
+
 
 /*
 vim:ft=gas:
