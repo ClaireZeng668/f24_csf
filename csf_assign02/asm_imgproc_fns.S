@@ -1,6 +1,6 @@
 /*
  * x86-64 assembly language implementations of functions
- * CSF Assignment 2 M2
+ * CSF Assignment 2 M3
  * Prasi Thapa
  * pthapa6@jhu.edu
  * Claire Zeng
@@ -15,50 +15,8 @@
 #define IMAGE_DATA_OFFSET    8
 
 /*
- * Defining helper functions here.
- */
-
-/* the following functions will be implemented in MS3 */
-.globl all_tiles_nonempty
-all_tiles_nonempty:
-	ret
-.globl determine_tile_w
-determine_tile_w:
-	ret
-.globl determine_tile_h
-determine_tile_h:
-	ret
-.globl determine_tile_x_offset
-determine_tile_x_offset:
-	ret
-.globl determine_tile_y_offset
-determine_tile_y_offset:
-	ret
-.globl copy_tile
-copy_tile:
-	ret
-.globl calculate_starting_index
-calculate_starting_index:
-	ret
-
-/*
  * Implementations of API functions
  */
-
-
-/* this function will be implemented in MS3 */
-	.globl imgproc_tile
-imgproc_tile:
-	/* TODO: implement (this stub implementation just returns 0) */
-	xorl %eax, %eax
-	ret
- 
- /* this function will be implemented in MS3 */
-	.globl imgproc_composite
-imgproc_composite:
-	/* TODO: implement (this stub implementation just returns 0) */
-	xorl %eax, %eax
-	ret
 
 /*
  * Transform image by mirroring its pixels horizontally.
@@ -237,6 +195,14 @@ imgproc_mirror_v:
     popq %rbp
     ret
 
+/* this function will be implemented in MS3 */
+	.globl imgproc_tile
+imgproc_tile:
+	/* TODO: implement (this stub implementation just returns 0) */
+	xorl %eax, %eax
+	ret
+ 
+
 /*
  * Transform image by converting each pixel to grayscale.
  * This transformation always succeeds.
@@ -301,6 +267,134 @@ imgproc_grayscale:
     popq %rbx
     popq %rbp
     ret
+
+
+ /* this function will be implemented in MS3 */
+	.globl imgproc_composite
+imgproc_composite:
+	/* TODO: implement (this stub implementation just returns 0) */
+	xorl %eax, %eax
+	ret
+
+
+
+//helper functions for tiling
+
+.globl all_tiles_nonempty
+all_tiles_nonempty:
+	movq $1, %rax
+	cmpq %rdi, %rdx //compare n and width
+	jg .Lempty //jump if rdx(n) > rdi(width)
+	cmpq %rsi, %rdx 
+	jg .Lempty //jump if rdx(n) > rsi(height)
+	cmpq $0, %rdi
+	jle .Lempty //jump if rdi(width) <= 0
+	cmpq $0, %rsi
+	jle .Lempty //jump if rsi(height) <= 0
+	jmp .Ldone_empty
+	.Lempty:
+		movq $0, %rax
+	.Ldone_empty:
+		ret
+
+.globl determine_tile_w
+determine_tile_w:
+	movq $0, %rdx 		//set rdx to 0 for 64 bit division
+	movq %rdi, %rax 	//put dividend in rax (width)
+	movq %rsi, %r10	
+	divq %r10 			//quotient in rax
+	ret
+
+.globl determine_tile_x_offset
+determine_tile_x_offset:
+	movq %rdx, %r10 	//save tile_col in r10
+	movq $0, %rdx 		//set rdx to 0 for 64 bit division
+	movq %rdi, %rax 	//put dividend in rax (width)
+	movq %rsi, %r11
+	divq %r11 			//put quotient in rax, remainder in rdx (we want the remainder)
+	movq $1, %rax
+	cmpq %rdx, %r10
+	jge .Lno_xoffset 	//jump if tile col >= number of offset
+	jmp .Ldone_xoffset
+	.Lno_xoffset:
+		movq $0, %rax 	//offset is zero
+	.Ldone_xoffset:
+		ret
+
+.globl determine_tile_h
+determine_tile_h:
+	movq $0, %rdx 		//set rdx to 0 for 64 bit division
+	movq %rdi, %rax 	//put dividend in rax (height)
+	movq %rsi, %r10
+	divq %r10 			//put quotient in rax
+	ret
+
+.globl determine_tile_y_offset
+determine_tile_y_offset:
+	movq %rdx, %r10 	//save tile_row in r10
+	movq $0, %rdx 		//set rdx to 0 for 64 bit division
+	movq %rdi, %rax 	//put dividend in rax (height)
+	movq %rsi, %r11
+	divq %r11 			//put quotient in rax, remainder in rdx (we want the remainder)
+	movq $1, %rax
+	cmpq %rdx, %r10
+	jge .Lno_yoffset 	//jump if tile row >= number of offset
+	jmp .Ldone_yoffset
+	.Lno_yoffset:
+		movq $0, %rax 	//offset is zero
+	.Ldone_yoffset:
+		ret
+
+
+/*
+rdi-out
+rsi-in
+rdx-tile_row
+rcx-tile_col
+r8-n
+
+*/
+.globl copy_tile
+copy_tile:
+	pushq %rbp
+    movq %rsp, %rbp
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+
+	//save parameters
+	movq %rdi, %rbx
+	movq %rsi, %r12
+	movq %rdx, %r13
+	movq %rcx, %r14
+	movq %r8, %r15
+
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbx
+    popq %rbp	
+	ret
+.globl calculate_starting_index
+calculate_starting_index:
+	pushq %rbp
+    movq %rsp, %rbp
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+
+	popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbx
+    popq %rbp	
+	ret
 
 /*
  * Functions to extract the red, green, blue, and alpha components of a pixel.
@@ -436,7 +530,7 @@ blend_components:
 	movq $0, %rdx 		//set rdx to 0 for 64 bit division
 	movl %edi, %eax 	//put dividend in eax
 	movl $255, %r10d
-	divl %r10d 			//divide $eax by 255, put quotient in rax
+	divl %r10d 			//divide eax by 255, put quotient in rax
 	ret
 
 .globl blend_colors

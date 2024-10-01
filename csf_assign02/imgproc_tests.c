@@ -142,9 +142,9 @@ int main( int argc, char **argv ) {
   //TEST( test_tile_basic );
   TEST( test_grayscale_basic );
   //TEST( test_composite_basic );
-  //TEST( test_all_tiles_nonempty );
-  //TEST( test_determine_tile_w );
-  //TEST( test_determine_tile_x_offset );
+  TEST( test_all_tiles_nonempty );
+  TEST( test_determine_tile_w );
+  TEST( test_determine_tile_x_offset );
   //TEST( test_determine_tile_h );
   //TEST( test_determine_tile_y_offset );
   TEST( test_get_r );
