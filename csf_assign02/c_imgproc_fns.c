@@ -159,23 +159,25 @@ int calculate_starting_index (struct Image *img, int tile_row, int tile_col, int
   int total_width_offset = img->width % n;  //offset for the width of the image if it is not divisible by n
   int total_height_offset = img->height % n;  //offset for the height of the image if it is not divisible by n
   int out_start_index = 0;
+  int width = determine_tile_w(img->width, n);
+  int height = determine_tile_h(img->height, n);
   //calculate start index for output tile
   for (int i = 0; i < tile_col; i++) {
     if (total_width_offset > 0) {
-      out_start_index = out_start_index + determine_tile_w(img->width, n) + 1;
+      out_start_index = out_start_index + width + 1;
       total_width_offset--;
     } else {
-      out_start_index = out_start_index + determine_tile_w(img->width, n);
+      out_start_index = out_start_index + width;
     }
   }
 
   //calculate start index for row
   for (int i = 0; i < tile_row; i++) {
     if (total_height_offset > 0) {
-      out_start_index = out_start_index + (img->width * (determine_tile_h(img->height, n)+1));
+      out_start_index = out_start_index + (img->width * (height+1));
       total_height_offset--;
     } else {
-      out_start_index = out_start_index + (img->width * determine_tile_h(img->height, n));
+      out_start_index = out_start_index + (img->width * height);
     }
   }
   return out_start_index;

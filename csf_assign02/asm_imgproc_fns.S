@@ -269,11 +269,70 @@ imgproc_grayscale:
     ret
 
 
- /* this function will be implemented in MS3 */
+/*
+ * int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct Image *output_img );
+ *
+ * Overlay a foreground image on a background image, using each foreground
+ * pixel's alpha value to determine its degree of opacity in order to blend
+ * it with the corresponding background pixel.
+ *      
+ * Parameters:
+ *   %rdi - pointer to base (background) image
+ *   %rsi - pointer to overlaid (foreground) image
+ *   %rdx - pointer to output Image
+ *      
+ * Returns: 
+ *   1 if successful, or 0 if the transformation fails because the base
+ *   and overlay image do not have the same dimensions
+ */
 	.globl imgproc_composite
 imgproc_composite:
-	/* TODO: implement (this stub implementation just returns 0) */
-	xorl %eax, %eax
+	pushq %rbp
+    movq %rsp, %rbp
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+
+	movl IMAGE_WIDTH_OFFSET(%rdi), %r8d //base img width
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %r9d //base img height
+	movl IMAGE_WIDTH_OFFSET(%rsi), %r10d //overlay img width
+    movl IMAGE_HEIGHT_OFFSET(%rsi), %r11d //overlay img height
+	movq $0, %rax
+	//check same dimensions
+	cmpl %r8d, %r10d
+	jne .Lcomp_done
+	cmpl %r9d, %r11d
+	jne .Lcomp_done
+
+	//dimensions equal
+	movq $1, %rax
+	imull %r9d, %r8d
+	movl %r8d, %ebx //total num pixels to compare with loop counter
+	movq $0, %r12 //loop counter
+	movq IMAGE_DATA_OFFSET(%rdi), %r13      // r13 = base data pointer
+    movq IMAGE_DATA_OFFSET(%rsi), %r14      // r14 = overlay data pointer
+	movq IMAGE_DATA_OFFSET(%rdx), %r15		// r15 = output data pointer
+
+	jmp .Lcomp_cond
+	.Lcomp_top:
+		movl (%r14, %r12, 4), %edi             // Load overlay pixel into %edi
+		movl (%r13, %r12, 4), %esi             // Load base pixel into %esi
+		call blend_colors
+		movl %eax, (%r15, %r12, 4)
+		incl %r12d
+	.Lcomp_cond:
+    cmpl %ebx, %r12d        // Compare index < total pixels
+    jl .Lcomp_top                 // If index < total pixels, continue loop
+
+	.Lcomp_done:
+	popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbx
+    popq %rbp
 	ret
 
 
@@ -352,7 +411,6 @@ rsi-in
 rdx-tile_row
 rcx-tile_col
 r8-n
-
 */
 .globl copy_tile
 copy_tile:
@@ -378,16 +436,100 @@ copy_tile:
     popq %rbx
     popq %rbp	
 	ret
+
+
+//rdi - img
+//rsi - tile_row
+//rdx - tile_col - r10
+//rcx - n
 .globl calculate_starting_index
 calculate_starting_index:
 	pushq %rbp
     movq %rsp, %rbp
     pushq %rbx
-    pushq %r12
+    pushq %r12 
     pushq %r13
     pushq %r14
     pushq %r15
+	subq $8, %rsp
+	//subq $40, %rsp //counter variable-8, tile_row-16, tile_col-24, n-32, w/h-40
 
+	//save parameters
+	movl IMAGE_WIDTH_OFFSET(%rdi), %ebx //img width
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %r12d //img height -> height
+	movq %rsi, %r13 //tile_row
+	movq %rdx, %r14	//tile_col
+	movq %rcx, %r15	//n
+	//r8 - width
+	//r9 - total_width_offset
+	//r10 - total_height_offset
+	//r11 - loop counter
+
+	movq %r12, %rdi
+	movq %r15, %rsi
+	call determine_tile_h //%rax = height
+	movl %eax, -8(%rbp) //-8rbp holds height variable
+
+	movq %rbx, %rdi
+	movq %r15, %rsi
+	call determine_tile_w //%rax = width
+	movl %eax, %r8d //r8 holds width variable
+
+	movq $0, %rdx 		//set rdx to 0 for 64 bit division
+	movq %rbx, %rax 	//put dividend (img.width) in rax
+	divq %r15 			//put quotient in rax, remainder in rdx (we want the remainder)
+	movq %rdx, %r9 		//r9 holds total_width_offset
+
+	movq $0, %rdx 		//set rdx to 0 for 64 bit division
+	movq %r12, %rax 	//put dividend (img.height) in rax
+	divq %r15 			//put quotient in rax, remainder in rdx (we want the remainder)
+	movq %rdx, %r10 	//r10 holds total_height_offset
+
+	movl -8(%rbp), %r12d //put height into r12d bc dont need img.height anymore
+
+	movq $0, %r11 //loop counter
+	movq $0, %r15 //out_start_index
+	.Ltopc_calc:
+		cmpq %r14, %r11
+		jge .Lcalc_reset //jump to next loop if counter >= tile col
+
+		cmpq $0, %r9
+		jle .Lccalc_else	//jump if total_width_offset <= 0
+		addl %r8d, %r15d
+		incl %r15d
+		decl %r9d			//decrement total_width_offset
+		incl %r11d			//increment counter
+		jmp .Ltopc_calc
+		.Lccalc_else:
+			addl %r8d, %r15d
+			incl %r11d			//increment counter
+			jmp .Ltopc_calc
+
+	.Lcalc_reset:
+		movq $0, %r11 //reset loop counter
+	.Ltopr_calc:
+		cmpq %r13, %r11
+		jge .Lcalc_done //jump to done counter >= tile row
+
+		cmpq $0, %r10
+		jle .Lrcalc_else	//jump if total_width_offset <= 0
+		movl %r12d, %edi
+		incl %edi			//height+1
+		imull %ebx, %edi 	//img.width * (height+1)
+		addl %edi, %r15d	//out_start_index = out_start_index + edi
+		decl %r10d			//decrement total_height_offset
+		incl %r11d 			//increment counter
+		jmp .Ltopr_calc
+		.Lrcalc_else:
+			movl %r12d, %edi
+			imull %ebx, %edi 	//img.width * height
+			addl %edi, %r15d	//out_start_index = out_start_index + edi
+			incl %r11d 			//increment counter
+			jmp .Ltopr_calc
+
+	.Lcalc_done:
+	movl %r15d, %eax
+	addq $8, %rsp
 	popq %r15
     popq %r14
     popq %r13
@@ -395,6 +537,7 @@ calculate_starting_index:
     popq %rbx
     popq %rbp	
 	ret
+	
 
 /*
  * Functions to extract the red, green, blue, and alpha components of a pixel.
@@ -582,9 +725,9 @@ blend_colors:
 	call blend_components
 	movl %eax, %r15d //r15 holds blue blended component
 
-	movl %r15d, %edi //edi holds red blended
+	movl %r13d, %edi //edi holds red blended
 	movl %r14d, %esi //esi holds green blended
-	movl %r13d, %edx //edx holds blue blended
+	movl %r15d, %edx //edx holds blue blended
 	movl $255, %ecx //ecx holds alpha = 255
 	call make_pixel //rax holds pixel made from r15,r14,r13, and 255
 
@@ -600,3 +743,5 @@ blend_colors:
 /*
 vim:ft=gas:
 */
+
+
