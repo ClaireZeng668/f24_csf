@@ -416,6 +416,7 @@ r8-n
 copy_tile:
 	pushq %rbp
     movq %rsp, %rbp
+	subq $32, %rsp
     pushq %rbx
     pushq %r12
     pushq %r13
@@ -423,17 +424,108 @@ copy_tile:
     pushq %r15
 
 	//save parameters
-	movq %rdi, %rbx
-	movq %rsi, %r12
-	movq %rdx, %r13
-	movq %rcx, %r14
-	movq %r8, %r15
+	movq %rdi, %rbx //output image
+	movq %rsi, %r12 //input image
+	movq %rdx, %r13	//tile_row -> out_start_index
+	movq %rcx, %r14	//tile_col -> orig_start_index
+	movq %r8, %r15	//n
+
+	movl IMAGE_WIDTH_OFFSET(%r12), %edi //img width
+	movl %r15d, %esi //n
+	call determine_tile_w
+	movl %eax, -8(%rbp) //tile width
+
+	movl IMAGE_WIDTH_OFFSET(%r12), %edi //img width
+	movl %r15d, %esi //n
+	movl %r14d, %edx
+	call determine_tile_x_offset
+	movl %eax, -16(%rbp) //tile width offset
+	
+	movl -16(%rbp), %r10d
+	addl %r10d, -8(%rbp) //row_len
+
+    movl IMAGE_HEIGHT_OFFSET(%r12), %edi //img height
+	movl %r15d, %esi //n
+	call determine_tile_h
+	movl %eax, -16(%rbp) //tile height
+
+	movl IMAGE_HEIGHT_OFFSET(%r12), %edi //img height
+	movl %r15d, %esi //n
+	movl %r13d, %edx
+	call determine_tile_y_offset
+	movl %eax, -24(%rbp) //tile height offset
+
+	movl -24(%rbp), %r10d
+	addl %r10d, -16(%rbp) //col_len
+
+	movq %r12, %rdi
+	movq %r13, %rsi
+	movq %r14, %rdx
+	movq %r15, %rcx
+	call calculate_starting_index
+	movl %eax, %r13d //out_start_index
+	
+	movq $0, %r14 //orig_start_index
+
+	//r10 - out_pos
+	//r11 - orig_pos
+	//r8 - row counter
+	//r9 - col counter
+	//rbx - output image
+	//rax - output data pointer
+	//r12 - input image 
+	//rdi - input data pointer
+	movq IMAGE_DATA_OFFSET(%rbx), %rax
+    movq IMAGE_DATA_OFFSET(%r12), %rdi
+	//r13 - out_start_index
+	//r14 - orig_start_index
+	//r15 - n
+	//-8(%rbp) - row len
+	//-16(%rbp) - col len
+	movl %r13d, %r10d
+	movl %r14d, %r11d
+	jmp .Lcopy_test_condr
+    .Lcopyc_top:
+		movl $0, %r9d      // Reset col counter
+        jmp .Lcopy_test_condc
+        .Lcopyr_top:      
+			movl (%rdi, %r11, 4), %esi
+			movl %esi, (%rax, %r10, 4) //copy pixel data
+
+			addl IMAGE_WIDTH_OFFSET(%r12), %r10d //add out_pos
+
+			movl IMAGE_WIDTH_OFFSET(%r12), %edx
+			imull %r15d, %edx
+			addl %edx, %r11d //add orig_pos
+
+            addl $1, %r9d //incremenent col counter
+        .Lcopy_test_condc:
+            cmpl -16(%rbp), %r9d
+            jl .Lcopyr_top //jump if col counter < col len
+
+		//reset out_pos
+		movl %r8d, %edx //row
+		incl %edx //row+1
+		addl %r13d, %edx //row+1+out_start_index
+		movl %edx, %r10d //out_pos = out_start_index+row+1
+
+		//reset orig_pos
+		movl %r8d, %edx //row
+		incl %edx //row+1
+		imull %r15d, %edx //(row+1)*n
+		addl %r14d, %edx //row+1+orig_start_index
+		movl %edx, %r11d
+        addl $1, %r8d //increment row counter
+    .Lcopy_test_condr:
+		cmpl -8(%rbp), %r8d
+		jl .Lcopyc_top //jump if row counter < row len
 
     popq %r15
     popq %r14
     popq %r13
     popq %r12
     popq %rbx
+	addq $32, %rsp
     popq %rbp	
 	ret
 
@@ -446,13 +538,12 @@ copy_tile:
 calculate_starting_index:
 	pushq %rbp
     movq %rsp, %rbp
+	subq $8, %rsp
     pushq %rbx
     pushq %r12 
     pushq %r13
     pushq %r14
     pushq %r15
-	subq $8, %rsp
-	//subq $40, %rsp //counter variable-8, tile_row-16, tile_col-24, n-32, w/h-40
 
 	//save parameters
 	movl IMAGE_WIDTH_OFFSET(%rdi), %ebx //img width
@@ -529,12 +620,12 @@ calculate_starting_index:
 
 	.Lcalc_done:
 	movl %r15d, %eax
-	addq $8, %rsp
 	popq %r15
     popq %r14
     popq %r13
     popq %r12
     popq %rbx
+	addq $8, %rsp
     popq %rbp	
 	ret
 	

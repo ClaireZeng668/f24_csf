@@ -156,9 +156,9 @@ int main( int argc, char **argv ) {
   TEST( test_blend_components );
   TEST( test_blend_colors );
   TEST( test_calculate_starting_index );
-  //TEST( test_copy_tile_1 );
-  //TEST( test_copy_tile_2 );
-  //TEST( test_copy_tile_3 );
+  TEST( test_copy_tile_1 );
+  TEST( test_copy_tile_2 );
+  TEST( test_copy_tile_3 );
   TEST(test_get_r_M2);
   TEST(test_get_g_M2);
   TEST(test_get_b_M2);
