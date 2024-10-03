@@ -195,12 +195,86 @@ imgproc_mirror_v:
     popq %rbp
     ret
 
-/* this function will be implemented in MS3 */
 	.globl imgproc_tile
 imgproc_tile:
-	/* TODO: implement (this stub implementation just returns 0) */
-	xorl %eax, %eax
-	ret
+    pushq %rbp
+    movq %rsp, %rbp
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+
+    // Load input and output image dimensions (width = cols, height = rows)
+    movl IMAGE_WIDTH_OFFSET(%rdi), %eax    // %eax = input image width
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx   // %ebx = input image height
+    movl IMAGE_WIDTH_OFFSET(%rsi), %r10d   // %r10d = output image width
+    movl IMAGE_HEIGHT_OFFSET(%rsi), %r11d  // %r11d = output image height
+
+    // Determine tile width and height
+    movl %r10d, %r13d       // r13d = output width
+    movl %eax, %r14d        // r14d = input width
+    call determine_tile_w   // tile_width = output_width / input_width
+
+    movl %r11d, %r13d       // r13d = output height
+    movl %ebx, %r14d        // r14d = input height
+    call determine_tile_h   // tile_height = output_height / input_height
+
+    // Initialize row and col for output image
+    movl $0, %r12d          // %r12d = current output row
+    movl $0, %r15d          // %r15d = current output col
+
+    // Load pointers to input and output image data
+    movq IMAGE_DATA_OFFSET(%rdi), %r8     // Input data pointer
+    movq IMAGE_DATA_OFFSET(%rsi), %r9     // Output data pointer
+
+    jmp .Ltest_row_tile
+
+	.Lloop_row_tile:
+		// Initialize current tile row and column
+		movl $0, %r12d          // Reset current row
+		jmp .Ltest_col_tile
+
+	.Lloop_col_tile:
+		// Map output image coordinates to input image coordinates
+		movl %r12d, %r13d      // r13d = current output row
+		movl %r15d, %r14d      // r14d = current output col
+
+		// Compute the pixel coordinates in the input image for tiling
+		// Here, we divide the output row and column by tile size
+		movl %r13d, %eax       // Input row = output row % input image height
+		modl %ebx, %eax
+		movl %r14d, %ebx       // Input col = output col % input image width
+		modl %eax, %ebx
+
+		// Copy the pixel from input image to output image
+		movl (%r8, %eax, 4), %edi    // Load pixel from input
+		movl %edi, (%r9, %r13d, 4)   // Store pixel in output
+
+		// Increment column
+		addl $1, %r15d
+
+	.Ltest_col_tile:
+		// Check if we have reached the end of the row
+		cmpl %r10d, %r15d       // Compare current col to output width
+		jl .Lloop_col_tile
+
+		// Increment row
+		addl $1, %r12d
+
+	.Ltest_row_tile:
+		// Check if we have processed all rows
+		cmpl %r11d, %r12d       // Compare current row to output height
+		jl .Lloop_row_tile
+
+		// Cleanup and return
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		popq %rbx
+		popq %rbp
+		ret
  
 
 /*
