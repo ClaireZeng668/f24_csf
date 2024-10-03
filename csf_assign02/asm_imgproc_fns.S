@@ -137,8 +137,8 @@ imgproc_mirror_v:
     pushq %r15
 
     // Load the width and height of the image
-    movl IMAGE_WIDTH_OFFSET(%rdi), %eax  
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx  
+    movl IMAGE_WIDTH_OFFSET(%rdi), %eax
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx
 
     movl $0, %r10d   // %r10 = opposite row index
     movl $0, %r11d   // %r11 = current row
@@ -195,11 +195,67 @@ imgproc_mirror_v:
     popq %rbp
     ret
 
-/* this function will be implemented in MS3 */
+//rdi - input
+//rsi - n
+//rdx - output
 	.globl imgproc_tile
 imgproc_tile:
-	/* TODO: implement (this stub implementation just returns 0) */
-	xorl %eax, %eax
+	pushq %rbp
+    movq %rsp, %rbp
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+
+	//save parameters
+	movq %rdi, %rbx //input pointer
+	movq %rsi, %r12 //n
+	movq %rdx, %r13 //output pointer
+
+	movl IMAGE_WIDTH_OFFSET(%rdi), %r10d
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %r11d
+	movq $0, %rax
+
+	cmpl $1, %esi
+	jl .Ltile_done
+	movl %r10d, %edi
+	movl %r11d, %esi
+	movl %r12d, %edx
+	call all_tiles_nonempty
+	cmpl $1, %eax
+	jne .Ltile_done
+
+	movl $0, %r14d //tile_row counter
+	movl $0, %r15d //tile_col counter
+	jmp .Ltile_condr
+	.Ltile_topr:
+		movl $0, %r15d //reset tile_col counter
+		jmp .Ltile_condc
+		.Ltile_topc:
+			movq %r13, %rdi
+			movq %rbx, %rsi
+			movl %r14d, %edx
+			movl %r15d, %ecx
+			movl %r12d, %r8d
+			call copy_tile
+			incl %r15d
+		.Ltile_condc:
+			cmpl %r12d, %r15d
+			jl .Ltile_topc
+		incl %r14d
+	.Ltile_condr:
+		cmpl %r12d, %r14d
+		jl .Ltile_topr
+	
+	movq $1, %rax
+	.Ltile_done:
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %rbx
+	popq %rbp
 	ret
  
 
@@ -429,7 +485,7 @@ copy_tile:
 	movq %rdx, %r13	//tile_row -> out_start_index
 	movq %rcx, %r14	//tile_col -> orig_start_index
 	movq %r8, %r15	//n
-
+//gdb: print *((unsigned *) ($r15 + ($r10 * 4)))
 	movl IMAGE_WIDTH_OFFSET(%r12), %edi //img width
 	movl %r15d, %esi //n
 	call determine_tile_w
@@ -484,6 +540,7 @@ copy_tile:
 	//-16(%rbp) - col len
 	movl %r13d, %r10d
 	movl %r14d, %r11d
+	movq $0, %r8
 	jmp .Lcopy_test_condr
     .Lcopyc_top:
 		movl $0, %r9d      // Reset col counter

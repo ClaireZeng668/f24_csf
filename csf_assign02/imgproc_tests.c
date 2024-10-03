@@ -139,7 +139,7 @@ int main( int argc, char **argv ) {
   /*Commented out tests will be implemented in MS3, so they do not pass at the moment*/
   TEST( test_mirror_h_basic );
   TEST( test_mirror_v_basic );
-  //TEST( test_tile_basic );
+  TEST( test_tile_basic );
   TEST( test_grayscale_basic );
   TEST( test_composite_basic );
   TEST( test_all_tiles_nonempty );
