@@ -136,7 +136,6 @@ int main( int argc, char **argv ) {
   // Make sure you add additional TEST() macro invocations
   // for any additional test functions you add.
 
-  /*Commented out tests will be implemented in MS3, so they do not pass at the moment*/
   TEST( test_mirror_h_basic );
   TEST( test_mirror_v_basic );
   TEST( test_tile_basic );
