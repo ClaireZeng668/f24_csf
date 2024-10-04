@@ -978,6 +978,3 @@ blend_colors:
 	popq %rbx
 	popq %rbp
 	ret
-
-
-
