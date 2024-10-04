@@ -221,7 +221,7 @@ imgproc_mirror_v:
  *   %rax  - return value (success/failure)
  *
  * Memory use:
- *   6 registers pushed for function scope.
+ *   Stack is aligned by pushing an even number of registers (6 in this case) and subtracting 8.
  *
  */
 	.globl imgproc_tile
@@ -233,6 +233,7 @@ imgproc_tile:
     pushq %r13
     pushq %r14
     pushq %r15
+	subq $8, %rsp
 
 	// save parameters
     movq %rdi, %rbx      // %rbx = pointer to input image
@@ -287,6 +288,7 @@ imgproc_tile:
     movq $1, %rax  // set return value to success (1)
 
 	.Ltile_done:
+		addq $8, %rsp
 		popq %r15
 		popq %r14
 		popq %r13
@@ -315,7 +317,7 @@ imgproc_tile:
  *   %ebx  - image height (rows)
  *
  * Memory use:
- *   Stack is aligned by pushing an odd number of registers (6 in this case).
+ *   Stack is aligned by pushing an even number of registers (6 in this case) and subtracting 8.
  */
 	.globl imgproc_grayscale
 imgproc_grayscale:
@@ -326,6 +328,7 @@ imgproc_grayscale:
     pushq %r13
     pushq %r14
     pushq %r15
+	subq $8, %rsp
 
     // Load image dimensions (width = cols, height = rows)
     movl IMAGE_WIDTH_OFFSET(%rdi), %r15d   // r15d = width
@@ -353,6 +356,7 @@ imgproc_grayscale:
     jl .Ltop                 // If index < total pixels, continue loop
 
     // Restore registers and return
+	addq $8, %rsp
     popq %r15
     popq %r14
     popq %r13
@@ -392,7 +396,7 @@ imgproc_grayscale:
  *   %r15d - loop counter
  *
  * Memory use:
- *   Function uses the stack for saving registers, but no local variables used.
+ *   Stack is aligned by pushing an even number of registers (6 in this case) and subtracting 8.
  */
 	.globl imgproc_composite
 imgproc_composite:
@@ -403,6 +407,7 @@ imgproc_composite:
     pushq %r13
     pushq %r14
     pushq %r15
+	subq $8, %rsp
 
 	movl IMAGE_WIDTH_OFFSET(%rdi), %r8d       // base img width
     movl IMAGE_HEIGHT_OFFSET(%rdi), %r9d      // base img height
@@ -439,6 +444,7 @@ imgproc_composite:
 		jl .Lcomp_top           // If index < total pixels, continue loop
 
 	.Lcomp_done:
+		addq $8, %rsp
 		popq %r15
 		popq %r14
 		popq %r13
@@ -448,7 +454,7 @@ imgproc_composite:
 		ret
 
 
-//helper functions for tiling
+//helper functions for tiling, no function calls within
 
 .globl all_tiles_nonempty
 all_tiles_nonempty:
@@ -542,13 +548,14 @@ determine_tile_y_offset:
  *   %rdi  - pointer to input image data
  *
  * Memory use:
- *   Local stack variables are used to store temporary values (tile width, height, etc.).
+ *   Local stack variables are used to store values (tile width, height, etc.).
+ *   Stack is aligned by pushing an even number of registers (6 in this case) and subtracting an odd multiple of 8.
  */
 .globl copy_tile
 copy_tile:
 	pushq %rbp
     movq %rsp, %rbp
-	subq $32, %rsp
+	subq $24, %rsp
     pushq %rbx
     pushq %r12
     pushq %r13
@@ -622,7 +629,7 @@ copy_tile:
 			movl (%rdi, %r11, 4), %esi
 			movl %esi, (%rax, %r10, 4) 
 
-			addl IMAGE_WIDTH_OFFSET(%r12), %r10  // add output position
+			addl IMAGE_WIDTH_OFFSET(%r12), %r10d  // add output position
 
 			movl IMAGE_WIDTH_OFFSET(%r12), %edx
 			imull %r15d, %edx
@@ -655,7 +662,7 @@ copy_tile:
     popq %r13
     popq %r12
     popq %rbx
-	addq $32, %rsp
+	addq $24, %rsp
     popq %rbp	
 	ret
 
@@ -685,6 +692,7 @@ copy_tile:
  *
  * Memory use:
  *   Local stack variables are used to store temporary values (tile width, height, etc.).
+ *   Stack is aligned by pushing an even number of registers (6 in this case) and subtracting 8.
  * 
  */
 .globl calculate_starting_index
@@ -861,7 +869,7 @@ make_pixel:
  *   %ecx - holds the alpha value
  *
  * Memory use:
- *   Stack is aligned by pushing two registers (2 in this case).
+ *   Stack is aligned by pushing three registers.
  */
 .globl to_grayscale
 to_grayscale:
@@ -901,7 +909,21 @@ to_grayscale:
 	popq %rbp
 	ret
 
-
+/*
+ * Function to blend color components.
+ * Parameters:
+ *   %rdi: pointer to foreground color component
+ *   %rsi: pointer to background color component
+ *
+ * Register use:
+ *   %edi - holds intermediate calculations
+ *   %r10d - holds intermediate calculations
+ *   %esi - holds intermediate calculations
+ *   %eax - holds calculated pixel value
+ *
+ * Memory use:
+ *   No stack usage; function does not alter stack state.
+ */
 .globl blend_components
 blend_components:
 	movq $0, %rax
@@ -916,10 +938,29 @@ blend_components:
 	divl %r10d 			//divide eax by 255, put quotient in rax
 	ret
 
+/*
+ * Function to blend foreground and background pixel.
+ * Parameters:
+ *   %rdi: pointer to foreground pixel
+ *   %rsi: pointer to background pixel
+ *
+ * Register use:
+ *   %ebx - holds the foregound pixel, foreground blue component (intermediate), blended blue component
+ *   %r12d - holds the background pixel
+ *   %r15d  - foregound alpha component
+ *   %r13d  - foregound red component (intermediate), blended red component
+ *   %r14d  - foregound green component (intermediate), blended green component
+ *   %eax  - blended pixel
+ *   %edi, %esi, %edx, %ecx - various intermediate values to pass into blend_components
+ *
+ * Memory use:
+ *   Stack is aligned by pushing an even number of registers (6 in this case) and subtracting an odd multiple of 8.
+ */
 .globl blend_colors
 blend_colors:
 	pushq %rbp
 	movq %rsp, %rbp
+	subq $8, %rsp
 	pushq %rbx 
 	pushq %r12
 	pushq %r13
@@ -976,5 +1017,6 @@ blend_colors:
 	popq %r13
 	popq %r12
 	popq %rbx
+	addq $8, %rsp
 	popq %rbp
 	ret
