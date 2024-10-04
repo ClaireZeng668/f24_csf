@@ -195,9 +195,35 @@ imgproc_mirror_v:
     popq %rbp
     ret
 
-//rdi - input
-//rsi - n
-//rdx - output
+
+/*
+ * Transform image by tiling it multiple times.
+ * This transformation is applied when tiling factor n is greater than 1.
+ * The image is repeated both horizontally and vertically to fill the output image.
+ *
+ * Parameters:
+ *   %rdi - pointer to the original struct Image (input image)
+ *   %rsi - tiling factor (n)
+ *   %rdx - pointer to output struct Image (output image)
+ *
+ * Register use:
+ *   %rdi  - pointer to input Image
+ *   %rsi  - tiling factor (n)
+ *   %rdx  - pointer to output Image
+ *   %rbx  - pointer to input image data
+ *   %r12  - tiling factor (n)
+ *   %r13  - pointer to output image data
+ *   %r10d - width of the input image
+ *   %r11d - height of the input image
+ *   %r14d - current tile row index
+ *   %r15d - current tile column index
+ *   %r8d  - tile copy counter (used in subroutine)
+ *   %rax  - return value (success/failure)
+ *
+ * Memory use:
+ *   6 registers pushed for function scope.
+ *
+ */
 	.globl imgproc_tile
 imgproc_tile:
 	pushq %rbp
@@ -208,55 +234,66 @@ imgproc_tile:
     pushq %r14
     pushq %r15
 
-	//save parameters
-	movq %rdi, %rbx //input pointer
-	movq %rsi, %r12 //n
-	movq %rdx, %r13 //output pointer
+	// save parameters
+    movq %rdi, %rbx      // %rbx = pointer to input image
+    movq %rsi, %r12      // %r12 = tiling factor (n)
+    movq %rdx, %r13      // %r13 = pointer to output image
 
-	movl IMAGE_WIDTH_OFFSET(%rdi), %r10d
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %r11d
-	movq $0, %rax
+    // load width and height of the input image
+    movl IMAGE_WIDTH_OFFSET(%rdi), %r10d   // %r10 = image width (cols)
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %r11d  // %r11 = image height (rows)
 
-	cmpl $1, %esi
-	jl .Ltile_done
+    movq $0, %rax         // Initialize return value (success/failure)
+
+    // if tiling factor is less than 1, exit the function
+    cmpl $1, %esi
+    jl .Ltile_done
+
+	// check if all valid
 	movl %r10d, %edi
 	movl %r11d, %esi
 	movl %r12d, %edx
-	call all_tiles_nonempty
+	call all_tiles_nonempty  // check if all tiles are nonempty
 	cmpl $1, %eax
-	jne .Ltile_done
+	jne .Ltile_done  // if invalid, exit function
 
-	movl $0, %r14d //tile_row counter
-	movl $0, %r15d //tile_col counter
+    movl $0, %r14d   // Initialize tile row counter
+    movl $0, %r15d   // Initialize tile column counter
+
+	// loop through each tile row
 	jmp .Ltile_condr
 	.Ltile_topr:
-		movl $0, %r15d //reset tile_col counter
+		movl $0, %r15d   // reset tile column counter for each row
+		// loop through each tile column
 		jmp .Ltile_condc
 		.Ltile_topc:
-			movq %r13, %rdi
-			movq %rbx, %rsi
-			movl %r14d, %edx
-			movl %r15d, %ecx
-			movl %r12d, %r8d
-			call copy_tile
-			incl %r15d
+            movq %r13, %rdi   // %rdi = pointer to output image
+            movq %rbx, %rsi   // %rsi = pointer to input image
+            movl %r14d, %edx  // %edx = current tile row index
+            movl %r15d, %ecx  // %ecx = current tile column index
+            movl %r12d, %r8d  // %r8d = tiling factor
+            call copy_tile    // Copy the tile to the output image
+			incl %r15d  	  // increment tile column counter
 		.Ltile_condc:
-			cmpl %r12d, %r15d
-			jl .Ltile_topc
-		incl %r14d
+            cmpl %r12d, %r15d  // compare column counter to tiling factor
+            jl .Ltile_topc     // loop if column counter < n
+
+        incl %r14d             // increment tile row counter
 	.Ltile_condr:
-		cmpl %r12d, %r14d
-		jl .Ltile_topr
-	
-	movq $1, %rax
+        cmpl %r12d, %r14d      // compare row counter to tiling factor
+        jl .Ltile_topr         // loop if row counter < n
+
+    // end of tiling process
+    movq $1, %rax  // set return value to success (1)
+
 	.Ltile_done:
-	popq %r15
-	popq %r14
-	popq %r13
-	popq %r12
-	popq %rbx
-	popq %rbp
-	ret
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		popq %rbx
+		popq %rbp
+		ret
  
 
 /*
@@ -326,8 +363,6 @@ imgproc_grayscale:
 
 
 /*
- * int imgproc_composite( struct Image *base_img, struct Image *overlay_img, struct Image *output_img );
- *
  * Overlay a foreground image on a background image, using each foreground
  * pixel's alpha value to determine its degree of opacity in order to blend
  * it with the corresponding background pixel.
@@ -340,6 +375,24 @@ imgproc_grayscale:
  * Returns: 
  *   1 if successful, or 0 if the transformation fails because the base
  *   and overlay image do not have the same dimensions
+ *
+ * Register use:
+ *   %rdi  - pointer to base image
+ *   %rsi  - pointer to overlay image
+ *   %rdx  - pointer to output image
+ *   %r8d  - base image width
+ *   %r9d  - base image height
+ *   %r10d - overlay image width
+ *   %r11d - overlay image height
+ *   %rax  - return value (success/failure)
+ *   %rbx  - base image data pointer
+ *   %r12  - overlay image data pointer
+ *   %r13  - output image data pointer
+ *   %r14d - total number of pixels to compare
+ *   %r15d - loop counter
+ *
+ * Memory use:
+ *   Function uses the stack for saving registers, but no local variables used.
  */
 	.globl imgproc_composite
 imgproc_composite:
@@ -351,46 +404,48 @@ imgproc_composite:
     pushq %r14
     pushq %r15
 
-	movl IMAGE_WIDTH_OFFSET(%rdi), %r8d //base img width
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %r9d //base img height
-	movl IMAGE_WIDTH_OFFSET(%rsi), %r10d //overlay img width
-    movl IMAGE_HEIGHT_OFFSET(%rsi), %r11d //overlay img height
+	movl IMAGE_WIDTH_OFFSET(%rdi), %r8d       // base img width
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %r9d      // base img height
+	movl IMAGE_WIDTH_OFFSET(%rsi), %r10d      // overlay img width
+    movl IMAGE_HEIGHT_OFFSET(%rsi), %r11d     // overlay img height
 	movq $0, %rax
-	//check same dimensions
+
+	// check same dimensions
 	cmpl %r8d, %r10d
 	jne .Lcomp_done
 	cmpl %r9d, %r11d
 	jne .Lcomp_done
 
-	//dimensions equal
+	// dimensions equal
 	movq $1, %rax
 	imull %r9d, %r8d
-	movl %r8d, %ebx //total num pixels to compare with loop counter
-	movq $0, %r12 //loop counter
+	movl %r8d, %ebx                         // total num pixels to compare with loop counter
+	movq $0, %r12                           // loop counter
 	movq IMAGE_DATA_OFFSET(%rdi), %r13      // r13 = base data pointer
     movq IMAGE_DATA_OFFSET(%rsi), %r14      // r14 = overlay data pointer
 	movq IMAGE_DATA_OFFSET(%rdx), %r15		// r15 = output data pointer
 
 	jmp .Lcomp_cond
+
 	.Lcomp_top:
-		movl (%r14, %r12, 4), %edi             // Load overlay pixel into %edi
-		movl (%r13, %r12, 4), %esi             // Load base pixel into %esi
+		movl (%r14, %r12, 4), %edi           // Load overlay pixel into %edi
+		movl (%r13, %r12, 4), %esi           // Load base pixel into %esi
 		call blend_colors
 		movl %eax, (%r15, %r12, 4)
 		incl %r12d
+
 	.Lcomp_cond:
-    cmpl %ebx, %r12d        // Compare index < total pixels
-    jl .Lcomp_top                 // If index < total pixels, continue loop
+		cmpl %ebx, %r12d        // Compare index < total pixels
+		jl .Lcomp_top           // If index < total pixels, continue loop
 
 	.Lcomp_done:
-	popq %r15
-    popq %r14
-    popq %r13
-    popq %r12
-    popq %rbx
-    popq %rbp
-	ret
-
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		popq %rbx
+		popq %rbp
+		ret
 
 
 //helper functions for tiling
@@ -399,13 +454,13 @@ imgproc_composite:
 all_tiles_nonempty:
 	movq $1, %rax
 	cmpq %rdi, %rdx //compare n and width
-	jg .Lempty //jump if rdx(n) > rdi(width)
+	jg .Lempty      //jump if rdx(n) > rdi(width)
 	cmpq %rsi, %rdx 
-	jg .Lempty //jump if rdx(n) > rsi(height)
+	jg .Lempty      //jump if rdx(n) > rsi(height)
 	cmpq $0, %rdi
-	jle .Lempty //jump if rdi(width) <= 0
+	jle .Lempty     //jump if rdi(width) <= 0
 	cmpq $0, %rsi
-	jle .Lempty //jump if rsi(height) <= 0
+	jle .Lempty     //jump if rsi(height) <= 0
 	jmp .Ldone_empty
 	.Lempty:
 		movq $0, %rax
@@ -462,12 +517,33 @@ determine_tile_y_offset:
 
 
 /*
-rdi-out
-rsi-in
-rdx-tile_row
-rcx-tile_col
-r8-n
-*/
+ * Copy a tile from the input image to the output image.
+ * This transformation places a portion of the input image into its corresponding
+ * location in the output image based on the tiling factor (n), row, and column indices.
+ * 
+ * Parameters:
+ *   %rdi - pointer to the output image
+ *   %rsi - pointer to the input image
+ *   %rdx - tile row index (to determine position in the output image)
+ *   %rcx - tile column index (to determine position in the input image)
+ *   %r8d - tiling factor (n)
+ *
+ * Register use:
+ *   %rbx  - pointer to output image data
+ *   %r12  - pointer to input image
+ *   %r13  - tile row index (used to calculate output start index)
+ *   %r14  - tile column index (used to calculate input start index)
+ *   %r15  - tiling factor (n)
+ *   %r10d - output image position index
+ *   %r11d - input image position index
+ *   %r8d  - row counter (for row iterations)
+ *   %r9d  - column counter (for column iterations)
+ *   %rax  - pointer to output image data
+ *   %rdi  - pointer to input image data
+ *
+ * Memory use:
+ *   Local stack variables are used to store temporary values (tile width, height, etc.).
+ */
 .globl copy_tile
 copy_tile:
 	pushq %rbp
@@ -479,103 +555,100 @@ copy_tile:
     pushq %r14
     pushq %r15
 
-	//save parameters
-	movq %rdi, %rbx //output image
-	movq %rsi, %r12 //input image
-	movq %rdx, %r13	//tile_row -> out_start_index
-	movq %rcx, %r14	//tile_col -> orig_start_index
-	movq %r8, %r15	//n
-//gdb: print *((unsigned *) ($r15 + ($r10 * 4)))
-	movl IMAGE_WIDTH_OFFSET(%r12), %edi //img width
-	movl %r15d, %esi //n
-	call determine_tile_w
-	movl %eax, -8(%rbp) //tile width
+	// save parameters
+	movq %rdi, %rbx    // %rbx = pointer to output image
+	movq %rsi, %r12    // %r12 = pointer to input image
+	movq %rdx, %r13    // %r13 = tile row index
+	movq %rcx, %r14    // %r14 = tile column index
+	movq %r8, %r15	   //n
 
-	movl IMAGE_WIDTH_OFFSET(%r12), %edi //img width
-	movl %r15d, %esi //n
+	// calculate tile width and offset
+	movl IMAGE_WIDTH_OFFSET(%r12), %edi   // img width
+	movl %r15d, %esi
+	call determine_tile_w
+	movl %eax, -8(%rbp)     // tile width
+
+	movl IMAGE_WIDTH_OFFSET(%r12), %edi   // img width
+	movl %r15d, %esi 
 	movl %r14d, %edx
 	call determine_tile_x_offset
-	movl %eax, -16(%rbp) //tile width offset
+	movl %eax, -16(%rbp)   // tile width offset
 	
+	// add tile width offset to calculate row length
 	movl -16(%rbp), %r10d
-	addl %r10d, -8(%rbp) //row_len
+	addl %r10d, -8(%rbp)  
 
-    movl IMAGE_HEIGHT_OFFSET(%r12), %edi //img height
-	movl %r15d, %esi //n
+    movl IMAGE_HEIGHT_OFFSET(%r12), %edi   // img height
+	movl %r15d, %esi
 	call determine_tile_h
-	movl %eax, -16(%rbp) //tile height
+	movl %eax, -16(%rbp)  // tile height
 
-	movl IMAGE_HEIGHT_OFFSET(%r12), %edi //img height
-	movl %r15d, %esi //n
+	// calculate tile height and offset
+	movl IMAGE_HEIGHT_OFFSET(%r12), %edi   //img height
+	movl %r15d, %esi
 	movl %r13d, %edx
 	call determine_tile_y_offset
-	movl %eax, -24(%rbp) //tile height offset
+	movl %eax, -24(%rbp) // tile height offset
 
+	// add tile height offset to calculate column length
 	movl -24(%rbp), %r10d
-	addl %r10d, -16(%rbp) //col_len
+	addl %r10d, -16(%rbp)   
 
+	// call calculate_starting_index to determine position in output image
 	movq %r12, %rdi
 	movq %r13, %rsi
 	movq %r14, %rdx
 	movq %r15, %rcx
 	call calculate_starting_index
-	movl %eax, %r13d //out_start_index
+	movl %eax, %r13d   // output start index
 	
-	movq $0, %r14 //orig_start_index
+	movq $0, %r14   // original start index
 
-	//r10 - out_pos
-	//r11 - orig_pos
-	//r8 - row counter
-	//r9 - col counter
-	//rbx - output image
-	//rax - output data pointer
-	//r12 - input image 
-	//rdi - input data pointer
+	// access image data
 	movq IMAGE_DATA_OFFSET(%rbx), %rax
     movq IMAGE_DATA_OFFSET(%r12), %rdi
-	//r13 - out_start_index
-	//r14 - orig_start_index
-	//r15 - n
-	//-8(%rbp) - row len
-	//-16(%rbp) - col len
-	movl %r13d, %r10d
-	movl %r14d, %r11d
-	movq $0, %r8
+
+	movl %r13d, %r10d  // output position
+	movl %r14d, %r11d  // original position
+	movq $0, %r8       // row counter
+
+	// copy tile from input to output image
 	jmp .Lcopy_test_condr
     .Lcopyc_top:
-		movl $0, %r9d      // Reset col counter
+		movl $0, %r9d      // reset column counter
         jmp .Lcopy_test_condc
         .Lcopyr_top:      
+			// copy pixel from input image to output image
 			movl (%rdi, %r11, 4), %esi
-			movl %esi, (%rax, %r10, 4) //copy pixel data
+			movl %esi, (%rax, %r10, 4) 
 
-			addl IMAGE_WIDTH_OFFSET(%r12), %r10d //add out_pos
+			addl IMAGE_WIDTH_OFFSET(%r12), %r10  // add output position
 
 			movl IMAGE_WIDTH_OFFSET(%r12), %edx
 			imull %r15d, %edx
-			addl %edx, %r11d //add orig_pos
+			addl %edx, %r11d  // add original position
 
-            addl $1, %r9d //incremenent col counter
+            addl $1, %r9d     // increment column counter
         .Lcopy_test_condc:
             cmpl -16(%rbp), %r9d
-            jl .Lcopyr_top //jump if col counter < col len
+            jl .Lcopyr_top    // jump if column counter < col len
 
-		//reset out_pos
-		movl %r8d, %edx //row
-		incl %edx //row+1
-		addl %r13d, %edx //row+1+out_start_index
-		movl %edx, %r10d //out_pos = out_start_index+row+1
+		// Reset for next row
+		movl %r8d, %edx       // row
+		incl %edx 		      // row + 1
+		addl %r13d, %edx      // row + 1 + out_start_index
+		movl %edx, %r10d      // out_pos = out_start_index + row + 1
 
-		//reset orig_pos
-		movl %r8d, %edx //row
-		incl %edx //row+1
-		imull %r15d, %edx //(row+1)*n
-		addl %r14d, %edx //row+1+orig_start_index
+		// Reset original position
+		movl %r8d, %edx       // row
+		incl %edx             // row + 1
+		imull %r15d, %edx     // (row + 1) * n
+		addl %r14d, %edx      // row + 1 + orig_start_index
 		movl %edx, %r11d
-        addl $1, %r8d //increment row counter
+        addl $1, %r8d         // increment row counter
     .Lcopy_test_condr:
 		cmpl -8(%rbp), %r8d
-		jl .Lcopyc_top //jump if row counter < row len
+		jl .Lcopyc_top        // jump if row counter < row len
 
     popq %r15
     popq %r14
@@ -587,10 +660,33 @@ copy_tile:
 	ret
 
 
-//rdi - img
-//rsi - tile_row
-//rdx - tile_col - r10
-//rcx - n
+/*
+ * Calculate the starting index for a tile in the output image.
+ * This determines the pixel position in the output image where the top-left
+ * corner of the current tile should be placed.
+ * 
+ * Parameters:
+ *   %rdi - pointer to the input image
+ *   %rsi - tile row index
+ *   %rdx - tile column index
+ *   %rcx - tiling factor (n)
+ * 
+ * Register use:
+ *   %rbx  - width of the input image
+ *   %r12d - height of the input image
+ *   %r13  - tile row index
+ *   %r14  - tile column index
+ *   %r15  - tiling factor (n)
+ *   %r8d  - width of a single tile
+ *   %r9d  - accumulated width offset
+ *   %r10d - accumulated height offset
+ *   %r11  - loop counter (used for iterating over tile columns and rows)
+ *   %r15d - starting index in the output image
+ *
+ * Memory use:
+ *   Local stack variables are used to store temporary values (tile width, height, etc.).
+ * 
+ */
 .globl calculate_starting_index
 calculate_starting_index:
 	pushq %rbp
@@ -602,89 +698,85 @@ calculate_starting_index:
     pushq %r14
     pushq %r15
 
-	//save parameters
-	movl IMAGE_WIDTH_OFFSET(%rdi), %ebx //img width
-    movl IMAGE_HEIGHT_OFFSET(%rdi), %r12d //img height -> height
-	movq %rsi, %r13 //tile_row
-	movq %rdx, %r14	//tile_col
-	movq %rcx, %r15	//n
-	//r8 - width
-	//r9 - total_width_offset
-	//r10 - total_height_offset
-	//r11 - loop counter
+	// save parameters
+	movl IMAGE_WIDTH_OFFSET(%rdi), %ebx    // %ebx = width of the input image
+    movl IMAGE_HEIGHT_OFFSET(%rdi), %r12d  // %r12d = height of the input image
+	movq %rsi, %r13   // %r13 = tile row index
+	movq %rdx, %r14   // %r14 = tile column index
+	movq %rcx, %r15   // %r15 = tiling factor (n)
 
 	movq %r12, %rdi
 	movq %r15, %rsi
-	call determine_tile_h //%rax = height
-	movl %eax, -8(%rbp) //-8rbp holds height variable
+	call determine_tile_h   // %rax = height
+	movl %eax, -8(%rbp)    
 
 	movq %rbx, %rdi
 	movq %r15, %rsi
-	call determine_tile_w //%rax = width
-	movl %eax, %r8d //r8 holds width variable
+	call determine_tile_w  // %rax = width
+	movl %eax, %r8d  
 
-	movq $0, %rdx 		//set rdx to 0 for 64 bit division
-	movq %rbx, %rax 	//put dividend (img.width) in rax
-	divq %r15 			//put quotient in rax, remainder in rdx (we want the remainder)
-	movq %rdx, %r9 		//r9 holds total_width_offset
+	movq $0, %rdx 		// set rdx to 0 for 64 bit division
+	movq %rbx, %rax 	// put dividend (img.width) in rax
+	divq %r15 			// put quotient in rax, remainder in rdx
+	movq %rdx, %r9 		// r9 holds total_width_offset
 
-	movq $0, %rdx 		//set rdx to 0 for 64 bit division
-	movq %r12, %rax 	//put dividend (img.height) in rax
-	divq %r15 			//put quotient in rax, remainder in rdx (we want the remainder)
-	movq %rdx, %r10 	//r10 holds total_height_offset
+	movq $0, %rdx 		// set rdx to 0 for 64 bit division
+	movq %r12, %rax 	// put dividend (img.height) in rax
+	divq %r15 			// put quotient in rax, remainder in rdx
+	movq %rdx, %r10 	// r10 holds total_height_offset
 
-	movl -8(%rbp), %r12d //put height into r12d bc dont need img.height anymore
+	movl -8(%rbp), %r12d    // move height into r12d
 
-	movq $0, %r11 //loop counter
-	movq $0, %r15 //out_start_index
+	movq $0, %r11   // loop counter
+	movq $0, %r15   // starting index in the output image
 	.Ltopc_calc:
 		cmpq %r14, %r11
-		jge .Lcalc_reset //jump to next loop if counter >= tile col
+		jge .Lcalc_reset    // jump to reset loop counter if counter >= tile col
 
 		cmpq $0, %r9
-		jle .Lccalc_else	//jump if total_width_offset <= 0
+		jle .Lccalc_else	// jump if total_width_offset <= 0
 		addl %r8d, %r15d
 		incl %r15d
-		decl %r9d			//decrement total_width_offset
-		incl %r11d			//increment counter
+		decl %r9d			// decrement total_width_offset
+		incl %r11d			// increment counter
 		jmp .Ltopc_calc
 		.Lccalc_else:
 			addl %r8d, %r15d
-			incl %r11d			//increment counter
+			incl %r11d			// increment counter
 			jmp .Ltopc_calc
 
 	.Lcalc_reset:
-		movq $0, %r11 //reset loop counter
+		movq $0, %r11       // reset loop counter
 	.Ltopr_calc:
 		cmpq %r13, %r11
-		jge .Lcalc_done //jump to done counter >= tile row
+		jge .Lcalc_done     // jump to end if counter >= tile row
 
 		cmpq $0, %r10
-		jle .Lrcalc_else	//jump if total_width_offset <= 0
+		jle .Lrcalc_else	// jump if total_height_offset <= 0
 		movl %r12d, %edi
-		incl %edi			//height+1
-		imull %ebx, %edi 	//img.width * (height+1)
-		addl %edi, %r15d	//out_start_index = out_start_index + edi
-		decl %r10d			//decrement total_height_offset
-		incl %r11d 			//increment counter
+		incl %edi			// increment height
+		imull %ebx, %edi 	// img.width * height
+		addl %edi, %r15d	// out_start_index = out_start_index + edi
+		decl %r10d			// decrement total_height_offset
+		incl %r11d 			// increment counter
 		jmp .Ltopr_calc
 		.Lrcalc_else:
 			movl %r12d, %edi
-			imull %ebx, %edi 	//img.width * height
-			addl %edi, %r15d	//out_start_index = out_start_index + edi
-			incl %r11d 			//increment counter
+			imull %ebx, %edi 	// img.width * height
+			addl %edi, %r15d	// out_start_index = out_start_index + edi
+			incl %r11d 		    // increment counter
 			jmp .Ltopr_calc
 
 	.Lcalc_done:
-	movl %r15d, %eax
-	popq %r15
-    popq %r14
-    popq %r13
-    popq %r12
-    popq %rbx
-	addq $8, %rsp
-    popq %rbp	
-	ret
+		movl %r15d, %eax
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		popq %rbx
+		addq $8, %rsp
+		popq %rbp	
+		ret
 	
 
 /*
@@ -887,9 +979,5 @@ blend_colors:
 	popq %rbp
 	ret
 
-
-/*
-vim:ft=gas:
-*/
 
 
