@@ -16,12 +16,12 @@ Cache::Cache(int sets, int blocks, int blockSize, const std::string& writeAlloca
 
 void Cache::load(unsigned int address) {
     totalLoads++;
-    //todo
+    //todo: implement functionality
 }
 
 void Cache::store(unsigned int address) {
     totalStores++;
-    //todo
+    //todo: implement functionality
 }
 
 void Cache::printSummary() {
@@ -33,3 +33,5 @@ void Cache::printSummary() {
     std::cout << "Store misses: " << storeMisses << std::endl;
     std::cout << "Total cycles: " << totalCycles << std::endl;
 }
+
+//helper functions to be added later
