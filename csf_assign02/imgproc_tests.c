@@ -111,15 +111,15 @@ void test_to_grayscale( TestObjs *objs );
 void test_blend_components( TestObjs *objs );
 void test_blend_colors( TestObjs *objs );
 void test_calculate_starting_index ( TestObjs *objs );
-void test_copy_tile_1 ( TestObjs *objs);
-void test_copy_tile_2 ( TestObjs *objs);
-void test_copy_tile_3 ( TestObjs *objs);
-void test_get_r_M2();
-void test_get_g_M2();
-void test_get_b_M2();
-void test_get_a_M2();
-void test_make_pixel_M2();
-void test_to_grayscale_M2();
+void test_copy_tile_1 ( TestObjs *objs );
+void test_copy_tile_2 ( TestObjs *objs );
+void test_copy_tile_3 ( TestObjs *objs );
+void test_get_r_M2( TestObjs *objs );
+void test_get_g_M2( TestObjs *objs );
+void test_get_b_M2( TestObjs *objs );
+void test_get_a_M2( TestObjs *objs );
+void test_make_pixel_M2( TestObjs *objs );
+void test_to_grayscale_M2( TestObjs *objs );
 
 
 // TODO: add prototypes for additional test functions
@@ -401,7 +401,7 @@ void test_composite_basic( TestObjs *objs ) {
 
 // M2 TESTS
 
-void test_get_r_M2() {
+void test_get_r_M2( TestObjs *objs ) {
   // Standard case: Extract red from a known pixel value
   uint32_t pixel = 0x11223344;  
   uint32_t expected_red = 0x11;
@@ -418,7 +418,7 @@ void test_get_r_M2() {
   assert(get_r(pixel) == expected_red);
 }
 
-void test_get_g_M2() {
+void test_get_g_M2( TestObjs *objs ) {
   uint32_t pixel = 0x11223344;  // Green = 0x22
   uint32_t expected_green = 0x22;
   assert(get_g(pixel) == expected_green);
@@ -434,7 +434,7 @@ void test_get_g_M2() {
   assert(get_g(pixel) == expected_green);
 }
 
-void test_get_b_M2() {
+void test_get_b_M2( TestObjs *objs ) {
   uint32_t pixel = 0x11223344;  // Blue = 0x33
   uint32_t expected_blue = 0x33;
   assert(get_b(pixel) == expected_blue);
@@ -450,7 +450,7 @@ void test_get_b_M2() {
   assert(get_b(pixel) == expected_blue);
 }
 
-void test_get_a_M2() {
+void test_get_a_M2( TestObjs *objs ) {
   uint32_t pixel = 0x11223344;  // Alpha = 0x44
   uint32_t expected_alpha = 0x44;
   assert(get_a(pixel) == expected_alpha);
@@ -466,7 +466,7 @@ void test_get_a_M2() {
   assert(get_a(pixel) == expected_alpha);
 }
 
-void test_make_pixel_M2() {
+void test_make_pixel_M2( TestObjs *objs ) {
   uint32_t r = 0x11, g = 0x22, b = 0x33, a = 0x44;
   uint32_t expected_pixel = 0x11223344;
   assert(make_pixel(r, g, b, a) == expected_pixel);
@@ -487,7 +487,7 @@ void test_make_pixel_M2() {
   assert(make_pixel(r, g, b, a) == expected_pixel);
 }
 
-void test_to_grayscale_M2() {
+void test_to_grayscale_M2( TestObjs *objs ) {
   // Example pixel: R = 79, G = 128, B = 49 -> Grayscale approx 0x7F7F7F7F
   uint32_t pixel = 0x4F803100;  // R=79, G=128, B=49, A=0x00
   uint32_t expected_grayscale = 0x61616100;
