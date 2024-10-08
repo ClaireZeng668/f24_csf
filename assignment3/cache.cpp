@@ -3,31 +3,33 @@
 #include "cache.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <cmath>
 
-Cache *initialize_cache(int num_sets, int blocks_per_set, int block_size) {
-    Cache *cache = (Cache *)malloc(sizeof(Cache));
-    cache->num_sets = num_sets;
-    cache->blocks_per_set = blocks_per_set;
-    cache->block_size = block_size;
-    cache->sets = (CacheSet *)malloc(num_sets * sizeof(CacheSet));
+Cache::Cache(int sets, int blocks, int blockSize, const std::string& writeAllocate, const std::string& writePolicy, const std::string& evictionPolicy)
+    : sets(sets), blocks(blocks), blockSize(blockSize), writeAllocate(writeAllocate), writePolicy(writePolicy), evictionPolicy(evictionPolicy),
+      totalLoads(0), totalStores(0), loadHits(0), loadMisses(0), storeHits(0), storeMisses(0), totalCycles(0) {
+        
+      }
 
-    for (int i = 0; i < num_sets; i++) {
-        cache->sets[i].blocks = (CacheBlock *)malloc(blocks_per_set * sizeof(CacheBlock));
-        for (int j = 0; j < blocks_per_set; j++) {
-            cache->sets[i].blocks[j].valid = 0;
-        }
-    }
-    return cache;
+void Cache::load(unsigned int address) {
+    totalLoads++;
+    //todo
 }
 
-void free_cache(Cache *cache) {
-    for (int i = 0; i < cache->num_sets; i++) {
-        free(cache->sets[i].blocks);
-    }
-    free(cache->sets);
-    free(cache);
+void Cache::store(unsigned int address) {
+    totalStores++;
+    //todo
 }
 
-int is_valid_cache_params(int sets, int blocks_per_set, int block_size) {
-    return is_power_of_two(sets) && is_power_of_two(blocks_per_set) && is_power_of_two(block_size) && block_size >= 4;
+void Cache::printSummary() {
+    std::cout << "Total loads: " << totalLoads << std::endl;
+    std::cout << "Total stores: " << totalStores << std::endl;
+    std::cout << "Load hits: " << loadHits << std::endl;
+    std::cout << "Load misses: " << loadMisses << std::endl;
+    std::cout << "Store hits: " << storeHits << std::endl;
+    std::cout << "Store misses: " << storeMisses << std::endl;
+    std::cout << "Total cycles: " << totalCycles << std::endl;
 }

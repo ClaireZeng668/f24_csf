@@ -4,32 +4,34 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <string>
 
 class Cache {
 public:
-    Cache(int num_sets, int num_blocks, int block_size, bool write_allocate, bool write_back, bool lru);
-    void simulate(const std::string& trace_file);
-    void print_stats() const;
+    Cache(int sets, int blocks, int blockSize, const std::string& writeAllocate, const std::string& writePolicy, const std::string& evictionPolicy);
+    
+    void load(unsigned int address);
+    void store(unsigned int address);
+    void printSummary();
 
 private:
-    int num_sets;
-    int num_blocks;
-    int block_size;
-    bool write_allocate;
-    bool write_back;
-    bool lru;
+    int totalLoads;
+    int totalStores;
+    int loadHits;
+    int loadMisses;
+    int storeHits;
+    int storeMisses;
+    int totalCycles;
 
-    // Stats
-    int total_loads;
-    int total_stores;
-    int load_hits;
-    int load_misses;
-    int store_hits;
-    int store_misses;
-    int total_cycles;
+    //config param for cache
+    int sets;
+    int blocks;
+    int blockSize;
+    std::string writeAllocate;
+    std::string writePolicy;
+    std::string evictionPolicy;
 
-    // Cache data structures (e.g., a 2D vector for sets and blocks)
-    // Define any necessary structures for managing cache lines, tags, etc.
+    //add more later
 };
 
-#endif // CACHE_H
+#endif
