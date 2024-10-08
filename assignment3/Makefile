@@ -1,5 +1,7 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -pedantic
+CXXFLAGS = -g -std=c++14 -Wall -Wextra -pedantic
+
+.PHONY: solution.zip
 
 all: csim
 
@@ -11,6 +13,10 @@ main.o: main.cpp cache.h
 
 cache.o: cache.cpp cache.h
 	$(CXX) $(CXXFLAGS) -c cache.cpp
+
+solution.zip :
+	rm -f $@
+	zip -9r $@ *.cpp *.h Makefile README.txt
 
 clean:
 	rm -f *.o csim
