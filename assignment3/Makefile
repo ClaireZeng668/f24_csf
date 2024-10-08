@@ -1,22 +1,16 @@
-CC = gcc
+CC = g++
 CFLAGS = -Wall -Wextra -pedantic
-SRC_DIR = src
-INC_DIR = include
-OBJ = csim.o cache.o trace.o
 
 all: csim
 
-csim: $(OBJ)
-    $(CC) $(CFLAGS) -o csim $(OBJ)
+csim: main.o cache.o
+	$(CC) -o csim main.o cache.o
 
-csim.o: $(SRC_DIR)/csim.c $(INC_DIR)/cache.h $(INC_DIR)/trace.h
-    $(CC) $(CFLAGS) -c $(SRC_DIR)/csim.c
+main.o: main.cpp cache.h
+	$(CC) $(CFLAGS) -c main.cpp
 
-cache.o: $(SRC_DIR)/cache.c $(INC_DIR)/cache.h
-    $(CC) $(CFLAGS) -c $(SRC_DIR)/cache.c
-
-trace.o: $(SRC_DIR)/trace.c $(INC_DIR)/trace.h
-    $(CC) $(CFLAGS) -c $(SRC_DIR)/trace.c
+cache.o: cache.cpp cache.h
+	$(CC) $(CFLAGS) -c cache.cpp
 
 clean:
-    rm -f *.o csim
+	rm -f *.o csim

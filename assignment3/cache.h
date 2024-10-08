@@ -1,27 +1,35 @@
 #ifndef CACHE_H
 #define CACHE_H
 
-typedef struct {
-    int valid;
-    unsigned int tag;
-    int dirty;
-    int lru_counter;
-} CacheBlock;
+#include <iostream>
+#include <vector>
+#include <cmath>
 
-typedef struct {
-    CacheBlock *blocks;
-} CacheSet;
+class Cache {
+public:
+    Cache(int num_sets, int num_blocks, int block_size, bool write_allocate, bool write_back, bool lru);
+    void simulate(const std::string& trace_file);
+    void print_stats() const;
 
-typedef struct {
-    CacheSet *sets;
+private:
     int num_sets;
-    int blocks_per_set;
+    int num_blocks;
     int block_size;
-} Cache;
+    bool write_allocate;
+    bool write_back;
+    bool lru;
 
-Cache *initialize_cache(int num_sets, int blocks_per_set, int block_size);
-void free_cache(Cache *cache);
-int is_valid_cache_params(int sets, int blocks_per_set, int block_size);
-int is_power_of_two(int x);
+    // Stats
+    int total_loads;
+    int total_stores;
+    int load_hits;
+    int load_misses;
+    int store_hits;
+    int store_misses;
+    int total_cycles;
 
-#endif
+    // Cache data structures (e.g., a 2D vector for sets and blocks)
+    // Define any necessary structures for managing cache lines, tags, etc.
+};
+
+#endif // CACHE_H
