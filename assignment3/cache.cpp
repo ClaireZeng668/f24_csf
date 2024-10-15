@@ -9,37 +9,48 @@
 #include <cstdlib>
 #include <cmath>
 
-
+//have timestamp for entire program, just find smallest timestamp
+//write though - 100 cycles
+//default constructor for struct
 
 Cache::Cache(int sets, int blocks, int blockSize, const std::string& writeAllocate, const std::string& writePolicy, const std::string& evictionPolicy)
     : sets(sets), blocks(blocks), blockSize(blockSize), writeAllocate(writeAllocate), writePolicy(writePolicy), evictionPolicy(evictionPolicy),
       totalLoads(0), totalStores(0), loadHits(0), loadMisses(0), storeHits(0), storeMisses(0), totalCycles(0), time(0) {
         std::vector<Set> set_vec;
-      }
+    }
+
 
 void Cache::load(unsigned int address) {
     totalLoads++;
-     
-    if (sets > 1) {
-        //direct mapped
-        if (blocks == 1) {
+    time++;
+    int index = get_index_bits(address);
+    int tag = get_tag_bits(address);
 
-        } else { //set associative
-            int index = get_index_bits(address);
-            int tag = get_tag_bits(address);
-            
-        }
-    } else { //fully associative
+    //write back, wrte allocate
 
-    }
-
+    //load hit - exists in cache - 1 cycle
+    //load miss - doesnt exists, find smallest ts, check validity, 
+        //if valid, get rid, pull from memory (100), load to cache (1), update ts, hit, misses, cycles, etc.
+        //if not, evict and store to mem if dirty (100), pull memory (100), update data (1)
     
     //todo: implement functionality
 }
 
 void Cache::store(unsigned int address) {
     totalStores++;
+    time++;
+    //store hit - exists in cache, update data (1), make dirty, update stuff
+    
+    //write through - 100 (eject 4 byte address, data already in mem)
+
+    //store miss - doesnt exists, find smallest ts, eject, check validity
+        //if not valid, put into memory (100+100*size), pull from memory (100), update cache (1)
+        //if valid, pull from memory (100), update cache (1)
+
+    //no write allocate (must be write through) - update mem (just 100)
+
     //todo: implement functionality
+
 }
 
 void Cache::printSummary() {
