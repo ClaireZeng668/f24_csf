@@ -1,6 +1,7 @@
 //cache related logic implementation
 
 #include "cache.h"
+#include <climits>
 #include <cstdint>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +17,10 @@
 Cache::Cache(int sets, int blocks, int blockSize, const std::string& writeAllocate, const std::string& writePolicy, const std::string& evictionPolicy)
     : sets(sets), blocks(blocks), blockSize(blockSize), writeAllocate(writeAllocate), writePolicy(writePolicy), evictionPolicy(evictionPolicy),
       totalLoads(0), totalStores(0), loadHits(0), loadMisses(0), storeHits(0), storeMisses(0), totalCycles(0), time(0) {
-        std::vector<Set> set_vec;
+        for (int i = 0; i < sets; i++) {
+            Set empty(blocks);
+            set_vec.push_back(empty);
+        }
     }
 
 
@@ -25,7 +29,41 @@ void Cache::load(unsigned int address) {
     time++;
     int index = get_index_bits(address);
     int tag = get_tag_bits(address);
+    
+    Set current = set_vec.at(index);
+    int smallest = 0;
+    //loop through set, check if tag is there
+    for (int i = 0; i < blocks; i++) {
+        Block current_block = current.block_vec.at(i);
+        int current_tag = current_block.tag;
+        int access = current_block.ts;
+        std::cout << "current tag " << current_tag << std::endl;
 
+        //find lru or fifo
+        if (access < current.block_vec.at(smallest).ts) {
+            smallest = i;
+        }
+        if (current_tag == tag) {
+            loadHits++;
+            return;
+        }
+    }
+    loadMisses++;
+    Block to_replace = current.block_vec.at(smallest);
+    Block new_block;
+    new_block.tag = tag;
+    new_block.ts = time;
+    std::cout << "new tag " << new_block.tag << std::endl;
+    current.block_vec.at(smallest) = new_block;
+    if (to_replace.dirty) { //is dirty
+        totalCycles+=201;
+    } else {
+        totalCycles+=101;
+    }
+
+    for (int i = 0; i < blocks; i++) {
+        std::cout << current.block_vec.at(i).tag << " " <<std::endl;
+    }
     //write back, wrte allocate
 
     //load hit - exists in cache - 1 cycle
@@ -35,6 +73,7 @@ void Cache::load(unsigned int address) {
     
     //todo: implement functionality
 }
+
 
 void Cache::store(unsigned int address) {
     totalStores++;

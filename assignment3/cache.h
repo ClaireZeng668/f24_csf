@@ -33,25 +33,31 @@ private:
     std::string writePolicy;
     std::string evictionPolicy;
 
-    //add more later
+    public: class Block {
+        public: 
+        int tag=0;
+        bool dirty=false;
+        int ts=0; //default zero
+    };
+
+    public: class Set {
+        public:
+        std::vector<Block> block_vec;
+
+        Set(int blocks) {
+            for (int i = 0; i < blocks; i++) {
+                Block empty;
+                block_vec.push_back(empty);
+            }
+        }
+    };
 
     int get_num_offset_bits (unsigned int address, int label);
     int get_index_bits (unsigned int address);
     int get_tag_bits (unsigned int address);
+
+    std::vector<Set> set_vec;
 };
 
-struct Block {
-    uint32_t tag;
-    bool dirty;
-    uint32_t load_ts, access_ts; //default set to zero, always check to see if evict
-
-    uint32_t get_tag();
-    bool get_validity();
-    uint32_t get_ts();
-};
-
-struct Set {
-    std::vector<Block> blocks;
-};
 
 #endif
