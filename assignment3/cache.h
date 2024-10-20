@@ -10,9 +10,9 @@
 
 class Block {
     public: 
-    int tag;
-    bool dirty=false;
-    int ts=0; //default zero
+    int tag = INT32_MAX;
+    bool dirty = false;
+    int ts = 0; //default zero
 };
 
 class Set {
@@ -34,7 +34,6 @@ public:
     void load(unsigned int address);
     void store(unsigned int address);
     void printSummary();
-    void output();
 
 private:
     int totalLoads;
@@ -45,6 +44,7 @@ private:
     int storeMisses;
     int totalCycles;
     int time;
+    std::vector<Set*> set_vec;
 
     //config param for cache
     int sets;
@@ -54,10 +54,13 @@ private:
     std::string writePolicy;
     std::string evictionPolicy;
 
-    int get_num_offset_bits (unsigned int address, int label);
+    int get_num_offset_bits (int label);
     int get_index_bits (unsigned int address);
     int get_tag_bits (unsigned int address);
-    std::vector<Set*> set_vec;
+    void load_miss(Set *current, int smallest, int tag);
+    void load_hit(Block *current_block);
+    void store_miss(Set *current, int smallest, int tag);
+    void store_hit(Block *current_block);
 };
 
 #endif

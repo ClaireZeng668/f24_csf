@@ -23,83 +23,136 @@ Cache::Cache(int sets, int blocks, int blockSize, const std::string& writeAlloca
         }
     }
 
-void Cache::output() {
-    for (int i = 0; i < blocks; i++) {
-        std::cout << i << " " << set_vec.at(164)->block_vec.at(i).tag << " ";
-    }
-    std::cout << std::endl;
-}
-
 void Cache::load(unsigned int address) {
     totalLoads++;
     time++;
     int index = get_index_bits(address);
     int tag = get_tag_bits(address);
-    
-    //std::cout << "index " << index << std::endl;
+
     Set *current = set_vec.at(index);
-    //std::cout << current->block_vec.at(0).tag << std::endl;
     int smallest = 0;
+
     //loop through set, check if tag is there
     for (int i = 0; i < blocks; i++) {
         Block current_block = current->block_vec.at(i);
-        int current_tag = current_block.tag;
-        int access = current_block.ts;
-        //std::cout << "current tag " << current->block_vec.at(i).tag << std::endl;
-
-        //find lru or fifo
-        if (access < current->block_vec.at(smallest).ts) {
+        //find lru
+        if (current_block.ts < current->block_vec.at(smallest).ts) {
             smallest = i;
         }
-        if (current_tag == tag) {
-            loadHits++;
+        if (current_block.tag == tag) {
+            load_hit(&current_block);
             return;
         }
     }
+    load_miss(current, smallest, tag);
+    
+    // for (int i = 0; i < blocks; i++) {
+    //     std::cout << current->block_vec.at(i).tag << " ";
+    // }
+    // std::cout << std::endl;
+}
+
+void Cache::load_hit(Block *current_block) {
+    loadHits++;
+    totalCycles++;
+    current_block->ts = time;
+    return;
+}
+
+void Cache::load_miss(Set *current, int smallest, int tag) {
     loadMisses++;
     Block to_replace = current->block_vec.at(smallest);
+
+    int amt = blockSize / 4;
+    if (to_replace.dirty) { //is dirty
+        totalCycles = totalCycles + (amt * 200) + 1;
+    } else {
+        totalCycles = totalCycles + (amt *100) + 1;
+    }
     Block new_block;
     new_block.tag = tag;
     new_block.ts = time;
-    //std::cout << "new tag " << new_block.tag << " smallest " << smallest << std::endl;
     current->block_vec.at(smallest) = new_block;
-    if (to_replace.dirty) { //is dirty
-        totalCycles+=201;
-    } else {
-        totalCycles+=101;
-    }
-
-    // for (int i = 0; i < blocks; i++) {
-    //     std::cout << i << " " << current->block_vec.at(i).tag << " ";
-    // }
-    // std::cout << index << std::endl;
-    //write back, wrte allocate
-
-    //load hit - exists in cache - 1 cycle
-    //load miss - doesnt exists, find smallest ts, check validity, 
-        //if valid, get rid, pull from memory (100), load to cache (1), update ts, hit, misses, cycles, etc.
-        //if not, evict and store to mem if dirty (100), pull memory (100), update data (1)
-    
-    //todo: implement functionality
+    return;
 }
 
+//write back, wrte allocate
+
+//load hit - exists in cache - 1 cycle
+//load miss - doesnt exists, find smallest ts, check validity, 
+    //if valid, get rid, pull from memory (100), load to cache (1), update ts, hit, misses, cycles, etc.
+    //if not, evict and store to mem if dirty (100), pull memory (100), update data (1)
 
 void Cache::store(unsigned int address) {
     totalStores++;
     time++;
-    //store hit - exists in cache, update data (1), make dirty, update stuff
-    
-    //write through - 100 (eject 4 byte address, data already in mem)
+    int index = get_index_bits(address);
+    int tag = get_tag_bits(address);
 
-    //store miss - doesnt exists, find smallest ts, eject, check validity
-        //if not valid, put into memory (100+100*size), pull from memory (100), update cache (1)
-        //if valid, pull from memory (100), update cache (1)
+    Set *current = set_vec.at(index);
+    int smallest = 0;
 
-    //no write allocate (must be write through) - update mem (just 100)
-
-    //todo: implement functionality
-
+    //loop through set, check if tag is there
+    for (int i = 0; i < blocks; i++) {
+        Block current_block = current->block_vec.at(i);
+        //find lru or fifo
+        if (current_block.ts < current->block_vec.at(smallest).ts) {
+            smallest = i;
+        }
+        if (current_block.tag == tag) {
+            store_hit(&current_block);
+            return;
+        }
+    }
+    store_miss(current, smallest, tag);
 }
+
+void Cache::store_hit(Block *current_block) {
+    storeHits++;
+    totalCycles++;
+    current_block->ts = time;
+    if (writePolicy == "write-back") {
+        current_block->dirty = true;
+        totalCycles++;
+    } else {
+        totalCycles+=101;
+    }
+    return;
+}
+
+void Cache::store_miss(Set *current, int smallest, int tag) {
+    storeMisses++;
+    
+    int amt = blockSize / 4;
+    if (writeAllocate == "write-allocate") {
+        Block to_replace = current->block_vec.at(smallest);
+        Block new_block;
+        new_block.tag = tag;
+        new_block.ts = time;
+        new_block.dirty = true;
+
+        current->block_vec.at(smallest) = new_block;
+        if (to_replace.dirty) { //is dirty
+            totalCycles = totalCycles + (amt * 200) + 1;
+        } else {
+            totalCycles = totalCycles + (amt * 100) + 1;
+        }
+    } else {
+        totalCycles+=100;
+    }
+    return;
+}
+
+//store hit - exists in cache, update data (1), make dirty, update stuff
+
+//write through - 100 (eject 4 byte address, data already in mem)
+
+//store miss - doesnt exists, find smallest ts, eject, check validity
+    //if not valid, put into memory (100*size), pull from memory (100), update cache (1)
+    //if valid, pull from memory (100), update cache (1)
+
+//no write allocate (must be write through) - update mem (just 100)
+
 
 void Cache::printSummary() {
     std::cout << "Total loads: " << totalLoads << std::endl;
@@ -112,10 +165,10 @@ void Cache::printSummary() {
 }
 
 
-int Cache::get_num_offset_bits (unsigned int address, int label) {
+int Cache::get_num_offset_bits (int label) {
     int num_bits = 0;
     int result = label;
-    while (result > 1) {
+    while (result != 0) {
         num_bits++;
         result = result >> 1;
     }
@@ -123,17 +176,15 @@ int Cache::get_num_offset_bits (unsigned int address, int label) {
 }
 
 int Cache::get_index_bits (unsigned int address) {
-    int num_offset_bits = get_num_offset_bits(address, blockSize);
-    unsigned int index_bits = address >> num_offset_bits;
+    int num_offset_bits = get_num_offset_bits(blockSize);
+    int index_bits = address >> num_offset_bits;
     index_bits = index_bits & (sets-1);
     return index_bits;
 }
 
 int Cache::get_tag_bits (unsigned int address) {
-    int num_offset_bits = get_num_offset_bits(address, blockSize);
-    int num_index_bits = get_num_offset_bits(address, sets);
+    int num_offset_bits = get_num_offset_bits(blockSize);
+    int num_index_bits = get_num_offset_bits(sets);
     int total_offset = num_offset_bits + num_index_bits;
     return address >> total_offset;
 }
-
-//helper functions to be added later

@@ -21,9 +21,6 @@ int main(int argc, char *argv[]) {
     std::string writePolicy = argv[5];
     std::string evictionPolicy = argv[6];
 
-    //todo: check if block size and number of sets is power of 2, bloc size is less than 4, write-back and no-write-allocate are specified
-    //print stderr if not
-
     Cache cacheSim(sets, blocks, blockSize, writeAllocate, writePolicy, evictionPolicy);
 
     //read memory access trace from standard input
