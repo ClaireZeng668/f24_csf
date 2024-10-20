@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
             std::cerr << "Error: Unknown operation type\n";
             return 1;
         }
+
     }
 
     //print summary statistics

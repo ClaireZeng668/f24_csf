@@ -18,11 +18,17 @@ Cache::Cache(int sets, int blocks, int blockSize, const std::string& writeAlloca
     : sets(sets), blocks(blocks), blockSize(blockSize), writeAllocate(writeAllocate), writePolicy(writePolicy), evictionPolicy(evictionPolicy),
       totalLoads(0), totalStores(0), loadHits(0), loadMisses(0), storeHits(0), storeMisses(0), totalCycles(0), time(0) {
         for (int i = 0; i < sets; i++) {
-            Set empty(blocks);
+            Set *empty = new Set(blocks);
             set_vec.push_back(empty);
         }
     }
 
+void Cache::output() {
+    for (int i = 0; i < blocks; i++) {
+        std::cout << i << " " << set_vec.at(164)->block_vec.at(i).tag << " ";
+    }
+    std::cout << std::endl;
+}
 
 void Cache::load(unsigned int address) {
     totalLoads++;
@@ -30,17 +36,19 @@ void Cache::load(unsigned int address) {
     int index = get_index_bits(address);
     int tag = get_tag_bits(address);
     
-    Set current = set_vec.at(index);
+    //std::cout << "index " << index << std::endl;
+    Set *current = set_vec.at(index);
+    //std::cout << current->block_vec.at(0).tag << std::endl;
     int smallest = 0;
     //loop through set, check if tag is there
     for (int i = 0; i < blocks; i++) {
-        Block current_block = current.block_vec.at(i);
+        Block current_block = current->block_vec.at(i);
         int current_tag = current_block.tag;
         int access = current_block.ts;
-        std::cout << "current tag " << current_tag << std::endl;
+        //std::cout << "current tag " << current->block_vec.at(i).tag << std::endl;
 
         //find lru or fifo
-        if (access < current.block_vec.at(smallest).ts) {
+        if (access < current->block_vec.at(smallest).ts) {
             smallest = i;
         }
         if (current_tag == tag) {
@@ -49,21 +57,22 @@ void Cache::load(unsigned int address) {
         }
     }
     loadMisses++;
-    Block to_replace = current.block_vec.at(smallest);
+    Block to_replace = current->block_vec.at(smallest);
     Block new_block;
     new_block.tag = tag;
     new_block.ts = time;
-    std::cout << "new tag " << new_block.tag << std::endl;
-    current.block_vec.at(smallest) = new_block;
+    //std::cout << "new tag " << new_block.tag << " smallest " << smallest << std::endl;
+    current->block_vec.at(smallest) = new_block;
     if (to_replace.dirty) { //is dirty
         totalCycles+=201;
     } else {
         totalCycles+=101;
     }
 
-    for (int i = 0; i < blocks; i++) {
-        std::cout << current.block_vec.at(i).tag << " " <<std::endl;
-    }
+    // for (int i = 0; i < blocks; i++) {
+    //     std::cout << i << " " << current->block_vec.at(i).tag << " ";
+    // }
+    // std::cout << index << std::endl;
     //write back, wrte allocate
 
     //load hit - exists in cache - 1 cycle
