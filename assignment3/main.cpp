@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
         }
 
         unsigned int memAddress = std::stoul(address, nullptr, 16);
-
+        
         if (type == 'l') {
             cacheSim.load(memAddress);
         } else if (type == 's') {

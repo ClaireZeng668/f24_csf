@@ -62,7 +62,6 @@ void Cache::load_hit(Block *current_block) {
 void Cache::load_miss(Set *current, int smallest, int tag) {
     loadMisses++;
     Block to_replace = current->block_vec.at(smallest);
-
     int amt = blockSize / 4;
     if (to_replace.dirty) { //is dirty
         totalCycles = totalCycles + (amt * 200) + 1;
@@ -109,34 +108,31 @@ void Cache::store(unsigned int address) {
 
 void Cache::store_hit(Block *current_block) {
     storeHits++;
-    totalCycles++;
     current_block->ts = time;
     if (writePolicy == "write-back") {
         current_block->dirty = true;
         totalCycles++;
     } else {
-        totalCycles+=101;
+        totalCycles+=100;
     }
     return;
 }
 
 void Cache::store_miss(Set *current, int smallest, int tag) {
     storeMisses++;
-    
     int amt = blockSize / 4;
+    Block to_replace = current->block_vec.at(smallest);
     if (writeAllocate == "write-allocate") {
-        Block to_replace = current->block_vec.at(smallest);
-        Block new_block;
-        new_block.tag = tag;
-        new_block.ts = time;
-        new_block.dirty = true;
-
-        current->block_vec.at(smallest) = new_block;
         if (to_replace.dirty) { //is dirty
             totalCycles = totalCycles + (amt * 200) + 1;
         } else {
             totalCycles = totalCycles + (amt * 100) + 1;
         }
+        Block new_block;
+        new_block.tag = tag;
+        new_block.ts = time;
+        new_block.dirty = true;
+        current->block_vec.at(smallest) = new_block;
     } else {
         totalCycles+=100;
     }
@@ -168,7 +164,7 @@ void Cache::printSummary() {
 int Cache::get_num_offset_bits (int label) {
     int num_bits = 0;
     int result = label;
-    while (result != 0) {
+    while (result > 1) {
         num_bits++;
         result = result >> 1;
     }

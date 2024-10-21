@@ -1,5 +1,40 @@
-l 0x0000AA40 1
-l 0x0000AA40 1
-s 0x000AA40 1
-s 0x000AA40 1
-l 0x0000AA40 1
+l 0x0000AA40 1  101 load miss
+s 0x000AA40 1   101 store hit
+s 0x000AA40 1   101 store hit
+l 0x0000AA40 1  1   load hit
+s 0x0000AA41 1  1   store hit
+s 0x0000AA42 1  1   store hit
+s 0x0000AA43 1  1   store hit
+s 0x0000AA44 1  101 store hit
+l 0x0000AA42 1  load hit
+l 0x0000AA43 1  load hit
+s 0x0000AA40 1  store hit
+s 0x0000AA41 1  store hit
+s 0x0000AA42 1  store hit
+s 0x0000AA43 1  store hit
+s 0x0000AA44 1  store hit
+s 0x0000AA45 1  store hit
+s 0x0000AA46 1  store hit
+s 0x0000AA47 1  store hit
+s 0x0000AA47 1  store hit
+s 0x0000AA47 1  store hit
+s 0x0000AA47 1  store hit
+l 0x0000AA47 1  store hit
+l 0x0000AA40 1  load hit
+l 0x0000AA41 1  load hit
+l 0x0000AA42 1  load hit
+l 0x0000AA40 1  load hit
+l 0x0000AA41 1  load hit
+l 0x00000058 1  load miss
+l 0x00000068 1  laod miss
+l 0x00000058 1  load hit
+l 0x00000068 1  load hit
+l 0x00000040 1  load miss
+l 0x0000000C 1  load miss
+l 0x00000040 1  hit
+l 0x00000048 1  hit
+l 0x00000040 1  hit
+l 0x0000AA42 1  hit
+l 0x0000AA43 1  hit
+s 0x0000AA40 1  hit
+s 0x0000AA41 1  hit
