@@ -32,9 +32,20 @@ void Cache::load(unsigned int address) {
     Set *current = set_vec.at(index);
     int smallest = 0;
 
+    //map tag - pointer to block object, find returns iterator
+    /*
+    auto it = current->set_map.find(tag);
+    if (it == current->set_map.end()) {
+        Block *block = it -> second;
+        load_hit(block)
+        return    
+    } else {
+        find victim to evict - sequential search
+    }
+    */
     //loop through set, check if tag is there
     for (int i = 0; i < blocks; i++) {
-        Block current_block = current->block_vec.at(i);
+        Block &current_block = current->block_vec.at(i);
         //find lru
         if (current_block.ts < current->block_vec.at(smallest).ts) {
             smallest = i;
@@ -66,7 +77,7 @@ void Cache::load_miss(Set *current, int smallest, int tag) {
     if (to_replace.dirty) { //is dirty
         totalCycles = totalCycles + (amt * 200) + 1;
     } else {
-        totalCycles = totalCycles + (amt *100) + 1;
+        totalCycles = totalCycles + (amt * 100) + 1;
     }
     Block new_block;
     new_block.tag = tag;
@@ -93,7 +104,7 @@ void Cache::store(unsigned int address) {
 
     //loop through set, check if tag is there
     for (int i = 0; i < blocks; i++) {
-        Block current_block = current->block_vec.at(i);
+        Block &current_block = current->block_vec.at(i);
         //find lru or fifo
         if (current_block.ts < current->block_vec.at(smallest).ts) {
             smallest = i;
@@ -118,20 +129,32 @@ void Cache::store_hit(Block *current_block) {
     return;
 }
 
+//write through never dirty
 void Cache::store_miss(Set *current, int smallest, int tag) {
     storeMisses++;
     int amt = blockSize / 4;
     Block to_replace = current->block_vec.at(smallest);
     if (writeAllocate == "write-allocate") {
-        if (to_replace.dirty) { //is dirty
+        // if (writePolicy == "write_through") {
+        //     Block new_block;
+        //     new_block.tag = tag;
+        //     new_block.ts = time;
+        //     current->block_vec.at(smallest) = new_block;
+        //     totalCycles = totalCycles + (amt * 100) + 100;
+        // } else {
+
+        // }
+        if (to_replace.dirty) { //is dirty - has to be write back
             totalCycles = totalCycles + (amt * 200) + 1;
         } else {
-            totalCycles = totalCycles + (amt * 100) + 1;
+            totalCycles = totalCycles + (amt * 100) + 100;
         }
         Block new_block;
         new_block.tag = tag;
         new_block.ts = time;
-        new_block.dirty = true;
+        if (writePolicy == "write-back") {
+            new_block.dirty = true;
+        }
         current->block_vec.at(smallest) = new_block;
     } else {
         totalCycles+=100;
