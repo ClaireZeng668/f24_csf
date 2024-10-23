@@ -42,7 +42,7 @@ private:
     int loadMisses;
     int storeHits;
     int storeMisses;
-    int totalCycles;
+    uint64_t totalCycles;
     int time;
     std::vector<Set*> set_vec;
 

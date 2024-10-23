@@ -74,9 +74,9 @@ void Cache::load_miss(Set *current, int smallest, int tag) {
     loadMisses++;
     Block to_replace = current->block_vec.at(smallest);
     int amt = blockSize / 4;
-    if (to_replace.dirty) { //is dirty
+    if (to_replace.dirty) { //is dirty - put into memory, pull from memory
         totalCycles = totalCycles + (amt * 200) + 1;
-    } else {
+    } else { //pull from memory
         totalCycles = totalCycles + (amt * 100) + 1;
     }
     Block new_block;
@@ -144,10 +144,10 @@ void Cache::store_miss(Set *current, int smallest, int tag) {
         // } else {
 
         // }
-        if (to_replace.dirty) { //is dirty - has to be write back
+        if (to_replace.dirty) { //is dirty - put into memory, pull from memory
             totalCycles = totalCycles + (amt * 200) + 1;
-        } else {
-            totalCycles = totalCycles + (amt * 100) + 100;
+        } else { //pull from memory
+            totalCycles = totalCycles + (amt * 100) + 1;
         }
         Block new_block;
         new_block.tag = tag;
