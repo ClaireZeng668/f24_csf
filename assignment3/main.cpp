@@ -21,7 +21,31 @@ int main(int argc, char *argv[]) {
     std::string writePolicy = argv[5];
     std::string evictionPolicy = argv[6];
 
+    //handle invalid inputs
+    if (sets % 2 != 0 && sets != 1) {
+        std::cerr << "Error: Invalid number of sets\n";
+        return 1;
+    }
+    if (blocks % 2 != 0 && blocks != 1) {
+        std::cerr << "Error: Invalid number of blocks per set\n";
+        return 1;
+    }
+    if (blockSize % 2 != 0 || blockSize < 4) {
+        std::cerr << "Error: Invalid number of bytes per block\n";
+        return 1;
+    }
+    if (writeAllocate != "write-allocate" && writeAllocate != "no-write-allocate") {
+        std::cerr << "Error: Invalid store miss policy\n";
+        return 1;
+    }
+    if (writePolicy != "write-through" && writePolicy != "write-back") {
+        std::cerr << "Error: Invalid store hit policy\n";
+        return 1;
+    }
+    
     Cache cacheSim(sets, blocks, blockSize, writeAllocate, writePolicy, evictionPolicy);
+
+
 
     //read memory access trace from standard input
     std::string line;
