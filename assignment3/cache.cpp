@@ -60,7 +60,9 @@ void Cache::load(unsigned int address) {
 void Cache::load_hit(Block *current_block) {
     loadHits++;
     totalCycles++;
-    current_block->ts = time;
+    if (evictionPolicy == "lru") {
+        current_block->ts = time;
+    }
     return;
 }
 
@@ -112,7 +114,9 @@ void Cache::store(unsigned int address) {
 //handle store hits
 void Cache::store_hit(Block *current_block) {
     storeHits++;
-    current_block->ts = time;
+    if (evictionPolicy == "lru") {
+        current_block->ts = time;
+    }
     //handle write back - update cache but not memory
     if (writePolicy == "write-back") {
         current_block->dirty = true;

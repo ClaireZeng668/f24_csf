@@ -42,6 +42,10 @@ int main(int argc, char *argv[]) {
         std::cerr << "Error: Invalid store hit policy\n";
         return 1;
     }
+    if (evictionPolicy != "lru" && evictionPolicy != "fifo") {
+        std::cerr << "Error: Invalid eviction policy\n";
+        return 1;
+    }
     
     Cache cacheSim(sets, blocks, blockSize, writeAllocate, writePolicy, evictionPolicy);
 
