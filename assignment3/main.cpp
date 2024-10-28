@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
     //check if correct number of arguments provided
     if (argc != 7) {
         std::cerr << "Usage: " << argv[0] << " <sets> <blocks> <block_size> <write-allocate|no-write-allocate> <write-through|write-back> <lru|fifo>\n";
-        return 1;
+        exit(1);
     }
 
     //parse command-line arguments
@@ -24,27 +24,27 @@ int main(int argc, char *argv[]) {
     //handle invalid inputs
     if (sets % 2 != 0 && sets != 1) {
         std::cerr << "Error: Invalid number of sets\n";
-        return 1;
+        exit(1);
     }
     if (blocks % 2 != 0 && blocks != 1) {
         std::cerr << "Error: Invalid number of blocks per set\n";
-        return 1;
+        exit(1);
     }
     if (blockSize % 2 != 0 || blockSize < 4) {
         std::cerr << "Error: Invalid number of bytes per block\n";
-        return 1;
+        exit(1);
     }
     if (writeAllocate != "write-allocate" && writeAllocate != "no-write-allocate") {
         std::cerr << "Error: Invalid store miss policy\n";
-        return 1;
+        exit(1);
     }
     if (writePolicy != "write-through" && writePolicy != "write-back") {
         std::cerr << "Error: Invalid store hit policy\n";
-        return 1;
+        exit(1);
     }
     if (evictionPolicy != "lru" && evictionPolicy != "fifo") {
         std::cerr << "Error: Invalid eviction policy\n";
-        return 1;
+        exit(1);
     }
     
     Cache cacheSim(sets, blocks, blockSize, writeAllocate, writePolicy, evictionPolicy);
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
         if (!(iss >> type >> address >> size)) {
             std::cerr << "Error: Invalid trace format\n";
-            return 1;
+            exit(1);
         }
 
         unsigned int memAddress = std::stoul(address, nullptr, 16);
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
             cacheSim.store(memAddress);
         } else {
             std::cerr << "Error: Unknown operation type\n";
-            return 1;
+            exit(1);
         }
 
     }
@@ -80,5 +80,5 @@ int main(int argc, char *argv[]) {
     //print summary statistics
     cacheSim.printSummary();
 
-    return 0;
+    exit(0);
 }
