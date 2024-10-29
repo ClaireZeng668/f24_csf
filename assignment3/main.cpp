@@ -22,11 +22,11 @@ int main(int argc, char *argv[]) {
     std::string evictionPolicy = argv[6];
 
     //handle invalid inputs
-    if (sets % 2 != 0 && sets != 1) {
+    if ((sets & (sets-1)) && sets != 1) {
         std::cerr << "Error: Invalid number of sets\n";
         exit(1);
     }
-    if (blocks % 2 != 0 && blocks != 1) {
+    if ((blocks & (blocks-1)) && blocks != 1) {
         std::cerr << "Error: Invalid number of blocks per set\n";
         exit(1);
     }
@@ -44,6 +44,10 @@ int main(int argc, char *argv[]) {
     }
     if (evictionPolicy != "lru" && evictionPolicy != "fifo") {
         std::cerr << "Error: Invalid eviction policy\n";
+        exit(1);
+    }
+    if (writeAllocate == "no-write-allocate" && writePolicy == "write-back") {
+        std::cerr << "Error: Invalid write parameter pair\n";
         exit(1);
     }
     
