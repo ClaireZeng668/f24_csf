@@ -3,12 +3,14 @@ Implemented:
 cache.cpp
 main.cpp
 Makefile
+Experimentation
 
 Claire Zeng
 Implemented:
 cache.cpp
 main.cpp
 Makefile
+Experimentation
 
 Same capacity used for all configurations - 1 MB = 1048576 bytes
 Direct mapped - n sets of 1 block each
@@ -91,7 +93,8 @@ Observations:
 - As the number of blocks increased, hit rates generally remained high, but total cycles also increased slightly.
 - Direct mapped caches performed worse compared to fully associative caches, especially with smaller block sizes. For example, with 256 sets, 1 block, 4096 bytes, write-allocate, and write-back, the hit rate was 99.839%, but total cycles were much higher at 116,227,683.
 - Direct-mapped caches performed best when block size was larger (4096 bytes for example) but still fell short in total cycles.
-- Set-associative caches were in between direct-mapped and fully associative caches. For example, a configuration with 256 sets, 4 blocks per set, 1024 bytes, write-allocate + write-back, and LRU gave a hit rate of 99.8964%, with only 14,928,483 total cycles (a balance).
+- Set-associative caches were generally in between direct-mapped and fully associative caches. 
+- Numbers for set associate caches are all fairly similar, so sizes may be somewhat neglible.
 
 Analysis:
 - Fully Associative: High hit rates (over 99%) for write-back configurations indicate good cache performance, especially for larger block sizes (4096 bytes). However, the miss rates increase significantly when using FIFO and no-write-allocate policies.
@@ -101,11 +104,15 @@ Analysis:
 - For all configurations, very large block sizes (4096 bytes and above) tend to increase miss rates due to reduced cache utilization.
 
 Best cache configuration is:
-- 256 sets
-- 4 blocks per set
-- 1024 bytes per block
-- Write-allocate, Write-back
-- LRU eviction
-- Offers very high hit rate (99.8964%) while keeping total cycles (14,928,483) low. 
-- Balances complexity and efficiency, avoding the significant increase in cycles in direct-mapped caches and the higher overhead of fully associative caches.
+- 1024 sets
+- 16 blocks per set 
+- 64 bytes per block 
+- Write-allocate, Write-back      
+- LRU eviction policy 
+
+- In general, set associative cashes are more efficient than direct mapped and fully associative. We thus focused on set associative configurations.
+- Has a relative low cycle count, with a relatively high hit rate.
+- Does not take up as much space as 4096 set configurations
+- A good in-between for trade off between hit rate and cycle count.
+
 
