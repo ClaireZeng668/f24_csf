@@ -34,12 +34,11 @@ Configurations:
 |                          | 16,384| 1     | 64    | Write-allocate, Write-through   | -               | 99.330       | 0.669         | 25301989     |
 |                          | 65,536| 1     | 16    | Write-allocate, Write-through   | -               | 97.818       | 2.1823        | 23688683     |
 |                          | 262,144| 1    | 4     | No-write-allocate, Write-through| -               | 90.896       | 9.104         | 21013697     |
-| Set-Associative          | 256  | 4      | 4096  | Write-allocate, Write-back     | LRU             | 99.943       | 0.0572        | 50263313     |
-|                          | 256  | 16     | 1024  | Write-allocate, Write-through   | LRU             | 99.899       | 0.1012        | 33404653     |
-|                          | 256  | 64     | 256   | Write-allocate, Write-through   | LRU             | 99.899       | 0.1012        | 33404653     |
-|                          | 256  | 256    | 64    | Write-allocate, Write-through   | LRU             |              |               |              |
-|                          | 256  | 1024   | 16    | Write-allocate, Write-back      | LRU             |              |               |              |
-|                          | 256  | 4096   | 4     | No-write-allocate, Write-through | FIFO            |              |               |              |
+| Set-Associative          | 256  | 4      | 1024  | No-write-allocate, Write-through    | LRU        | 97.9786       | 2.021        | 31509997     |
+|                          | 256  | 16     | 256   | No-write-allocate, Write-through   | LRU          | 97.9786       | 2.021        | 25986797     |
+|                          | 256  | 64     | 64    | No-write-allocate, Write-through   | LRU          | 94.9432       | 5.0567      |  23746797    |
+|                          | 256  | 256    | 16    | No-write-allocate, Write-through   | LRU          |   92.807       |   7.419      |   22462797           |
+|                          | 256  | 1024   | 4     | No-write-allocate, Write-through   | LRU          |  90.9006        |   9.099     |   21012197           |
 
 
 Analysis:
