@@ -15,8 +15,15 @@ Direct mapped - n sets of 1 block each
 M-way set associative - n sets of m blocks each
 Fully associative - 1 set of n blocks
 
-Higher block sizes (like 4096 bytes/block and greater) will likely do worse.
-Configurations:
+Parameters: 
+Number of sets (paritioning of cache)
+Number of blocks per set (impacting whether direct-mapped, set-associative, or fully associative)
+Block size (impacting spatial locality)
+Write Policy
+Eviction Policy (relevant when multiple blocks are eligible for eviction)
+
+
+Experimentation Data;
 
 
 
@@ -51,17 +58,29 @@ Configurations:
 |                          | 256   | 1024   | 4     | Write-allocate, Write-through   | LRU             | 93.836       | 6.164         | 20537253      |
 
 
-
+Observations:
+- The highest hit rate (99.942%) was observed with 1 set, 256 blocks, 4096 bytes, write-allocate, write-back, and LRU eviction.
+- As the number of blocks increased, hit rates generally remained high, but total cycles also increased slightly.
+- Direct mapped caches performed worse compared to fully associative caches, especially with smaller block sizes. For example, with 256 sets, 1 block, 4096 bytes, write-allocate, and write-back, the hit rate was 99.839%, but total cycles were much higher at 116,227,683.
+- Direct-mapped caches performed best when block size was larger (4096 bytes for example) but still fell short in total cycles.
+- Set-associative caches were in between direct-mapped and fully associative caches. For example, a configuration with 256 sets, 4 blocks per set, 1024 bytes, write-allocate + write-back, and LRU gave a hit rate of 99.8964%, with only 14,928,483 total cycles (a balance).
 
 Analysis:
 - Fully Associative: High hit rates (over 99%) for write-back configurations indicate good cache performance, especially for larger block sizes (4096 bytes). However, the miss rates increase significantly when using FIFO and no-write-allocate policies.
 - Direct Mapped: Lower hit rates compared to fully associative caches, especially with larger sets (e.g., 256 sets with a block size of 4096 bytes). The miss rates are higher than fully associative configurations, showing potential downside.
-- Set-Associative: Hit rates are lower than fully associative but generally better than direct mapped, especially with larger block sizes. This indicates that set-associative caches are a good in-between.
-- Fully associative caches have lower cycle counts than direct mapped, indicating they can service requests faster due to fewer misses. In contrast, the direct-mapped configuration, especially with a high number of sets, has a significantly higher cycle count, indicating inefficiencies with some workloads.
-- Set-associative caches also demonstrate lower cycle counts compared to direct mapped configurations, and thus effectively reduce miss penalties.
-- Fully associative caches offer the highest hit rates but come with increased complexity and cost in hardware implementation. Set-associative configurations provide a balance, offering lower miss rates than direct-mapped caches without the high complexity of fully associative designs.
+- Set-Associative: Hit rates are lower than fully associative but generally better than direct mapped, especially with larger block sizes. Set-associative caches also show lower cycle counts compared to direct mapped configurations, and thus effectively reduce misses.
+- Fully associative caches offer the highest hit rates but come with increased complexity and cost in hardware implementation. 
 - For all configurations, very large block sizes (4096 bytes and above) tend to increase miss rates due to reduced cache utilization.
-(?)
+
+Best cache configuration is:
+- 256 sets
+- 4 blocks per set
+- 1024 bytes per block
+- Write-allocate, Write-back
+- LRU eviction
+- Offers very high hit rate (99.8964%) while keeping total cycles (14,928,483) low. 
+- Balances complexity and efficiency, avoding the significant increase in cycles in direct-mapped caches and the higher overhead of fully associative caches.
+
 
     Fully Associative:                       write-allocate write-back  write-allocate write through    no-write-allocate write-through
         1 set, 256 blocks, 4096 bytes/block
