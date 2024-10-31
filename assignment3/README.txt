@@ -36,7 +36,7 @@ Configurations:
 |                          | 262,144| 1    | 4     | No-write-allocate, Write-through| -               | 90.896       | 9.104         | 21013697     |
 | Set-Associative          | 256  | 4      | 4096  | Write-allocate, Write-back     | LRU             | 99.943       | 0.0572        | 50263313     |
 |                          | 256  | 16     | 1024  | Write-allocate, Write-through   | LRU             | 99.899       | 0.1012        | 33404653     |
-|                          | 256  | 64     | 256   | No-write-allocate, Write-back   | LRU             |              |               |              |
+|                          | 256  | 64     | 256   | Write-allocate, Write-through   | LRU             | 99.899       | 0.1012        | 33404653     |
 |                          | 256  | 256    | 64    | Write-allocate, Write-through   | LRU             |              |               |              |
 |                          | 256  | 1024   | 16    | Write-allocate, Write-back      | LRU             |              |               |              |
 |                          | 256  | 4096   | 4     | No-write-allocate, Write-through | FIFO            |              |               |              |
