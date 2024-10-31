@@ -31,9 +31,9 @@ Configurations:
 | Direct Mapped            | 256   | 1      | 4096  | Write-allocate, Write-back      | -               | 99.839       | 0.1606        | 116227683     |
 |                          | 1024  | 1      | 1024  | No-write-allocate, Write-through| -               | 97.926       | 2.074         | 35401197      |
 |                          | 4096  | 1      | 256   | Write-allocate, Write-back      | -               | 99.753       | 0.247         | 9283683       |
-|                          | 16,384| 1      | 64    | Write-allocate, Write-through   | -               | 99.330       | 0.669         | 25301989      |
-|                          | 65,536| 1      | 16    | Write-allocate, Write-through   | -               | 97.818       | 2.1823        | 23688683      |
-|                          | 262,144| 1     | 4     | No-write-allocate, Write-through| -               | 90.896       | 9.104         | 21013697      |
+|                          | 16384 | 1      | 64    | Write-allocate, Write-through   | -               | 99.330       | 0.669         | 25301989      |
+|                          | 65536 | 1      | 16    | Write-allocate, Write-through   | -               | 97.818       | 2.1823        | 23688683      |
+|                          | 262144| 1      | 4     | No-write-allocate, Write-through| -               | 90.896       | 9.104         | 21013697      |
 | Set-Associative          | 256   | 4      | 1024  | No-write-allocate, Write-through| LRU             | 97.9786      | 2.021         | 31509997      |
 |                          | 256   | 16     | 256   | No-write-allocate, Write-through| LRU             | 97.9786      | 2.021         | 25986797      |
 |                          | 256   | 64     | 64    | No-write-allocate, Write-through| LRU             | 94.9432      | 5.0567        | 23746797      |
