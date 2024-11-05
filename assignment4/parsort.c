@@ -1,3 +1,4 @@
+//#include <cstdint>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -23,17 +24,45 @@ int main( int argc, char **argv ) {
   }
 
   int fd;
-
+  const char *filename = argv[1];
   // open the named file
   // TODO: open the named file
+  fd = open(filename, O_RDWR);
+  if (fd < 0) {
+    fprintf(stderr, "Couldn't open %s\n", argv[1]);
+    return 1;
+  }
 
   // determine file size and number of elements
   unsigned long file_size, num_elements;
   // TODO: determine the file size and number of elements
+  struct stat statbuf;
+  int rc = fstat( fd, &statbuf );
+  if ( rc != 0 ) {
+    fprintf(stderr, "Error: fstat failed\n");
+    return 1;
+  }
+  // statbuf.st_size indicates the number of bytes in the file
+  int file_size_in_bytes = statbuf.st_size;
+  num_elements = file_size_in_bytes/sizeof(int64_t);
+
+  
+
 
   // mmap the file data
   int64_t *arr;
   // TODO: mmap the file data
+  arr = mmap( NULL, file_size_in_bytes, PROT_READ | PROT_WRITE,
+    MAP_SHARED, fd, 0 );
+  close( fd ); // file can be closed now
+  if ( arr == MAP_FAILED ) {
+    fprintf( stderr, "Error: mmap failed\n" );
+    exit( 1 );
+  }
+  // *arr now behaves like a standard array of int64_t.
+  // Be careful though! Going off the end of the array will
+  // silently extend the file, which can rapidly lead to
+  // disk space depletion!
 
   // Sort the data!
   int success;
@@ -44,7 +73,7 @@ int main( int argc, char **argv ) {
   }
 
   // Unmap the file data
-  // TODO: unmap the file data
+  munmap( arr, file_size_in_bytes );
 
   return 0;
 }
@@ -178,10 +207,79 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
   // Recursively sort the left and right partitions
   int left_success, right_success;
   // TODO: modify this code so that the recursive calls execute in child processes
-  left_success = quicksort( arr, start, mid, par_threshold );
-  right_success = quicksort( arr, mid + 1, end, par_threshold );
+  pid_t child_pidl = fork();
+  if ( child_pidl == 0 ) {
+    // executing in the child
+    left_success = quicksort( arr, start, mid, par_threshold );
+    if (left_success) {
+      exit( 0 );
+    }
+    else
+      exit( 1 );
+  } else if ( child_pidl < 0 ) {
+    // fork failed
+    fprintf( stderr, "Error: fork failed\n" );
+    exit( 1 );
+  } //else {
+  //   // in parent????
+  // }
+  pid_t child_pidr = fork();
+  if ( child_pidr == 0 ) {
+    // executing in the child
+    left_success = quicksort( arr, start, mid, par_threshold );
+    if (left_success) {
+      exit( 0 );
+    }
+    else
+      exit( 1 );
+  } else if ( child_pidr < 0 ) {
+    // fork failed
+    fprintf( stderr, "Error: fork failed\n" );
+    exit( 1 );
+  } //else {
 
-  return left_success && right_success;
+  int rcl, wstatusl;
+  rcl = waitpid( child_pidl, &wstatusl,0 );
+  if ( rcl < 0 ) {
+    // waitpid failed
+    fprintf( stderr, "Error: waitpid failed\n" );
+    exit( 1 );
+  } else {
+    // check status of child
+    if ( !WIFEXITED( wstatusl ) ) {
+      // child did not exit normally (e.g., it was terminated by a signal)
+      fprintf( stderr, "Error: child exit failed\n" );
+      exit( 1 );
+    } else if ( WEXITSTATUS( wstatusl ) != 0 ) {
+      // child exited with a non-zero exit code
+      fprintf( stderr, "Error: non zero child exit code\n" );
+      exit( 1 );
+    }
+  }
+
+int rcr, wstatusr;
+  rcr = waitpid( child_pidr, &wstatusr,0 );
+  if ( rcr < 0 ) {
+    // waitpid failed
+    fprintf( stderr, "Error: waitpid failed\n" );
+    exit( 1 );
+  } else {
+    // check status of child
+    if ( !WIFEXITED( wstatusr ) ) {
+      // child did not exit normally (e.g., it was terminated by a signal)
+      fprintf( stderr, "Error: child exit failed\n" );
+      exit( 1 );
+    } else if ( WEXITSTATUS( wstatusr ) != 0 ) {
+      // child exited with a non-zero exit code
+      fprintf( stderr, "Error: non zero child exit code\n" );
+      exit( 1 );
+    }
+  }
+
+  // left_success = quicksort( arr, start, mid, par_threshold );
+  // right_success = quicksort( arr, mid + 1, end, par_threshold );
+
+  return 1;//left_success && right_success;
 }
 
 // TODO: define additional helper functions if needed
