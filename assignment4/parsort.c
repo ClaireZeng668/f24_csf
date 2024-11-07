@@ -57,19 +57,15 @@ int main( int argc, char **argv ) {
   close( fd ); // file can be closed now
   if ( arr == MAP_FAILED ) {
     fprintf( stderr, "Error: mmap failed\n" );
-    exit( 1 );
+    return 1;
   }
-  // *arr now behaves like a standard array of int64_t.
-  // Be careful though! Going off the end of the array will
-  // silently extend the file, which can rapidly lead to
-  // disk space depletion!
 
   // Sort the data!
   int success;
   success = quicksort( arr, 0, num_elements, par_threshold );
   if ( !success ) {
     fprintf( stderr, "Error: sorting failed\n" );
-    exit( 1 );
+    return 1;
   }
 
   // Unmap the file data
@@ -191,9 +187,9 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
 
   // Base case: if there are fewer than 2 elements to sort,
   // do nothing
-  if ( len < 2 )
+  if ( len < 2 ) {
     return 1;
-
+  }
   // Base case: if number of elements is less than or equal to
   // the threshold, sort sequentially using qsort
   if ( len <= par_threshold ) {
@@ -206,7 +202,8 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
 
   // Recursively sort the left and right partitions
   int left_success, right_success;
-  // TODO: modify this code so that the recursive calls execute in child processes
+  // TODO: modify this code so that the recursive calls execute in child
+
   pid_t child_pidl = fork();
   if ( child_pidl == 0 ) {
     // executing in the child
@@ -219,15 +216,14 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
   } else if ( child_pidl < 0 ) {
     // fork failed
     fprintf( stderr, "Error: fork failed\n" );
-    exit( 1 );
-  } //else {
-  //   // in parent????
-  // }
+    return 0;
+  }
+
   pid_t child_pidr = fork();
   if ( child_pidr == 0 ) {
     // executing in the child
-    left_success = quicksort( arr, start, mid, par_threshold );
-    if (left_success) {
+    right_success = quicksort( arr, mid + 1, end, par_threshold );
+    if (right_success) {
       exit( 0 );
     }
     else
@@ -235,25 +231,25 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
   } else if ( child_pidr < 0 ) {
     // fork failed
     fprintf( stderr, "Error: fork failed\n" );
-    exit( 1 );
-  } //else {
+    return 0;
+  }
 
   int rcl, wstatusl;
   rcl = waitpid( child_pidl, &wstatusl,0 );
   if ( rcl < 0 ) {
     // waitpid failed
     fprintf( stderr, "Error: waitpid failed\n" );
-    exit( 1 );
+    return 1;
   } else {
     // check status of child
     if ( !WIFEXITED( wstatusl ) ) {
       // child did not exit normally (e.g., it was terminated by a signal)
       fprintf( stderr, "Error: child exit failed\n" );
-      exit( 1 );
+      return 0;
     } else if ( WEXITSTATUS( wstatusl ) != 0 ) {
       // child exited with a non-zero exit code
       fprintf( stderr, "Error: non zero child exit code\n" );
-      exit( 1 );
+      return 0;
     }
   }
 
@@ -262,17 +258,17 @@ int rcr, wstatusr;
   if ( rcr < 0 ) {
     // waitpid failed
     fprintf( stderr, "Error: waitpid failed\n" );
-    exit( 1 );
+    return 1;
   } else {
     // check status of child
     if ( !WIFEXITED( wstatusr ) ) {
       // child did not exit normally (e.g., it was terminated by a signal)
       fprintf( stderr, "Error: child exit failed\n" );
-      exit( 1 );
+      return 0;
     } else if ( WEXITSTATUS( wstatusr ) != 0 ) {
       // child exited with a non-zero exit code
       fprintf( stderr, "Error: non zero child exit code\n" );
-      exit( 1 );
+      return 0;
     }
   }
 
