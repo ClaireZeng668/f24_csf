@@ -1,12 +1,14 @@
 CONTRIBUTIONS
 
-TODO: write a brief summary of how each team member contributed to
-the project.
+Prasi Thapa:
+parsort.c
+Experimentation/Analysis
+
+Claire Zeng:
+parsort.c
+Experimentation/Analysis
 
 REPORT
-
-TODO: add your report according to the instructions in the
-"Experiments and analysis" section of the assignment description.
 
 Outputs:
 
@@ -153,20 +155,22 @@ Analysis:
 
 Evaluates parallel performance of parsort by sorting 16 mb random data file with varying thresholds. 
 The threshold controls size of data segments before they are sorted.
-Lower thresholds = more parallelism, may have more overhead
+Lower thresholds = more parallelism -> more processes running but may have more overhead
 
- A 16 MB random data file (data_16M.in) generated using gen_rand_data
- Thresholds were set to values from 2097152 down to 16384 to test effects of increased parallelism on performance
- Timed using the time command to capture real, user, and sys times, which represent wall clock time, CPU time, and system call time
-
-
- - Lowering the threshold means that more processes are created, increasing parallelism. 
- This improved performance initially, as smaller segments of the array could be sorted simultaneously across multiple CPU cores.
- - Once the threshold was lowered to around 65536, the real time no longer improved significantly. Diminishing returns.
- Likely due to to the overhead associated with processes and process creation, offsetting the benefits of parallelism.
- - With too many processes, more costs.
- - Since machine has limited number of cores, the program can only benefit from parallelism up to that limit. 
- When the number of processes exceeded the number of available cores, some processes had to wait, resulting in minimal performance gains.
+By using the ./run_experiments.sh command:
+A 16 MB random data file (data_16M.in) generated using gen_rand_data
+Thresholds were set to values from 2097152 down to 16384 to test effects of increased parallelism on performance
+Timed using the time command to capture real, user, and sys times, which represent wall clock time, CPU time, and system call time
 
 
-The optimal threshold for this experiment is prob arund 65536
+- Lowering the threshold means that more processes are created, increasing parallelism. 
+This improved performance initially, as smaller segments of the array could be sorted simultaneously across multiple CPU cores.
+- Once the threshold was lowered to around 65536, the real time no longer improved significantly. Diminishing returns.
+Likely due to the overhead associated with processes and process creation, offsetting the benefits of parallelism.
+- With too many processes, more costs.
+- Since machine has limited number of cores, the program can only benefit from parallelism up to that limit. 
+When the number of processes exceeded the number of available cores, some processes had to wait, resulting in minimal performance gains.
+In addition, the OS kernel will have to switch processes leading to more overhead.
+- With too many processes, more actual costs exceed the theoretical benefits.
+
+The optimal threshold for this experiment is probably around 65536
