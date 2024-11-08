@@ -1,3 +1,10 @@
+/*
+  * parsort.c
+  *
+  * Parallel sorting using fork/join parallelism.
+  *
+  * Authors: Prasi Thapa, Claire Zeng\
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -18,7 +25,7 @@ void swap( int64_t *arr, unsigned long i, unsigned long j );
 unsigned long partition( int64_t *arr, unsigned long start, unsigned long end );
 
 // Recursive quicksort function with parallel execution using fork
-void quicksort( int64_t *arr, unsigned long start, unsigned long end );
+int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned long par_threshold );
 
 
 int main( int argc, char **argv ) {
@@ -32,13 +39,14 @@ int main( int argc, char **argv ) {
   // Open the file for input
   int fd;
   const char *filename = argv[1];
+  // open the named file
   fd = open(filename, O_RDWR);
   if (fd < 0) {
     fprintf(stderr, "Couldn't open %s\n", argv[1]);
     return 1;
   }
 
-  unsigned long file_size, num_elements;
+  unsigned long num_elements; //file_size not used?
   // determine the file size and number of elements
   struct stat statbuf;
   int rc = fstat( fd, &statbuf );
@@ -46,7 +54,6 @@ int main( int argc, char **argv ) {
     fprintf(stderr, "Error: fstat failed\n");
     return 1;
   }
-
   int file_size_in_bytes = statbuf.st_size;  // indicates the number of bytes in the file
   num_elements = file_size_in_bytes/sizeof(int64_t);
 
@@ -57,7 +64,7 @@ int main( int argc, char **argv ) {
   int64_t *arr;
   arr = mmap( NULL, file_size_in_bytes, PROT_READ | PROT_WRITE,
     MAP_SHARED, fd, 0 );
-  close( fd );  // file can be closed after mmap
+  close( fd ); // file can be closed after mmap
   if ( arr == MAP_FAILED ) {
     fprintf( stderr, "Error: mmap failed\n" );
     return 1;
@@ -76,7 +83,6 @@ int main( int argc, char **argv ) {
 
   return 0;
 }
-
 
 /*
 * Function to compare two elements.
@@ -99,7 +105,6 @@ int compare( const void *left, const void *right ) {
     return 0;
 }
 
-
 /*
 * Function to swap two elements in an array.
 * Parameters:
@@ -112,7 +117,6 @@ void swap( int64_t *arr, unsigned long i, unsigned long j ) {
   arr[i] = arr[j];
   arr[j] = tmp;
 }
-
 
 /*
 * Function to partition a region of an array.
@@ -172,9 +176,12 @@ unsigned long partition( int64_t *arr, unsigned long start, unsigned long end ) 
   return left_index;
 }
 
-
 /*
 * Function to recursively sort a region of an array.
+* Note that the only reason that sorting should fail is 
+* if a child process can't be created or if there is any
+* other system call failure.
+*
 * Parameters:
 *   arr - pointer to the first element of the array
 *   start - inclusive lower bound index
@@ -276,5 +283,5 @@ int rcr, wstatusr;
     }
   }
 
-  return 1;//left_success && right_success;
+  return 1;
 }
