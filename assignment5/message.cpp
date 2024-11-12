@@ -27,7 +27,13 @@ Message::~Message()
 
 Message &Message::operator=( const Message &rhs )
 {
-  // TODO: implement
+  this->m_message_type = rhs.get_message_type();
+  std::vector<std::string> rhs_args;
+  int num_args = rhs.get_num_args();
+  for (int i = 0; i < num_args; i++) {
+    rhs_args.at(i) = rhs.get_arg(i);
+  }
+  this->m_args = rhs_args;
   return *this;
 }
 
@@ -43,32 +49,27 @@ void Message::set_message_type(MessageType message_type)
 
 std::string Message::get_username() const
 {
-  // TODO: implement
-  return "";
+  return m_args.at(0);
 }
 
 std::string Message::get_table() const
 {
-  // TODO: implement
-  return "";
+  return m_args.at(0);
 }
 
 std::string Message::get_key() const
 {
-  // TODO: implement
-  return "";
+  return m_args.at(1);
 }
 
 std::string Message::get_value() const
 {
-  // TODO: implement
-  return "";
+  return m_args.at(0);
 }
 
 std::string Message::get_quoted_text() const
 {
-  // TODO: implement
-  return "";
+  return m_args.at(0);
 }
 
 void Message::push_arg( const std::string &arg )
@@ -78,6 +79,19 @@ void Message::push_arg( const std::string &arg )
 
 bool Message::is_valid() const
 {
-  // TODO: implement
+  switch (m_message_type) {
+    case //LOGIN CREATE FAILED ERROR
+      if (this->get_num_args() > 1) {return false;}
+      if (!isalpha(this->get_arg(0)[0])) {return false;}
+    case //SET GET
+      if (this->get_num_arr()!=2) {return false;}
+      if (!isalpha(this->get_arg(0)[0]) || !isalpha(this->get_arg(1)[0])) {return false;}
+    case //DATA PUSH
+      if (!isspace(this->get_arg(0)[0])) {return false;}
+    case //everything else?
+      if (this->get_num_args()!=0) {return false;}
+  }
+  
+  
   return true;
 }
