@@ -12,20 +12,26 @@ ValueStack::~ValueStack()
 
 bool ValueStack::is_empty() const
 {
-  // TODO: implement
+  return val_stack.empty();
 }
 
 void ValueStack::push( const std::string &value )
 {
-  // TODO: implement
+  val_stack.push(value);
 }
 
 std::string ValueStack::get_top() const
 {
-  // TODO: implement
+  if (val_stack.empty()) {
+    throw OperationException("Error: ValueStack is empty");
+  }
+  return val_stack.top();
 }
 
 void ValueStack::pop()
 {
-  // TODO: implement
+  if (val_stack.empty()) {
+    throw OperationException("Error: ValueStack is empty");
+  }
+  val_stack.pop();
 }

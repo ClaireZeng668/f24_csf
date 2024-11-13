@@ -1,12 +1,14 @@
 #ifndef VALUE_STACK_H
 #define VALUE_STACK_H
 
+#include <stack>
 #include <vector>
 #include <string>
 
 class ValueStack {
 private:
   // TODO: member variable(s)
+  std::stack<std::string> val_stack;
 
 public:
   ValueStack();

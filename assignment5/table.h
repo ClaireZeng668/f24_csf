@@ -4,11 +4,13 @@
 #include <map>
 #include <string>
 #include <pthread.h>
+#include <map>
 
 class Table {
 private:
   std::string m_name;
   // TODO: add member variables
+  std::map<std::string, std::string> table;
 
   // copy constructor and assignment operator are prohibited
   Table( const Table & );

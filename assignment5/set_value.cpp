@@ -21,5 +21,7 @@ int main(int argc, char **argv)
     std::cerr << "Error: Couldn't connect to server";
     return 1;
   }
+  //rio_written(fd, );
+
   // TODO: again, no idea whats going on
 }

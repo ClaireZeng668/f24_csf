@@ -79,19 +79,35 @@ void Message::push_arg( const std::string &arg )
 
 bool Message::is_valid() const
 {
-  switch (m_message_type) {
-    case //LOGIN CREATE FAILED ERROR
-      if (this->get_num_args() > 1) {return false;}
-      if (!isalpha(this->get_arg(0)[0])) {return false;}
-    case //SET GET
-      if (this->get_num_arr()!=2) {return false;}
-      if (!isalpha(this->get_arg(0)[0]) || !isalpha(this->get_arg(1)[0])) {return false;}
-    case //DATA PUSH
-      if (!isspace(this->get_arg(0)[0])) {return false;}
-    case //everything else?
-      if (this->get_num_args()!=0) {return false;}
+  if (m_message_type == MessageType::LOGIN || m_message_type == MessageType::CREATE) {
+    if (m_args.size() != 1) {
+      return false;
+    }
+    if (!isalpha(m_args.at(0).at(0))) {
+      return false;
+    }
+  } else if (m_message_type == MessageType::FAILED || m_message_type == MessageType::ERROR) {
+    if (m_args.size() != 1) {
+      return false;
+    }
+  } else if (m_message_type == MessageType::SET || m_message_type == MessageType::GET) {
+    if (m_args.size() != 2) {
+      return false;
+    }
+    if (!isalpha(m_args.at(0).at(0)) || !isalpha(m_args.at(1).at(0))) {
+      return false;
+    }
+  } else if (m_message_type == MessageType::PUSH || m_message_type == MessageType::DATA) {
+    if (m_args.size() != 1) {
+      return false;
+    }
+    if (isspace(m_args.at(0).at(0))) {
+      return false;
+    }
+  } else {
+    if (m_args.size() != 0) {
+      return false;
+    }
   }
-  
-  
   return true;
 }
