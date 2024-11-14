@@ -7,6 +7,7 @@
 Message::Message()
   : m_message_type(MessageType::NONE)
 {
+  std::vector<std::string> m_args;
 }
 
 Message::Message( MessageType message_type, std::initializer_list<std::string> args )

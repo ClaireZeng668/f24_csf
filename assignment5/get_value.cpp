@@ -1,15 +1,16 @@
 #include "csapp.h"
+#include "message.h"
 #include <iostream>
 #include <sstream>
+#include "message_serialization.h"
 
-int check_response (std::string resp_command, std::string resp_args) {
-  if (resp_command == "FAILED") {
-    std::cerr << resp_args;
-    return 1;
-  } else if (resp_command == "ERROR") {
-    std::cerr << resp_args;
+int check_response (Message server_response) {
+  MessageType return_type = server_response.get_message_type();
+  if (return_type == MessageType::FAILED || return_type == MessageType::ERROR) {
+    std::cerr << server_response.get_quoted_text();
     return 1;
   }
+  return 0;
 }
 
 int main(int argc, char **argv)
@@ -36,62 +37,89 @@ int main(int argc, char **argv)
   rio_readinitb(&rio, fd);
   
   //LOGIN
-  char login[] = "LOGIN ";
-  char* command = strcat(login, argv[3]);
-  strcat(command, "\n");
-  rio_writen(fd, command, (strlen(command)));
-  char response[1023];
-  int bytes_read = rio_readlineb(&rio, response, 1024);
-  if (bytes_read < 0) {
-    std::cerr << "Error: Rio_readlineb error\n";
+  Message login_message;
+  login_message.set_message_type(MessageType::LOGIN);
+  std::string client_username = argv[3];
+  login_message.push_arg(client_username);
+  std::string client_request;
+  MessageSerialization::encode(login_message, client_request);  //encode converts Message -> string
+
+  std::cout << client_request;
+
+  int write_success = rio_writen(fd, client_request.data(), client_request.size());
+  if (write_success != client_request.size()) {
+    std::cerr << "Error: rio_writen error\n";
     return 1;
   }
-  std::string resp = response;
-  std::stringstream ss(resp);
-  std::string resp_command;
-  std::string resp_args;
-  ss >> resp_command;
-  ss >> resp_args;
-  int not_success = check_response(resp_command, resp_args);
+  char response_buf[1025];
+  int bytes_read = rio_readlineb(&rio, response_buf, 1025);
+  if (bytes_read < 0) {
+    std::cerr << "Error: rio_readlineb error\n";
+    return 1;
+  }
+  std::string response = response_buf;
+  Message server_response;
+  MessageSerialization::decode(response, server_response); //decode converts string -> Message
+  std::cout << "login response " << response << std::endl;
+  int not_success = check_response(server_response);
   if (not_success) {return 1;}
+  
 
   //GET
-  char get[] = "GET ";
-  command = strcat(get, argv[4]);
-  command = strcat(command, argv[5]);
-  command = strcat(command, "\n");
-  rio_writen(fd, command, (5+table.length()+key.length()));
-  bytes_read = rio_readlineb(&rio, response, 1024);
+  Message get_request;
+  get_request.set_message_type(MessageType::GET);
+  std::string request_table = argv[4];
+  std::string request_key = argv[5];
+  get_request.push_arg(request_table);
+  get_request.push_arg(request_key);
+  MessageSerialization::encode(get_request, client_request);
+
+  std::cout << client_request;
+
+  write_success = rio_writen(fd, client_request.data(), client_request.size());
+  if (write_success != client_request.size()) {
+    std::cerr << "Error: rio_writen error\n";
+    return 1;
+  }
+  response.clear();
+  memset(response_buf, '\0', 1025);
+  bytes_read = rio_readlineb(&rio, response_buf, 1024);
   if (bytes_read < 0) {
     std::cerr << "Error: Rio_readlineb error";
     return 1;
   }
-  resp = response;
-  ss.str("");
-  ss << resp;
-  ss >> resp_command;
-  ss >> resp_args;
-  not_success = check_response(resp_command, resp_args);
+  response = response_buf;
+  MessageSerialization::decode(response, server_response);
+  std::cout << "get response " << response << std::endl;
+  not_success = check_response(server_response);
   if (not_success) {return 1;}
 
+
   //TOP
-  char top[] = "TOP";
-  command = strcat(get, argv[4]);
-  command = strcat(command, argv[5]);
-  command = strcat(command, "\n");
-  rio_writen(fd, command, (3));
-  bytes_read = rio_readlineb(&rio, response, 1024);
+  Message top_request;
+  top_request.set_message_type(MessageType::TOP);
+  MessageSerialization::encode(top_request, client_request);
+
+
+  // TODO: figure our why this is giving seg fault
+  write_success = rio_writen(fd, client_request.data(), client_request.size());
+  std::cout << "writen reached";
+  if (write_success != client_request.size()) {
+    std::cerr << "Error: rio_writen error\n";
+    return 1;
+  }
+  
+  memset(response_buf, '\0', 1025);
+  bytes_read = rio_readlineb(&rio, &response, 1024);
   if (bytes_read < 0) {
     std::cerr << "Error: Rio_readlineb error";
     return 1;
   }
-  resp = response;
-  ss.str("");
-  ss << resp;
-  ss >> resp_command;
-  ss >> resp_args;
-  not_success = check_response(resp_command, resp_args);
+  response.clear();
+  response = response_buf;
+  MessageSerialization::decode(response, server_response);
+  not_success = check_response(server_response);
   if (not_success) {return 1;}
-  std::cout << resp_args;
+  std::cout << server_response.get_value();// << "\n";
   return 0;
 }

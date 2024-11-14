@@ -10,6 +10,7 @@
 
 void MessageSerialization::encode( const Message &msg, std::string &encoded_msg )
 {
+  encoded_msg.clear();
   MessageType type = msg.get_message_type();
   int num_args = msg.get_num_args();
   std::string args;
@@ -50,7 +51,7 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
     throw InvalidMessage("Error: Message lacks terminating newline character");
   }
   if (encoded_msg_.length() > 1024) {
-    throw InvalidMessage("Error: source encoded message exceeds meximum length");
+    throw InvalidMessage("Error: source encoded message exceeds maximum length");
   }
   std::stringstream ss;
   ss << encoded_msg_;
