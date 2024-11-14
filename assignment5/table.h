@@ -11,6 +11,9 @@ private:
   std::string m_name;
   // TODO: add member variables
   std::map<std::string, std::string> table;
+  std::map<std::string, std::string> changes;
+  bool has_changes;
+  bool is_locked;
 
   // copy constructor and assignment operator are prohibited
   Table( const Table & );
