@@ -1,63 +1,73 @@
+//set_value.cpp
 #include "csapp.h"
+#include "message.h"
 #include <iostream>
-#include <sstream>
-#include <string>
+#include "message_serialization.h"
 
-void usage() {
-    std::cerr << "Usage: ./set_value <hostname> <port> <username> <table> <key> <value>\n";
+void handle_error(const std::string &message) {
+    std::cerr << "Error: " << message << "\n";
+    exit(1);
+}
+
+void send_message(int fd, Message &msg) {
+    std::string serialized_msg;
+    MessageSerialization::encode(msg, serialized_msg);
+    if (rio_writen(fd, serialized_msg.data(), serialized_msg.size()) != serialized_msg.size()) {
+        handle_error("Failed to send message to server");
+    }
+}
+
+Message receive_message(int fd, rio_t &rio) {
+    char response_buf[1024];
+    int bytes_read = rio_readlineb(&rio, response_buf, sizeof(response_buf));
+    if (bytes_read <= 0) {
+        handle_error("Failed to read message from server");
+    }
+    std::string response = response_buf;
+    Message server_response;
+    MessageSerialization::decode(response, server_response);
+    return server_response;
 }
 
 int main(int argc, char **argv) {
     if (argc != 7) {
-        usage();
+        std::cerr << "Usage: ./set_value <hostname> <port> <username> <table> <key> <value>\n";
         return 1;
     }
 
-    std::string hostname = argv[1];
-    std::string port = argv[2];
-    std::string username = argv[3];
-    std::string table = argv[4];
-    std::string key = argv[5];
-    std::string value = argv[6];
+    std::string hostname = argv[1], port = argv[2], username = argv[3];
+    std::string table = argv[4], key = argv[5], value = argv[6];
 
-    //cpen connection to server
-    int client_fd = open_clientfd(hostname.c_str(), port.c_str());
-    if (client_fd < 0) {
-        std::cerr << "Error: Could not connect to server at " << hostname << ":" << port << "\n";
-        return 1;
-    }
+    int fd = open_clientfd(hostname.c_str(), port.c_str());
+    if (fd < 0) handle_error("Couldn't connect to server");
 
-    //prepare req string
-    std::ostringstream request_stream;
-    request_stream << "SET " << username << " " << table << " " << key << " " << value << "\r\n";
-    std::string request = request_stream.str();
-
-    //init rio
     rio_t rio;
-    rio_readinitb(&rio, client_fd);
+    rio_readinitb(&rio, fd);
 
-    //send request to server
-    if (rio_writen(client_fd, request.c_str(), request.size()) != (ssize_t)request.size()) {
-        std::cerr << "Error: Failed to send request to server\n";
-        close(client_fd);
-        return 1;
+    try {
+        // LOGIN
+        Message login_msg(MessageType::LOGIN, {username});
+        send_message(fd, login_msg);
+        Message login_response = receive_message(fd, rio);
+        if (login_response.get_message_type() != MessageType::OK) {
+            handle_error(login_response.get_quoted_text());
+        }
+
+        // SET
+        Message set_msg(MessageType::SET, {table, key, value});
+        send_message(fd, set_msg);
+        Message set_response = receive_message(fd, rio);
+        if (set_response.get_message_type() != MessageType::OK) {
+            handle_error(set_response.get_quoted_text());
+        }
+
+        // BYE
+        Message bye_msg(MessageType::BYE);
+        send_message(fd, bye_msg);
+    } catch (const std::exception &e) {
+        handle_error(e.what());
     }
 
-    //read response from server
-    char response[1024];
-    ssize_t n = rio_readlineb(&rio, response, sizeof(response));
-    if (n < 0) {
-        std::cerr << "Error: Failed to read response from server\n";
-        close(client_fd);
-        return 1;
-    }
-
-    //output
-    std::cout << "Server response: " << response;
-
-    close(client_fd);
-
+    close(fd);
     return 0;
 }
-
-//??? still wip

@@ -17,6 +17,7 @@ ClientConnection::ClientConnection( Server *server, int client_fd )
 ClientConnection::~ClientConnection()
 {
   // TODO: implement
+   Close(m_client_fd);
 }
 
 void ClientConnection::chat_with_client()
@@ -24,4 +25,3 @@ void ClientConnection::chat_with_client()
   // TODO: implement
 }
 
-// TODO: additional member functions

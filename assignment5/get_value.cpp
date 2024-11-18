@@ -1,9 +1,11 @@
+//get_value.cpp
 #include "csapp.h"
 #include "message.h"
 #include <iostream>
 #include <sstream>
 #include "message_serialization.h"
 
+/*
 int check_response (Message server_response) {
   MessageType return_type = server_response.get_message_type();
   if (return_type == MessageType::FAILED || return_type == MessageType::ERROR) {
@@ -123,9 +125,9 @@ int main(int argc, char **argv)
   std::cout << server_response.get_value();// << "\n";
   return 0;
 }
+*/
 
-
-/* Still need to test my implementation, Claire's still may be more correct
+// Still need to test my implementation, Claire's still may be more correct
 #include "csapp.h"
 #include "message.h"
 #include <iostream>
@@ -231,5 +233,3 @@ int main(int argc, char **argv) {
     close(fd);
     return 0;
 }
-
-*/
