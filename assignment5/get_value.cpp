@@ -127,109 +127,98 @@ int main(int argc, char **argv)
 }
 */
 
-// Still need to test my implementation, Claire's still may be more correct
+//get_value.cpp
 #include "csapp.h"
 #include "message.h"
+#include "message_serialization.h"
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "message_serialization.h"
 
 const int RESPONSE_BUFFER_SIZE = 1024;
 
-int check_response(const Message &server_response) {
-    if (server_response.get_message_type() == MessageType::FAILED || 
-        server_response.get_message_type() == MessageType::ERROR) {
-        std::cerr << server_response.get_quoted_text() << '\n';
-        return 1;
-    }
-    return 0;
+void handle_error(const std::string &msg) {
+  std::cerr << "Error: " << msg << "\n";
+  exit(1);
 }
 
 bool send_message(rio_t &rio, int fd, const Message &message) {
-    std::string serialized_message;
-    MessageSerialization::encode(message, serialized_message);
-    
-    if (rio_writen(fd, serialized_message.data(), serialized_message.size()) != serialized_message.size()) {
-        std::cerr << "Error: Failed to send message\n";
-        return false;
-    }
-    return true;
+  std::string serialized_message;
+  MessageSerialization::encode(message, serialized_message);
+  if (rio_writen(fd, serialized_message.data(), serialized_message.size()) != serialized_message.size()) {
+    handle_error("Failed to send message.");
+    return false;
+  }
+  return true;
 }
 
 bool receive_message(rio_t &rio, Message &response) {
-    char response_buf[RESPONSE_BUFFER_SIZE + 1] = {0}; // +1 for null terminator
-    int bytes_read = rio_readlineb(&rio, response_buf, RESPONSE_BUFFER_SIZE);
-    
-    if (bytes_read < 0) {
-        std::cerr << "Error: Failed to read server response\n";
-        return false;
-    }
-    
+  char response_buf[RESPONSE_BUFFER_SIZE + 1] = {0};
+  int bytes_read = rio_readlineb(&rio, response_buf, RESPONSE_BUFFER_SIZE);
+  if (bytes_read <= 0) {
+    handle_error("Failed to read server response.");
+    return false;
+  }
+
+  try {
     std::string response_str(response_buf);
     MessageSerialization::decode(response_str, response);
-    return true;
+  } catch (const std::exception &e) {
+    handle_error("Failed to decode server response: " + std::string(e.what()));
+    return false;
+  }
+  return true;
 }
 
+
 int main(int argc, char **argv) {
-    if (argc != 6) {
-        std::cerr << "Usage: ./get_value <hostname> <port> <username> <table> <key>\n";
-        return 1;
-    }
+  if (argc != 6) {
+    std::cerr << "Usage: ./get_value <hostname> <port> <username> <table> <key>\n";
+    return 1;
+  }
 
-    std::string hostname = argv[1];
-    std::string port = argv[2];
-    std::string username = argv[3];
-    std::string table = argv[4];
-    std::string key = argv[5];
+  std::string hostname = argv[1];
+  std::string port = argv[2];
+  std::string username = argv[3];
+  std::string table = argv[4];
+  std::string key = argv[5];
 
-    int fd = open_clientfd(hostname.c_str(), port.c_str());
-    if (fd < 0) {
-        std::cerr << "Error: Couldn't connect to server\n";
-        return 1;
-    }
+  int fd = open_clientfd(hostname.c_str(), port.c_str());
+  if (fd < 0) {
+    std::cerr << "Error: Couldn't connect to server\n";
+    return 1;
+  }
 
-    rio_t rio;
-    rio_readinitb(&rio, fd);
+  rio_t rio;
+  rio_readinitb(&rio, fd);
 
-    //login
-    Message login_message;
-    login_message.set_message_type(MessageType::LOGIN);
-    login_message.push_arg(username);
-
-    if (!send_message(rio, fd, login_message)) return 1;
+  try {
+    // LOGIN
+    Message login_msg(MessageType::LOGIN, {username});
+    if (!send_message(rio, fd, login_msg)) return 1;
 
     Message server_response;
-    if (!receive_message(rio, server_response)) return 1;
+    if (!receive_message(rio, server_response) || server_response.get_message_type() != MessageType::OK) {
+      handle_error(server_response.get_quoted_text());
+    }
 
-    if (check_response(server_response)) return 1;
+    // GET
+    Message get_msg(MessageType::GET, {table, key});
+    if (!send_message(rio, fd, get_msg)) return 1;
 
-    // Get
-    Message get_request;
-    get_request.set_message_type(MessageType::GET);
-    get_request.push_arg(table);
-    get_request.push_arg(key);
-
-    if (!send_message(rio, fd, get_request)) return 1;
-
-    if (!receive_message(rio, server_response)) return 1;
-
-    if (check_response(server_response)) return 1;
+    if (!receive_message(rio, server_response) || server_response.get_message_type() != MessageType::DATA) {
+      handle_error(server_response.get_quoted_text());
+    }
 
     std::cout << "Value retrieved: " << server_response.get_value() << '\n';
 
-    //Top
-    Message top_request;
-    top_request.set_message_type(MessageType::TOP);
+    // BYE
+    Message bye_msg(MessageType::BYE);
+    send_message(rio, fd, bye_msg);
+  } catch (const std::exception &e) {
+    handle_error(e.what());
+  }
 
-    if (!send_message(rio, fd, top_request)) return 1;
-
-    if (!receive_message(rio, server_response)) return 1;
-
-    if (check_response(server_response)) return 1;
-
-    std::cout << "Top response: " << server_response.get_value() << '\n';
-
-    close(fd);
-    return 0;
+  close(fd);
+  return 0;
 }
