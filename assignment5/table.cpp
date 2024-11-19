@@ -19,12 +19,12 @@ Table::~Table()
 void Table::lock()
 {
   // TODO: implement
-  pthread_mutex_t lock;
-  int result = pthread_mutex_lock(&lock);
-  if (result != 0) {
-    //handle error
-  }
-  is_locked = true;
+  // pthread_mutex_t lock;
+  // int result = pthread_mutex_lock(&lock);
+  // if (result != 0) {
+  //   //handle error
+  // }
+  // is_locked = true;
 }
 
 void Table::unlock()
@@ -51,7 +51,7 @@ bool Table::trylock()
   //return false;
   // }
   //is_locked = true;
-  //return true;
+  return true;
 }
 
 void Table::set( const std::string &key, const std::string &value )

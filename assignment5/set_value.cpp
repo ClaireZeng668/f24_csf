@@ -23,6 +23,7 @@ bool send_message(rio_t &rio, int fd, const Message &message) {
 
 bool receive_message(rio_t &rio, Message &response) {
   char response_buf[RESPONSE_BUFFER_SIZE + 1] = {0};
+  response.clear_args();
   int bytes_read = rio_readlineb(&rio, response_buf, RESPONSE_BUFFER_SIZE);
   if (bytes_read <= 0) {
     handle_error("Failed to read server response.");
@@ -54,31 +55,44 @@ int main(int argc, char **argv) {
   rio_t rio;
   rio_readinitb(&rio, fd);
 
-    try {
-        // LOGIN
-        Message login_msg(MessageType::LOGIN, {username});
-        if (!send_message(rio, fd, login_msg)) throw std::runtime_error("Login message failed to send");
-        Message login_response;
-        if (!receive_message(rio, login_response)) throw std::runtime_error("Login response failed");
-        if (login_response.get_message_type() != MessageType::OK) {
-            throw std::runtime_error(login_response.get_quoted_text());
-        }
-
-        // SET
-        Message set_msg(MessageType::SET, {table, key, value});
-        if (!send_message(rio, fd, set_msg)) throw std::runtime_error("Set message failed to send");
-        Message set_response;
-        if (!receive_message(rio, set_response)) throw std::runtime_error("Set response failed");
-        if (set_response.get_message_type() != MessageType::OK) {
-            throw std::runtime_error(set_response.get_quoted_text());
-        }
-
-        // BYE
-        Message bye_msg(MessageType::BYE);
-        send_message(rio, fd, bye_msg);
-    } catch (const std::exception &e) {
-        handle_error(e.what());
+  try {
+    // LOGIN
+    Message login_msg(MessageType::LOGIN, {username});
+    if (!send_message(rio, fd, login_msg)) throw std::runtime_error("Login message failed to send");
+    
+    Message login_response;
+    if (!receive_message(rio, login_response)) throw std::runtime_error("Login response failed");
+    if (login_response.get_message_type() != MessageType::OK) {
+      throw std::runtime_error(login_response.get_quoted_text());
     }
+
+    Message login_msg(MessageType::LOGIN, {username});
+    if (!send_message(rio, fd, login_msg)) return 1;
+
+    Message server_response;
+    if (!receive_message(rio, server_response) || server_response.get_message_type() != MessageType::OK) {
+      handle_error(server_response.get_quoted_text());
+    }
+
+    // SET
+    Message set_msg(MessageType::SET, {table, key, value});
+    if (!send_message(rio, fd, set_msg)) throw std::runtime_error("Set message failed to send");
+    Message set_response;
+    if (!receive_message(rio, set_response)) throw std::runtime_error("Set response failed");
+    if (set_response.get_message_type() != MessageType::OK) {
+      throw std::runtime_error(set_response.get_quoted_text());
+    }
+
+    // BYE
+    Message bye_msg(MessageType::BYE);
+    if (!send_message(rio, fd, bye_msg)) return 1;
+    Message bye_response;
+    if (!receive_message(rio, bye_response) || bye_response.get_message_type() != MessageType::DATA) {
+      handle_error(bye_response.get_quoted_text());
+    }
+  } catch (const std::exception &e) {
+    handle_error(e.what());
+  }
 
   close(fd);
   return 0;
