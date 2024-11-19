@@ -1,6 +1,4 @@
 //incr_value.cpp
-//reverted to old implementation
-
 #include "csapp.h"
 #include "message.h"
 #include <iostream>
@@ -48,15 +46,6 @@ int main(int argc, char **argv) {
     std::cerr << "Usage: ./incr_value [-t] <hostname> <port> <username> <table> <key>\n";
     return 1;
   }
-
-  /*
-  std::string hostname = argv[count++];
-  std::string port = argv[count++];
-  std::string username = argv[count++];
-  std::string table = argv[count++];
-  std::string key = argv[count++];
-  */
-
   
   // implementing transaction
   bool use_transaction = (argc == 7);
@@ -75,88 +64,82 @@ int main(int argc, char **argv) {
   try {
     // LOGIN
     Message login_msg(MessageType::LOGIN, {username});
-    if (!send_message(rio, fd, login_msg)) throw std::runtime_error("Login message failed to send");
+    if (!send_message(rio, fd, login_msg)) return 1;
     Message login_response;
-    if (!receive_message(rio, login_response)) throw std::runtime_error("Login response failed");
-    if (login_response.get_message_type() != MessageType::OK) {
-      throw std::runtime_error(login_response.get_quoted_text());
+    if (!receive_message(rio, login_response) || login_response.get_message_type() != MessageType::OK) {
+      handle_error(login_response.get_quoted_text());
     }
 
+    //BEGIN
     if (use_transaction) {
       Message begin_msg(MessageType::BEGIN);
-      if (!send_message(rio, fd, begin_msg)) throw std::runtime_error("Begin transaction message failed to send");
+      if (!send_message(rio, fd, begin_msg)) return 1;
+
       Message begin_response;
-      if (!receive_message(rio, begin_response)) throw std::runtime_error("Begin response failed");
-      if (begin_response.get_message_type() != MessageType::OK) {
-        throw std::runtime_error(begin_response.get_quoted_text());
+      if (!receive_message(rio, begin_response) || begin_response.get_message_type() != MessageType::OK) {
+        handle_error(begin_response.get_quoted_text());
       }
     }
 
     // GET
     Message get_msg(MessageType::GET, {table, key});
-    if (!send_message(rio, fd, get_msg)) throw std::runtime_error("Get message failed to send");
-    Message get_response;
-    if (!receive_message(rio, get_response)) throw std::runtime_error("Get response failed");
-    if (get_response.get_message_type() != MessageType::DATA) {
-      throw std::runtime_error(get_response.get_quoted_text());
-    }
+    if (!send_message(rio, fd, get_msg)) return 1;
 
-    //int current_value = std::stoi(get_response.get_value());
+    Message get_response;
+    if (!receive_message(rio, get_response) || get_response.get_message_type() != MessageType::OK) {
+      handle_error(get_response.get_quoted_text());
+    }
 
     // PUSH
-    Message push_msg(MessageType::PUSH, {table, key, std::to_string(current_value + 1)});
-    if (!send_message(rio, fd, set_msg)) throw std::runtime_error("Set message failed to send");
-    Message push_response;
-    if (!receive_message(rio, push_response)) throw std::runtime_error("Set response failed");
-    if (push_response.get_message_type() != MessageType::OK) {
-      throw std::runtime_error(push_response.get_quoted_text());
-    }
+    std::string one = "1";
+    Message push_msg(MessageType::PUSH, {one});
+    if (!send_message(rio, fd, push_msg)) return 1;
 
-    // if (use_transaction) {
-    //   Message commit_msg(MessageType::COMMIT);
-    //   send_message(rio, fd, commit_msg);
-    // }
+    Message push_response;
+    if (!receive_message(rio, push_response) || push_response.get_message_type() != MessageType::OK) {
+      handle_error(push_response.get_quoted_text());
+    }
 
     //ADD
     Message add_msg(MessageType::ADD);
-    if (!send_message(rio, fd, add_msg)) throw std::runtime_error("add message failed to send");
+    if (!send_message(rio, fd, add_msg)) return 1;
+
     Message add_response;
-    if (!receive_message(rio, add_response)) throw std::runtime_error("add response failed");
-    if (add_response.get_message_type() != MessageType::OK) {
-      throw std::runtime_error(add_response.get_quoted_text());
+    if (!receive_message(rio, add_response) || add_response.get_message_type() != MessageType::OK) {
+      handle_error(add_response.get_quoted_text());
     }
 
-
     // SET
-    Message set_msg(MessageType::SET, {table, key, std::to_string(current_value + 1)});
-    send_message(rio, fd, set_msg);
+    Message set_msg(MessageType::SET, {table, key});
+    if (!send_message(rio, fd, set_msg)) return 1;
+
     Message set_response;
-    receive_message(rio, set_response);
-    if (set_response.get_message_type() != MessageType::OK) {
+    if (!receive_message(rio, set_response) || set_response.get_message_type() != MessageType::OK) {
       handle_error(set_response.get_quoted_text());
     }
 
+    //COMMIT
     if (use_transaction) {
       Message commit_msg(MessageType::COMMIT);
-      send_message(rio, fd, commit_msg);
+      if (!send_message(rio, fd, commit_msg)) return 1;
+
       Message commit_response;
-      receive_message(rio, commit_response);
-      if (commit_response.get_message_type() != MessageType::OK) {
-          handle_error(commit_response.get_quoted_text());
+      if (!receive_message(rio, commit_response) || commit_response.get_message_type() != MessageType::OK) {
+        handle_error(commit_response.get_quoted_text());
       }
     }
 
     // BYE
     Message bye_msg(MessageType::BYE);
     if (!send_message(rio, fd, bye_msg)) return 1;
+
     Message bye_response;
-    if (!receive_message(rio, bye_response) || bye_response.get_message_type() != MessageType::DATA) {
+    if (!receive_message(rio, bye_response) || bye_response.get_message_type() != MessageType::OK) {
       handle_error(bye_response.get_quoted_text());
     }
   } catch (const std::exception &e) {
     handle_error(e.what());
   }
-
   close(fd);
   return 0;
 }

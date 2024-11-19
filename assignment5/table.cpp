@@ -18,7 +18,7 @@ Table::~Table()
 
 void Table::lock()
 {
-  // TODO: implement
+  // TODO: implement (commented code was written before covering mutex in class, please ignore)
   // pthread_mutex_t lock;
   // int result = pthread_mutex_lock(&lock);
   // if (result != 0) {
@@ -29,7 +29,7 @@ void Table::lock()
 
 void Table::unlock()
 {
-  // TODO: implement
+  // TODO: implement (commented code was written before covering mutex in class, please ignore)
   //result = pthread_mutex_unlock(&lock);
   // if (result != 0) {
   //   //handle error
@@ -39,7 +39,7 @@ void Table::unlock()
 
 bool Table::trylock()
 {
-  // TODO: implement
+  // TODO: implement (commented code was written before covering mutex in class, please ignore)
   //if (is_locked) {
     //return false;
   //}

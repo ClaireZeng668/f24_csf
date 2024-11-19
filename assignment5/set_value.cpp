@@ -58,36 +58,38 @@ int main(int argc, char **argv) {
   try {
     // LOGIN
     Message login_msg(MessageType::LOGIN, {username});
-    if (!send_message(rio, fd, login_msg)) throw std::runtime_error("Login message failed to send");
-    
-    Message login_response;
-    if (!receive_message(rio, login_response)) throw std::runtime_error("Login response failed");
-    if (login_response.get_message_type() != MessageType::OK) {
-      throw std::runtime_error(login_response.get_quoted_text());
-    }
-
-    Message login_msg(MessageType::LOGIN, {username});
     if (!send_message(rio, fd, login_msg)) return 1;
 
-    Message server_response;
-    if (!receive_message(rio, server_response) || server_response.get_message_type() != MessageType::OK) {
-      handle_error(server_response.get_quoted_text());
+    Message login_response;
+    if (!receive_message(rio, login_response) || login_response.get_message_type() != MessageType::OK) {
+      handle_error(login_response.get_quoted_text());
     }
 
+    //PUSH
+    Message push_msg(MessageType::PUSH, {value});
+    if (!send_message(rio, fd, push_msg)) return 1;
+    
+    Message push_response;
+    if (!receive_message(rio, push_response) || push_response.get_message_type() != MessageType::OK) {
+      handle_error(push_response.get_quoted_text());
+    }
+
+
     // SET
-    Message set_msg(MessageType::SET, {table, key, value});
-    if (!send_message(rio, fd, set_msg)) throw std::runtime_error("Set message failed to send");
+    Message set_msg(MessageType::SET, {table, key});
+    if (!send_message(rio, fd, set_msg)) return 1;
+
     Message set_response;
-    if (!receive_message(rio, set_response)) throw std::runtime_error("Set response failed");
-    if (set_response.get_message_type() != MessageType::OK) {
-      throw std::runtime_error(set_response.get_quoted_text());
+    if (!receive_message(rio, set_response) || set_response.get_message_type() != MessageType::OK) {
+      handle_error(set_response.get_quoted_text());
     }
 
     // BYE
     Message bye_msg(MessageType::BYE);
     if (!send_message(rio, fd, bye_msg)) return 1;
+
     Message bye_response;
-    if (!receive_message(rio, bye_response) || bye_response.get_message_type() != MessageType::DATA) {
+    if (!receive_message(rio, bye_response) || bye_response.get_message_type() != MessageType::OK) {
       handle_error(bye_response.get_quoted_text());
     }
   } catch (const std::exception &e) {
