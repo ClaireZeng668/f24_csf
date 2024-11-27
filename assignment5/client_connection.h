@@ -23,6 +23,8 @@ public:
   ~ClientConnection();
 
   void chat_with_client();
+  bool receive_message(rio_t &rio, Message &response);
+  bool send_message(rio_t &rio, int fd, const Message &message);
 
   // TODO: additional member functions
 };

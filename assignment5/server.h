@@ -10,7 +10,8 @@
 class Server {
 private:
   // TODO: add member variables
-
+  int server_fd;
+  std::vector<Table*> server_tables;
   // copy constructor and assignment operator are prohibited
   Server( const Server & );
   Server &operator=( const Server & );
@@ -25,7 +26,8 @@ public:
   static void *client_worker( void *arg );
 
   void log_error( const std::string &what );
-
+  void create_table( const std::string &name );
+  Table *find_table( const std::string &name );
   // TODO: add member functions
 
   // Some suggested member functions:

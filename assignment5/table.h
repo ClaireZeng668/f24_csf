@@ -14,6 +14,7 @@ private:
   std::map<std::string, std::string> changes;
   bool has_changes;
   bool is_locked;
+  pthread_mutex_t table_lock;
 
   // copy constructor and assignment operator are prohibited
   Table( const Table & );

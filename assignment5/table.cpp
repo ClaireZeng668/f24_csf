@@ -9,48 +9,42 @@ Table::Table( const std::string &name )
   // TODO: initialize additional member variables
 {
   // TODO: implement
+  pthread_mutex_init(&this->table_lock, NULL);
 }
 
 Table::~Table()
 {
-  // TODO: implement
+  pthread_mutex_destroy(&this->table_lock);
 }
 
 void Table::lock()
 {
-  // TODO: implement (commented code was written before covering mutex in class, please ignore)
-  // pthread_mutex_t lock;
-  // int result = pthread_mutex_lock(&lock);
-  // if (result != 0) {
-  //   //handle error
-  // }
-  // is_locked = true;
+  int result = pthread_mutex_lock(&this->table_lock);
+  if (result != 0) {
+    throw FailedTransaction("Table failed to lock");
+  }
+  is_locked = true;
 }
 
 void Table::unlock()
 {
-  // TODO: implement (commented code was written before covering mutex in class, please ignore)
-  //result = pthread_mutex_unlock(&lock);
-  // if (result != 0) {
-  //   //handle error
-  // }
-  //is_locked = false;
+  int result = pthread_mutex_unlock(&this->table_lock);
+  if (result != 0) {
+    throw FailedTransaction("Table failed to unlock");
+  }
+  is_locked = false;
 }
 
 bool Table::trylock()
 {
-  // TODO: implement (commented code was written before covering mutex in class, please ignore)
-  //if (is_locked) {
-    //return false;
-  //}
-  //result = pthread_mutex_trylock(&lock);
-  // if (result != 0) {
-  //   //handle error?
-  //rollback changes
-  //unlock other stuff?
-  //return false;
-  // }
-  //is_locked = true;
+  if (is_locked) {
+    return false;
+  }
+  int result = pthread_mutex_trylock(&this->table_lock);
+  if (result != 0) {
+    throw FailedTransaction("Table failed to lock for a transaction");
+  }
+  is_locked = true;
   return true;
 }
 
