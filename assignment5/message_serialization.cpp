@@ -35,10 +35,16 @@ void MessageSerialization::encode( const Message &msg, std::string &encoded_msg 
   for (int i = 0; i < num_args; i++) {
     std::string current = msg.get_arg(i);
     encoded_msg.append(" ");
+    if (type == MessageType::FAILED || type == MessageType::ERROR) {
+      encoded_msg.append("\"");
+    }
     encoded_msg.append(current);
   }
   if (encoded_msg.length() > 1023) {
     throw InvalidMessage("Error: resulting encoded message exceeds maximum length");
+  }
+  if (type == MessageType::FAILED || type == MessageType::ERROR) {
+    encoded_msg.append("\"");
   }
   encoded_msg.append("\n");
 }

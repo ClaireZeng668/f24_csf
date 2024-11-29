@@ -20,9 +20,10 @@ Table::~Table()
 void Table::lock()
 {
   int result = pthread_mutex_lock(&this->table_lock);
-  if (result != 0) {
-    throw FailedTransaction("Table failed to lock");
-  }
+  //TODO: is this part necessary? lock waits for mutex to be available?
+  // if (result != 0) {
+  //   throw FailedTransaction("Table failed to lock");
+  // }
   is_locked = true;
 }
 

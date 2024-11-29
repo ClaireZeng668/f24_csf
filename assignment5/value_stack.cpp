@@ -23,7 +23,7 @@ void ValueStack::push( const std::string &value )
 std::string ValueStack::get_top() const
 {
   if (val_stack.empty()) {
-    throw OperationException("Error: ValueStack is empty");
+    throw OperationException("ValueStack is empty");
   }
   return val_stack.top();
 }
@@ -31,7 +31,7 @@ std::string ValueStack::get_top() const
 void ValueStack::pop()
 {
   if (val_stack.empty()) {
-    throw OperationException("Error: ValueStack is empty");
+    throw OperationException("ValueStack is empty");
   }
   val_stack.pop();
 }

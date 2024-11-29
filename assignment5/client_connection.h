@@ -4,6 +4,7 @@
 #include <set>
 #include "message.h"
 #include "csapp.h"
+#include "value_stack.h"
 
 class Server; // forward declaration
 class Table; // forward declaration
@@ -13,6 +14,7 @@ private:
   Server *m_server;
   int m_client_fd;
   rio_t m_fdbuf;
+  std::vector<Table*> client_locked_tables;
 
   // copy constructor and assignment operator are prohibited
   ClientConnection( const ClientConnection & );
@@ -27,6 +29,11 @@ public:
   bool send_message(rio_t &rio, int fd, const Message &message);
 
   // TODO: additional member functions
+  void set_request(ValueStack &values, Message client_msg, bool try_lock);
+  void math_request(ValueStack &values, std::string operation);
+  void execute_transaction(ValueStack &values, bool &sent_message);
+  bool regular_requests( MessageType type, Message client_msg, ValueStack &values, /*bool &sent_message, */ bool try_lock);
+  void unlock_all();
 };
 
 #endif // CLIENT_CONNECTION_H

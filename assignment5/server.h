@@ -12,6 +12,7 @@ private:
   // TODO: add member variables
   int server_fd;
   std::vector<Table*> server_tables;
+  bool transaction_in_progress;
   // copy constructor and assignment operator are prohibited
   Server( const Server & );
   Server &operator=( const Server & );
@@ -28,6 +29,10 @@ public:
   void log_error( const std::string &what );
   void create_table( const std::string &name );
   Table *find_table( const std::string &name );
+  void add_table( Table* to_add );
+  bool has_transaction() { return transaction_in_progress; }
+  void start_transaction() { transaction_in_progress = true; }
+  void end_transaction() { transaction_in_progress = false; }
   // TODO: add member functions
 
   // Some suggested member functions:
