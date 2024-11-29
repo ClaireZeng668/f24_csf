@@ -41,7 +41,7 @@ void MessageSerialization::encode( const Message &msg, std::string &encoded_msg 
     encoded_msg.append(current);
   }
   if (encoded_msg.length() > 1023) {
-    throw InvalidMessage("Error: resulting encoded message exceeds maximum length");
+    throw InvalidMessage("resulting encoded message exceeds maximum length");
   }
   if (type == MessageType::FAILED || type == MessageType::ERROR) {
     encoded_msg.append("\"");
@@ -54,10 +54,10 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
   msg.clear_args();
   char quote = '\n';
   if (encoded_msg_.back() != quote) {
-    throw InvalidMessage("Error: Message lacks terminating newline character");
+    throw InvalidMessage("Message lacks terminating newline character");
   }
   if (encoded_msg_.length() > 1024) {
-    throw InvalidMessage("Error: source encoded message exceeds maximum length");
+    throw InvalidMessage("source encoded message exceeds maximum length");
   }
   std::stringstream ss;
   ss << encoded_msg_;
@@ -99,6 +99,6 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
     msg.push_arg(arg);;
   }
   if (!msg.is_valid()) {
-    throw InvalidMessage("Error: resuling Message object is not valid");
+    throw InvalidMessage("resuling Message object is not valid");
   }
 }

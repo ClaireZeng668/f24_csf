@@ -12,7 +12,7 @@ private:
   // TODO: add member variables
   int server_fd;
   std::vector<Table*> server_tables;
-  bool transaction_in_progress;
+  bool transaction_in_progress = false;
   // copy constructor and assignment operator are prohibited
   Server( const Server & );
   Server &operator=( const Server & );

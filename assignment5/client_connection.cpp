@@ -63,6 +63,9 @@ void ClientConnection::set_request(ValueStack &values, Message client_msg, bool 
   std::string value = values.get_top();
   values.pop();
   Table *table = m_server->find_table(table_name);
+  if (table == NULL) {
+    throw OperationException("Table does not exist");
+  }
   if (try_lock) {
     table->trylock();
     table->set(key, value);
@@ -93,23 +96,25 @@ void ClientConnection::math_request(ValueStack &values, std::string operation) {
 }
 
 void ClientConnection::execute_transaction(ValueStack &values, bool &sent_message) {
-  Message server_response(MessageType::FAILED);
+  Message server_response(MessageType::OK);
   bool did_request = false;
   Message client_msg;
   //invlid message and comm exception exit execute and chat back to server?
   //try {
-    while (client_msg.get_message_type() != MessageType::COMMIT && client_msg.get_message_type() != MessageType::BYE) {
-      receive_message(m_fdbuf, client_msg);
-      MessageType type = client_msg.get_message_type();
-      did_request = regular_requests(type, client_msg, values, /*sent_message, */true);
-      if (!did_request) {
-        throw InvalidMessage("Message request was not a valid request"); //TODO: have to commit before bye?
-      }
+  send_message(m_fdbuf, m_client_fd, server_response);
+  while (client_msg.get_message_type() != MessageType::COMMIT && client_msg.get_message_type() != MessageType::BYE) {
+    receive_message(m_fdbuf, client_msg);
+    MessageType type = client_msg.get_message_type();
+    did_request = regular_requests(type, client_msg, values, /*sent_message, */true);
+    if (!did_request) {
+      throw InvalidMessage("Message request was not a valid request"); //TODO: have to commit before bye?
     }
-    for (auto it = client_locked_tables.begin(); it != client_locked_tables.end(); it++) {
-      Table *table = *it;
-      table->commit_changes();
-    }
+  }
+  for (auto it = client_locked_tables.begin(); it != client_locked_tables.end(); it++) {
+    Table *table = *it;
+    table->commit_changes();
+    send_message(m_fdbuf, m_client_fd, server_response);
+  }
   // } catch (FailedTransaction ex) {
   //   for (auto it = client_locked_tables.begin(); it != client_locked_tables.end(); it++) {
   //     Table *table = *it;
@@ -128,6 +133,9 @@ bool ClientConnection::regular_requests( MessageType type, Message client_msg, V
   bool sent_message = false;
   Message ok_response(MessageType::OK);
   if (type == MessageType::CREATE) {
+    if (!client_msg.is_valid()) {
+      throw InvalidMessage("Invalid table name");
+    }
     std::string table_name = client_msg.get_table();
     m_server->create_table(table_name); 
     completed_request = true;
@@ -186,6 +194,8 @@ bool ClientConnection::regular_requests( MessageType type, Message client_msg, V
   else if (type == MessageType::DIV) {
     math_request(values, "div");
     completed_request = true;
+  } else if (type == MessageType::COMMIT) {
+    return true;
   }
   
   if (!sent_message && completed_request) { 
@@ -212,6 +222,9 @@ void ClientConnection::chat_with_client() {
   try {
     if (login_response.get_message_type() != MessageType::LOGIN) {
       throw InvalidMessage("First request must be LOGIN");
+    }
+    if (!login_response.is_valid()) {
+      throw InvalidMessage("invalid username");
     }
     Message client_msg;
     Message done(MessageType::OK);
