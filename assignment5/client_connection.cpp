@@ -128,6 +128,7 @@ bool ClientConnection::execute_transaction(ValueStack &values, bool &sent_messag
       m_server->add_table(table);
     }
     table->unlock();
+    //m_server->unlock_table(table);
     send_message(m_fdbuf, m_client_fd, server_response);
   }
   return false;
@@ -164,8 +165,14 @@ void ClientConnection::set_request(ValueStack &values, Message client_msg, bool 
     throw OperationException("Table does not exist");
   }
   if (try_lock) {
+    // if (m_server->is_locked(table)) {
+    //   unlock_all();
+    //   throw FailedTransaction("Table already locked");
+    // }
     table->trylock();
+    //m_server->lock_table(table);
     table->set(key, value);
+    client_locked_tables.push_back(table);
   } else { 
     table->lock();
     table->set(key, value);
@@ -183,7 +190,12 @@ void ClientConnection::get_request(ValueStack &values, Message client_msg, bool 
     throw OperationException("Table does not exist");
   }
   if (try_lock) {
+    // if (m_server->is_locked(table)) {
+    //   unlock_all();
+    //   throw FailedTransaction("Table already locked");
+    // }
     table->trylock();
+    //m_server->lock_table(table);
     client_locked_tables.push_back(table);
     values.push(table->get(key));
   } else {
@@ -280,7 +292,7 @@ void ClientConnection::unlock_all() {
     }
   }
   client_locked_tables.clear();
-  m_server->end_transaction();
+  end_transaction();
 }
 
 void ClientConnection::chat_with_client() {
@@ -308,12 +320,12 @@ void ClientConnection::chat_with_client() {
         did_request = regular_requests(type, client_msg, values, /*sent_message, */false);
         if (!did_request) {
           if (type == MessageType::BEGIN) {
-            if (m_server->has_transaction()) {
+            if (has_transaction()) {
               throw FailedTransaction("Transaction already in progress");
             }
-            m_server->start_transaction();
+            start_transaction();
             bool log_out = execute_transaction(values, sent_message);
-            m_server->end_transaction();
+            end_transaction();
             if (log_out) {return;}
           } else if (type == MessageType::BYE) {  //need to check stuff?
             unlock_all();

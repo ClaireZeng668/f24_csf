@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <memory>
+#include <algorithm>
 #include "client_connection.h"
 #include "csapp.h"
 #include "exceptions.h"
@@ -10,7 +11,7 @@
 
 Server::Server()
   : server_tables()
-  , locked_tables()
+  //, locked_tables()
   // TODO: initialize member variables
 {
   // TODO: implement
@@ -93,7 +94,9 @@ void Server::create_table( const std::string &name ) {
   Table* new_table = find_table(name);
   if (new_table == NULL) {
     new_table = new Table(name);
+    new_table->lock();
     server_tables.push_back(new_table);
+    new_table->unlock();
   } else {
     throw OperationException("Table already exists");
   }
@@ -112,12 +115,16 @@ void Server::add_table( Table* to_add ) {
   server_tables.push_back(to_add);
 }
 
-// bool Server::table_is_transaction( std::string table_to_lock ) {
+// bool Server::is_locked( Table* table_to_lock ) {
 //   for (auto it = locked_tables.begin(); it != locked_tables.end(); it++) {
 //     Table *table = *it;
-//     if (table->get_name() == table_to_lock) {
+//     if (table == table_to_lock) {
 //       return true;
 //     }
 //   }
 //   return false;
+// }
+
+// void Server::unlock_table( Table* table_to_unlock ) {
+//   locked_tables.erase(find(locked_tables.begin(), locked_tables.end(), table_to_unlock));
 // }
