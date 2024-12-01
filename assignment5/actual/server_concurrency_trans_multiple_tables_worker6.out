@@ -1,0 +1,17 @@
+acct_num=0, src1=2, src2=1, dest=3, debit1=3, debit2=7
+acct_num=2, src1=3, src2=2, dest=1, debit1=2, debit2=9
+acct_num=1, src1=2, src2=1, dest=3, debit1=4, debit2=9
+acct_num=1, src1=1, src2=3, dest=2, debit1=1, debit2=2
+acct_num=0, src1=2, src2=1, dest=3, debit1=8, debit2=1
+acct_num=0, src1=3, src2=2, dest=1, debit1=9, debit2=4
+acct_num=0, src1=2, src2=3, dest=1, debit1=5, debit2=9
+acct_num=0, src1=3, src2=2, dest=1, debit1=8, debit2=3
+acct_num=0, src1=1, src2=3, dest=2, debit1=9, debit2=5
+acct_num=1, src1=1, src2=2, dest=3, debit1=6, debit2=3
+acct_num=0, src1=1, src2=3, dest=2, debit1=8, debit2=6
+acct_num=2, src1=3, src2=2, dest=1, debit1=6, debit2=5
+acct_num=4, src1=2, src2=3, dest=1, debit1=1, debit2=2
+acct_num=3, src1=2, src2=3, dest=1, debit1=3, debit2=1
+acct_num=4, src1=3, src2=2, dest=1, debit1=1, debit2=5
+acct_num=4, src1=3, src2=1, dest=2, debit1=1, debit2=4
+acct_num=4, src1=2, src2=3, dest=1, debit1=8, debit2=4

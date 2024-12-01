@@ -15,6 +15,7 @@ private:
   bool has_changes;
   bool is_locked;
   pthread_mutex_t table_lock;
+  bool created = false;
 
   // copy constructor and assignment operator are prohibited
   Table( const Table & );
@@ -29,6 +30,8 @@ public:
   void lock();
   void unlock();
   bool trylock();
+  bool created_in_transaction() {return created;}
+  void set_created() {created=true;}
 
   // Note: these functions should only be called while the
   // table's lock is held!

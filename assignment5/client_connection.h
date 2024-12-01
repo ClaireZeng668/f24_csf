@@ -30,10 +30,15 @@ public:
 
   // TODO: additional member functions
   void set_request(ValueStack &values, Message client_msg, bool try_lock);
+  void get_request(ValueStack &values, Message client_msg, bool try_lock);
   void math_request(ValueStack &values, std::string operation);
-  void execute_transaction(ValueStack &values, bool &sent_message);
+  bool execute_transaction(ValueStack &values, bool &sent_message);
   bool regular_requests( MessageType type, Message client_msg, ValueStack &values, /*bool &sent_message, */ bool try_lock);
   void unlock_all();
+  bool is_number(std::string value);
+  Table* create_transaction_table(std::string table_name);
+  Table *find_table(std::string &name);
+
 };
 
 #endif // CLIENT_CONNECTION_H

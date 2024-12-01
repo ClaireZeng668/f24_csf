@@ -1,3 +1,4 @@
+#include <cctype>
 #include <set>
 #include <map>
 #include <regex>
@@ -78,13 +79,23 @@ void Message::push_arg( const std::string &arg )
   m_args.push_back( arg );
 }
 
+bool Message::is_valid_identifier(std::string ident) const {
+  for (int i = 1; i < ident.length(); i++) {
+    char current = ident.at(i);
+    if (!isalnum(current) && current != '_') {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool Message::is_valid() const
 {
   if (m_message_type == MessageType::LOGIN || m_message_type == MessageType::CREATE) {
     if (m_args.size() != 1) {
       return false;
     }
-    if (!isalpha(m_args.at(0).at(0))) {
+    if (!isalpha(m_args.at(0).at(0)) || !is_valid_identifier(m_args.at(0))) {
       return false;
     }
   } else if (m_message_type == MessageType::FAILED || m_message_type == MessageType::ERROR) {
@@ -98,12 +109,18 @@ bool Message::is_valid() const
     if (!isalpha(m_args.at(0).at(0)) || !isalpha(m_args.at(1).at(0))) {
       return false;
     }
+    if (!is_valid_identifier(m_args.at(0)) || !is_valid_identifier(m_args.at(1))) {
+      return false;
+    }
   } else if (m_message_type == MessageType::PUSH || m_message_type == MessageType::DATA) {
     if (m_args.size() != 1) {
       return false;
     }
-    if (isspace(m_args.at(0).at(0))) {
-      return false;
+    std::string value = m_args.at(0);
+    for (int i = 0; i < value.length(); i++) {
+      if (isspace(value.at(0))) {
+        return false;
+      }
     }
   } else {
     if (m_args.size() != 0) {

@@ -5,10 +5,12 @@
 #include "csapp.h"
 #include "exceptions.h"
 #include "guard.h"
+#include "table.h"
 #include "server.h"
 
 Server::Server()
   : server_tables()
+  , locked_tables()
   // TODO: initialize member variables
 {
   // TODO: implement
@@ -109,3 +111,13 @@ Table* Server::find_table( const std::string &name ) {
 void Server::add_table( Table* to_add ) {
   server_tables.push_back(to_add);
 }
+
+// bool Server::table_is_transaction( std::string table_to_lock ) {
+//   for (auto it = locked_tables.begin(); it != locked_tables.end(); it++) {
+//     Table *table = *it;
+//     if (table->get_name() == table_to_lock) {
+//       return true;
+//     }
+//   }
+//   return false;
+// }

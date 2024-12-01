@@ -43,7 +43,7 @@ bool Table::trylock()
   }
   int result = pthread_mutex_trylock(&this->table_lock);
   if (result != 0) {
-    throw FailedTransaction("Table failed to lock for a transaction");
+    throw FailedTransaction("Table failed to acquire lock for a transaction");
   }
   is_locked = true;
   return true;
@@ -57,7 +57,11 @@ void Table::set( const std::string &key, const std::string &value )
 
 std::string Table::get( const std::string &key )
 {
-  return changes[key];
+  if (has_key(key)) {
+    return changes[key];
+  } else {
+    throw OperationException("Key does not exist in table");
+  }
 }
 
 bool Table::has_key( const std::string &key )

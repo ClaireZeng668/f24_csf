@@ -64,23 +64,24 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
   std::string command;
   ss >> command;
   if (command.compare("LOGIN") == 0) {msg.set_message_type(MessageType::LOGIN);}
-  if (command.compare("CREATE") == 0) {msg.set_message_type(MessageType::CREATE);}
-  if (command.compare("PUSH") == 0) {msg.set_message_type(MessageType::PUSH);}
-  if (command.compare("DATA") == 0) {msg.set_message_type(MessageType::DATA);}
-  if (command.compare("POP") == 0) {msg.set_message_type(MessageType::POP);}
-  if (command.compare("TOP") == 0) {msg.set_message_type(MessageType::TOP);}
-  if (command.compare("SET") == 0) {msg.set_message_type(MessageType::SET);}
-  if (command.compare("GET") == 0) {msg.set_message_type(MessageType::GET);}
-  if (command.compare("ADD") == 0) {msg.set_message_type(MessageType::ADD);}
-  if (command.compare("SUB") == 0) {msg.set_message_type(MessageType::SUB);}
-  if (command.compare("MUL") == 0) {msg.set_message_type(MessageType::MUL);}
-  if (command.compare("DIV") == 0) {msg.set_message_type(MessageType::DIV);}
-  if (command.compare("BEGIN") == 0) {msg.set_message_type(MessageType::BEGIN);}
-  if (command.compare("COMMIT") == 0) {msg.set_message_type(MessageType::COMMIT);}
-  if (command.compare("BYE") == 0) {msg.set_message_type(MessageType::BYE);}
-  if (command.compare("OK") == 0) {msg.set_message_type(MessageType::OK);}
-  if (command.compare("FAILED") == 0) {msg.set_message_type(MessageType::FAILED);}
-  if (command.compare("ERROR") == 0) {msg.set_message_type(MessageType::ERROR);}
+  else if (command.compare("CREATE") == 0) {msg.set_message_type(MessageType::CREATE);}
+  else if (command.compare("PUSH") == 0) {msg.set_message_type(MessageType::PUSH);}
+  else if (command.compare("DATA") == 0) {msg.set_message_type(MessageType::DATA);}
+  else if (command.compare("POP") == 0) {msg.set_message_type(MessageType::POP);}
+  else if (command.compare("TOP") == 0) {msg.set_message_type(MessageType::TOP);}
+  else if (command.compare("SET") == 0) {msg.set_message_type(MessageType::SET);}
+  else if (command.compare("GET") == 0) {msg.set_message_type(MessageType::GET);}
+  else if (command.compare("ADD") == 0) {msg.set_message_type(MessageType::ADD);}
+  else if (command.compare("SUB") == 0) {msg.set_message_type(MessageType::SUB);}
+  else if (command.compare("MUL") == 0) {msg.set_message_type(MessageType::MUL);}
+  else if (command.compare("DIV") == 0) {msg.set_message_type(MessageType::DIV);}
+  else if (command.compare("BEGIN") == 0) {msg.set_message_type(MessageType::BEGIN);}
+  else if (command.compare("COMMIT") == 0) {msg.set_message_type(MessageType::COMMIT);}
+  else if (command.compare("BYE") == 0) {msg.set_message_type(MessageType::BYE);}
+  else if (command.compare("OK") == 0) {msg.set_message_type(MessageType::OK);}
+  else if (command.compare("FAILED") == 0) {msg.set_message_type(MessageType::FAILED);}
+  else if (command.compare("ERROR") == 0) {msg.set_message_type(MessageType::ERROR);}
+  else {throw InvalidMessage("Invalid message command");}
   std::string arg;
   quote = '\"';
   while (ss >> arg) {
