@@ -99,7 +99,7 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
     }
     msg.push_arg(arg);;
   }
-  if (!msg.is_valid()) {
-    throw InvalidMessage("resuling Message object is not valid");
-  }
+  // if (!msg.is_valid()) {
+  //   throw InvalidMessage("resuling Message object is not valid");
+  // }
 }

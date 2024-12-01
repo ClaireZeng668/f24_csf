@@ -36,19 +36,21 @@ bool ClientConnection::receive_message(rio_t &rio, Message &response) {
     return false;
   }
 
-  try {
+  //try {
     std::string response_str(response_buf);
     MessageSerialization::decode(response_str, response); //string -> message
-  } catch (const std::exception &e) {
-    response.set_message_type(MessageType::ERROR);
-    unlock_all();
-    throw InvalidMessage(e.what());
-    return false;
-  }
-  if (!response.is_valid()) {
-    response.set_message_type(MessageType::ERROR);
-    unlock_all();
-    throw InvalidMessage("Message couldn't be processed because of missing or invalid data");
+  // } catch (const std::exception &e) {
+  //   response.set_message_type(MessageType::ERROR);
+  //   unlock_all();
+  //   throw InvalidMessage(e.what());
+  //   return false;
+  // }
+  if (response.get_message_type() != MessageType::LOGIN) {
+    if (!response.is_valid()) {
+      response.set_message_type(MessageType::ERROR);
+      unlock_all();
+      throw InvalidMessage("Message couldn't be processed because of missing or invalid data");
+    }
   }
   return true;
 }
@@ -289,11 +291,12 @@ void ClientConnection::chat_with_client() {
   Message login_response;
   receive_message(m_fdbuf, login_response);
   try {
+    //receive_message(m_fdbuf, login_response);
     if (login_response.get_message_type() != MessageType::LOGIN) {
       throw InvalidMessage("First request must be LOGIN");
     }
     if (!login_response.is_valid()) {
-      throw InvalidMessage("invalid username");
+      throw InvalidMessage("Invalid username");
     }
     Message client_msg;
     Message done(MessageType::OK);
