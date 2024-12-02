@@ -128,29 +128,30 @@ bool ClientConnection::execute_transaction(ValueStack &values, bool &sent_messag
       m_server->add_table(table);
     }
     table->unlock();
-    send_message(m_fdbuf, m_client_fd, server_response);
+  }
+  client_locked_tables.clear();
+  send_message(m_fdbuf, m_client_fd, server_response);
+  m_server->end_transaction();
+  return false;
+}
+
+bool ClientConnection::find_table(std::string &name) {
+  for (auto it = client_locked_tables.begin(); it != client_locked_tables.end(); it++) {
+    if ((*it)->get_name() == name) {
+      return true;
+    }
   }
   return false;
 }
 
-Table* ClientConnection::find_table(std::string &name) {
-  for (auto it = client_locked_tables.begin(); it != client_locked_tables.end(); it++) {
-    if ((*it)->get_name() == name) {
-      return *it;
-    }
-  }
-  return NULL;
-}
-
 Table* ClientConnection::create_transaction_table(std::string table_name) {
-  Table* new_table = find_table(table_name);
-  if (new_table == NULL) {
-    new_table = new Table(table_name);
+  if (!find_table(table_name)) {
+    Table* new_table = new Table(table_name);
     client_locked_tables.push_back(new_table);
+    return new_table;
   } else {
     throw OperationException("Table already exists");
   }
-  return new_table;
 }
 
 
@@ -164,7 +165,10 @@ void ClientConnection::set_request(ValueStack &values, Message client_msg, bool 
     throw OperationException("Table does not exist");
   }
   if (try_lock) {
-    table->trylock();
+    if (!find_table(table_name)) {
+      table->trylock();
+      client_locked_tables.push_back(table);
+    }
     table->set(key, value);
   } else { 
     table->lock();
@@ -183,8 +187,10 @@ void ClientConnection::get_request(ValueStack &values, Message client_msg, bool 
     throw OperationException("Table does not exist");
   }
   if (try_lock) {
-    table->trylock();
-    client_locked_tables.push_back(table);
+    if (!find_table(table_name)) {
+      table->trylock();
+      client_locked_tables.push_back(table);
+    }
     values.push(table->get(key));
   } else {
     table->lock();

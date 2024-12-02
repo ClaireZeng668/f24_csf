@@ -37,7 +37,7 @@ public:
   void unlock_all();
   bool is_number(std::string value);
   Table* create_transaction_table(std::string table_name);
-  Table *find_table(std::string &name);
+  bool find_table(std::string &name);
 
 };
 
