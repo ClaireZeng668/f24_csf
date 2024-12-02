@@ -36,19 +36,21 @@ bool ClientConnection::receive_message(rio_t &rio, Message &response) {
     return false;
   }
 
-  try {
+  //try {
     std::string response_str(response_buf);
     MessageSerialization::decode(response_str, response); //string -> message
-  } catch (const std::exception &e) {
-    response.set_message_type(MessageType::ERROR);
-    unlock_all();
-    throw InvalidMessage(e.what());
-    return false;
-  }
-  if (!response.is_valid()) {
-    response.set_message_type(MessageType::ERROR);
-    unlock_all();
-    throw InvalidMessage("Message couldn't be processed because of missing or invalid data");
+  // } catch (const std::exception &e) {
+  //   response.set_message_type(MessageType::ERROR);
+  //   unlock_all();
+  //   throw InvalidMessage(e.what());
+  //   return false;
+  // }
+  if (response.get_message_type() != MessageType::LOGIN) {
+    if (!response.is_valid()) {
+      response.set_message_type(MessageType::ERROR);
+      unlock_all();
+      throw InvalidMessage("Message couldn't be processed because of missing or invalid data");
+    }
   }
   return true;
 }
@@ -126,7 +128,6 @@ bool ClientConnection::execute_transaction(ValueStack &values, bool &sent_messag
       m_server->add_table(table);
     }
     table->unlock();
-    //m_server->unlock_table(table);
     send_message(m_fdbuf, m_client_fd, server_response);
   }
   return false;
@@ -163,14 +164,8 @@ void ClientConnection::set_request(ValueStack &values, Message client_msg, bool 
     throw OperationException("Table does not exist");
   }
   if (try_lock) {
-    // if (m_server->is_locked(table)) {
-    //   unlock_all();
-    //   throw FailedTransaction("Table already locked");
-    // }
     table->trylock();
-    //m_server->lock_table(table);
     table->set(key, value);
-    client_locked_tables.push_back(table);
   } else { 
     table->lock();
     table->set(key, value);
@@ -188,12 +183,7 @@ void ClientConnection::get_request(ValueStack &values, Message client_msg, bool 
     throw OperationException("Table does not exist");
   }
   if (try_lock) {
-    // if (m_server->is_locked(table)) {
-    //   unlock_all();
-    //   throw FailedTransaction("Table already locked");
-    // }
     table->trylock();
-    //m_server->lock_table(table);
     client_locked_tables.push_back(table);
     values.push(table->get(key));
   } else {
@@ -290,7 +280,7 @@ void ClientConnection::unlock_all() {
     }
   }
   client_locked_tables.clear();
-  end_transaction();
+  m_server->end_transaction();
 }
 
 void ClientConnection::chat_with_client() {
@@ -301,11 +291,12 @@ void ClientConnection::chat_with_client() {
   Message login_response;
   receive_message(m_fdbuf, login_response);
   try {
+    //receive_message(m_fdbuf, login_response);
     if (login_response.get_message_type() != MessageType::LOGIN) {
       throw InvalidMessage("First request must be LOGIN");
     }
     if (!login_response.is_valid()) {
-      throw InvalidMessage("invalid username");
+      throw InvalidMessage("Invalid username");
     }
     Message client_msg;
     Message done(MessageType::OK);
@@ -317,12 +308,12 @@ void ClientConnection::chat_with_client() {
         did_request = regular_requests(type, client_msg, values, /*sent_message, */false);
         if (!did_request) {
           if (type == MessageType::BEGIN) {
-            if (has_transaction()) {
+            if (m_server->has_transaction()) {
               throw FailedTransaction("Transaction already in progress");
             }
-            start_transaction();
+            m_server->start_transaction();
             bool log_out = execute_transaction(values, sent_message);
-            end_transaction();
+            m_server->end_transaction();
             if (log_out) {return;}
           } else if (type == MessageType::BYE) {  //need to check stuff?
             unlock_all();
