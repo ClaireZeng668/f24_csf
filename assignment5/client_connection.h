@@ -16,6 +16,8 @@ private:
   rio_t m_fdbuf;
   std::vector<Table*> client_locked_tables;
 
+  bool transaction_in_progress = false;
+
   // copy constructor and assignment operator are prohibited
   ClientConnection( const ClientConnection & );
   ClientConnection &operator=( const ClientConnection & );
@@ -38,6 +40,10 @@ public:
   bool is_number(std::string value);
   Table* create_transaction_table(std::string table_name);
   bool find_table(std::string &name);
+
+  bool has_transaction() { return transaction_in_progress; }
+  void start_transaction() { transaction_in_progress = true; }
+  void end_transaction() { transaction_in_progress = false; }
 
 };
 

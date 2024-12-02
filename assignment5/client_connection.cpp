@@ -131,7 +131,7 @@ bool ClientConnection::execute_transaction(ValueStack &values, bool &sent_messag
   }
   client_locked_tables.clear();
   send_message(m_fdbuf, m_client_fd, server_response);
-  m_server->end_transaction();
+  end_transaction();
   return false;
 }
 
@@ -286,7 +286,7 @@ void ClientConnection::unlock_all() {
     }
   }
   client_locked_tables.clear();
-  m_server->end_transaction();
+  end_transaction();
 }
 
 void ClientConnection::chat_with_client() {
@@ -314,12 +314,12 @@ void ClientConnection::chat_with_client() {
         did_request = regular_requests(type, client_msg, values, /*sent_message, */false);
         if (!did_request) {
           if (type == MessageType::BEGIN) {
-            if (m_server->has_transaction()) {
+            if (has_transaction()) {
               throw FailedTransaction("Transaction already in progress");
             }
-            m_server->start_transaction();
+            start_transaction();
             bool log_out = execute_transaction(values, sent_message);
-            m_server->end_transaction();
+            end_transaction();
             if (log_out) {return;}
           } else if (type == MessageType::BYE) {  //need to check stuff?
             unlock_all();

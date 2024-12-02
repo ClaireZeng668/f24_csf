@@ -34,10 +34,10 @@ void Table::unlock()
 
 bool Table::trylock()
 {
-  if (is_locked) {
-    return false;
-  }
   int result = pthread_mutex_trylock(&this->table_lock);
+  // if (is_locked) {
+  //   return false;
+  // }
   if (result != 0) {
     throw FailedTransaction("Table failed to acquire lock for a transaction");
   }
