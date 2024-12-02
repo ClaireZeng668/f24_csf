@@ -80,9 +80,7 @@ void Message::push_arg( const std::string &arg )
 }
 
 bool Message::is_valid_identifier(std::string ident) const {
-  int ident_length = ident.length();
-  if (ident_length < 2) {return false;}
-  for (int i = 1; i < ident_length; i++) {
+  for (int i = 1; i < ident.length(); i++) {
     char current = ident.at(i);
     if (!isalnum(current) && current != '_') {
       return false;
