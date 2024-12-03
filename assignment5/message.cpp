@@ -3,6 +3,7 @@
 #include <map>
 #include <regex>
 #include <cassert>
+#include <stdexcept>
 #include "message.h"
 
 Message::Message()
@@ -89,6 +90,14 @@ bool Message::is_valid_identifier(std::string ident) const {
     }
   }
   return true;
+}
+
+std::string Message::get_arg(unsigned i) const {
+  try {
+    return m_args.at( i );
+  } catch (std::out_of_range ex) {
+    return NULL;
+  }
 }
 
 bool Message::is_valid() const

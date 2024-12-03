@@ -19,33 +19,77 @@ private:
   Server &operator=( const Server & );
 
 public:
+
+  /*
+  * Server object constructor
+  */
   Server();
+
+  /*
+  * Server object destructor
+  */
   ~Server();
 
+  /*
+  * Creates server socket
+  *
+  * Parameters:
+  *     port - the port number for the socket
+  *
+  * Throws:
+  *     CommException if failed to create server socket
+  */
   void listen( const std::string &port );
+
+  /*
+  * Waits for client connections and creates threads to handle client requests
+  */
   void server_loop();
 
+  /*
+  * Start routine for threads
+  *
+  * Parameters:
+  *     arg - ClientConnection object to handle client
+  */
   static void *client_worker( void *arg );
 
+  /*
+  * Prints error message
+  */
   void log_error( const std::string &what );
+
+  /*
+  * Creates server table
+  *
+  * Parameters:
+  *     name - the specified name for the table
+  *
+  * Throws:
+  *     OperationException if table already exists
+  */
   void create_table( const std::string &name );
+
+  /*
+  * Checks if table exists in the server
+  *
+  * Parameters:
+  *     name - the specified name for the table
+  *
+  * Returns:
+  *     Table pointer to the specified table
+  *     NULL is table does not exist in the server
+  */
   Table *find_table( const std::string &name );
+
+  /*
+  * Adds a table to the server
+  *
+  * Parameters:
+  *     to_add - the specified table to add to the server
+  */
   void add_table( Table* to_add );
-  // bool has_transaction() { return transaction_in_progress; }
-  // void start_transaction() { transaction_in_progress = true; }
-  // void end_transaction() { transaction_in_progress = false; }
-  // void add_tables( std::vector<Table*> transaction_tables );
 
-  // void lock_table( Table* table_to_lock ) {locked_tables.push_back(table_to_lock);}
-  // bool table_is_transaction( std::string table_to_lock );
-  // TODO: add member functions
-
-  // Some suggested member functions:
-/*
-  void create_table( const std::string &name );
-  Table *find_table( const std::string &name );
-  void log_error( const std::string &what );
-*/
 };
 
 

@@ -11,16 +11,49 @@ private:
   std::stack<std::string> val_stack;
 
 public:
+  /*
+  * ValueStack object constructor
+  */
   ValueStack();
+
+  /*
+  * ValueStack object destructor
+  */
   ~ValueStack();
 
+  /*
+  * Checks if ValueStack is empty
+  *
+  * Returns:
+  *     boolean true if empty
+  */
   bool is_empty() const;
+
+  /*
+  * Checks if ValueStack is empty
+  *
+  * Parameters:
+  *     value - string value to push onto the ValueStack
+  */
   void push( const std::string &value );
 
-  // Note: get_top() and pop() should throw OperationException
-  // if called when the stack is empty
-
+  /*
+  * Gets the top value of ValueStack
+  *
+  * Returns:
+  *     string of top value
+  *
+  * Throws:
+  *     OperationException if ValueStack is empty
+  */
   std::string get_top() const;
+
+  /*
+  * Removes the top value of ValueStack
+  *
+  * Throws:
+  *     OperationException if ValueStack is empty
+  */
   void pop();
 };
 

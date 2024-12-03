@@ -25,44 +25,34 @@ ClientConnection::~ClientConnection()
    Close(m_client_fd);
 }
 
-bool ClientConnection::receive_message(rio_t &rio, Message &response) {
+void ClientConnection::receive_message(rio_t &rio, Message &request) {
   char response_buf[1024 + 1] = {0};
-  response.clear_args();
+  request.clear_args();
   int bytes_read = rio_readlineb(&rio, response_buf, 1024);
   if (bytes_read <= 0) {
-    response.set_message_type(MessageType::ERROR);
+    request.set_message_type(MessageType::ERROR);
     unlock_all();
     throw CommException("Failed to read server response.");
-    return false;
   }
 
-  //try {
-    std::string response_str(response_buf);
-    MessageSerialization::decode(response_str, response); //string -> message
-  // } catch (const std::exception &e) {
-  //   response.set_message_type(MessageType::ERROR);
-  //   unlock_all();
-  //   throw InvalidMessage(e.what());
-  //   return false;
-  // }
-  if (response.get_message_type() != MessageType::LOGIN) {
-    if (!response.is_valid()) {
-      response.set_message_type(MessageType::ERROR);
+  std::string response_str(response_buf);
+  MessageSerialization::decode(response_str, request); //string -> message
+  if (request.get_message_type() != MessageType::LOGIN) {
+    if (!request.is_valid()) {
+      request.set_message_type(MessageType::ERROR);
       unlock_all();
       throw InvalidMessage("Message couldn't be processed because of missing or invalid data");
     }
   }
-  return true;
 }
 
-bool ClientConnection::send_message(rio_t &rio, int fd, const Message &message) {
+void ClientConnection::send_message(rio_t &rio, int fd, const Message &message) {
   std::string serialized_message;
   MessageSerialization::encode(message, serialized_message);
   if (rio_writen(fd, serialized_message.data(), serialized_message.size()) != serialized_message.size()) {
     unlock_all();
     throw CommException("Failed to send message.");
   }
-  return true;
 }
 
 bool ClientConnection::is_number(std::string value) {
@@ -97,12 +87,10 @@ void ClientConnection::math_request(ValueStack &values, std::string operation) {
   values.push(std::to_string(result));
 }
 
-bool ClientConnection::execute_transaction(ValueStack &values, bool &sent_message) {
+bool ClientConnection::execute_transaction(ValueStack &values) {
   Message server_response(MessageType::OK);
   bool did_request = false;
   Message client_msg;
-  //invlid message and comm exception exit execute and chat back to server?
-  //try {
   send_message(m_fdbuf, m_client_fd, server_response);
   receive_message(m_fdbuf, client_msg);
   MessageType type = client_msg.get_message_type();
@@ -112,7 +100,7 @@ bool ClientConnection::execute_transaction(ValueStack &values, bool &sent_messag
       send_message(m_fdbuf, m_client_fd, server_response);
       return true;
     }
-    did_request = regular_requests(type, client_msg, values, /*sent_message, */true);
+    did_request = regular_requests(type, client_msg, values, true);
     if (!did_request) {
       unlock_all();
       throw InvalidMessage("Message request was not a valid request");
@@ -171,10 +159,12 @@ void ClientConnection::set_request(ValueStack &values, Message client_msg, bool 
     }
     table->set(key, value);
   } else { 
-    table->lock();
-    table->set(key, value);
-    table->commit_changes();
-    table->unlock();
+    {
+      pthread_mutex_t mutex = table->get_mutex();
+      Guard g(mutex);
+      table->set(key, value);
+      table->commit_changes();
+    }
   }
 }
 
@@ -193,9 +183,11 @@ void ClientConnection::get_request(ValueStack &values, Message client_msg, bool 
     }
     values.push(table->get(key));
   } else {
-    table->lock();
-    values.push(table->get(key));
-    table->unlock();
+    {
+      pthread_mutex_t mutex = table->get_mutex();
+      Guard g(mutex);
+      values.push(table->get(key));
+    }
   }
 }
 
@@ -293,11 +285,9 @@ void ClientConnection::chat_with_client() {
   ValueStack values;
   bool sent_message = false;
   bool did_request = false;
-  // TODO: implement
   Message login_response;
   receive_message(m_fdbuf, login_response);
   try {
-    //receive_message(m_fdbuf, login_response);
     if (login_response.get_message_type() != MessageType::LOGIN) {
       throw InvalidMessage("First request must be LOGIN");
     }
@@ -307,21 +297,21 @@ void ClientConnection::chat_with_client() {
     Message client_msg;
     Message done(MessageType::OK);
     send_message(m_fdbuf, m_client_fd, done);
-    while (1) {//server_response.get_message_type() != MessageType::ERROR) { throwing invalidmessage or commexception will exit chat with client?
+    while (1) {
       try {
         receive_message(m_fdbuf, client_msg);
         MessageType type = client_msg.get_message_type();
-        did_request = regular_requests(type, client_msg, values, /*sent_message, */false);
+        did_request = regular_requests(type, client_msg, values, false);
         if (!did_request) {
           if (type == MessageType::BEGIN) {
             if (has_transaction()) {
               throw FailedTransaction("Transaction already in progress");
             }
             start_transaction();
-            bool log_out = execute_transaction(values, sent_message);
+            bool log_out = execute_transaction(values);
             end_transaction();
             if (log_out) {return;}
-          } else if (type == MessageType::BYE) {  //need to check stuff?
+          } else if (type == MessageType::BYE) {
             unlock_all();
             send_message(m_fdbuf, m_client_fd, done);
             return;
