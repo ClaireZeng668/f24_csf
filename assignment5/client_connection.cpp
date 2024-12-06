@@ -32,7 +32,7 @@ void ClientConnection::receive_message(rio_t &rio, Message &request) {
   if (bytes_read <= 0) {
     request.set_message_type(MessageType::ERROR);
     unlock_all();
-    throw CommException("Failed to read server response.");
+    throw CommException("Failed to read client request.");
   }
 
   std::string response_str(response_buf);

@@ -20,7 +20,6 @@ Table::~Table()
 void Table::lock()
 {
   int result = pthread_mutex_lock(&this->table_lock);
-  is_locked = true;
 }
 
 void Table::unlock()
@@ -29,19 +28,14 @@ void Table::unlock()
   if (result != 0) {
     throw FailedTransaction("Table failed to unlock");
   }
-  is_locked = false;
 }
 
 bool Table::trylock()
 {
   int result = pthread_mutex_trylock(&this->table_lock);
-  // if (is_locked) {
-  //   return false;
-  // }
   if (result != 0) {
     throw FailedTransaction("Table failed to acquire lock for a transaction");
   }
-  is_locked = true;
   return true;
 }
 

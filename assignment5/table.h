@@ -13,7 +13,6 @@ private:
   std::map<std::string, std::string> table;
   std::map<std::string, std::string> changes;
   bool has_changes;
-  bool is_locked;
   pthread_mutex_t table_lock;
   bool created = false;
 
